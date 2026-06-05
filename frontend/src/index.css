@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* ChemiCrown Specific Brand Colors (Navy Blue / Orange) */
+  --color-brand-blue: #1F2E54;
+  --color-brand-purple: #E6513A; /* Repurposed as Orange for legacy support */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  :root {
+    /* Base Background and Text */
+    --background: #FFFFFF;
+    --foreground: #020617; /* Slate 950 */
+
+    /* Primary: Deep Navy Blue from PDF */
+    --primary: #1F2E54; 
+    --primary-foreground: #FFFFFF;
+
+    /* Secondary: Vibrant Orange from PDF */
+    --secondary: #E6513A; 
+    --secondary-foreground: #FFFFFF;
+
+    /* Destructive/Error: Red */
+    --destructive: #EF4444;
+    --destructive-foreground: #FFFFFF;
+
+    /* Neutral UI Elements */
+    --muted: #F1F5F9; /* Slate 100 */
+    --muted-foreground: #64748B; /* Slate 500 */
+
+    --accent: #EBF0FF; 
+    --accent-foreground: #1F2E54;
+
+    --popover: #FFFFFF;
+    --popover-foreground: #020617;
+
+    --card: #FFFFFF;
+    --card-foreground: #020617;
+
+    --border: #E2E8F0; /* Slate 200 */
+    --input: #E2E8F0;
+    --ring: #1F2E54;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: #0F172A; /* Slate 900 */
+    --foreground: #F8FAFC; /* Slate 50 */
+    --card: #1E293B; /* Slate 800 */
+    --card-foreground: #F8FAFC;
+    --popover: #0F172A;
+    --popover-foreground: #F8FAFC;
+    --primary: #4A63A5; 
+    --primary-foreground: #FFFFFF;
+    --secondary: #E8654E; 
+    --secondary-foreground: #FFFFFF;
+    --muted: #1E293B;
+    --muted-foreground: #94A3B8; /* Slate 400 */
+    --accent: #1F2E54; 
+    --accent-foreground: #EBF0FF;
+    --destructive: #B91C1C; /* Red 800 */
+    --destructive-foreground: #F8FAFC;
+    --border: #334155; /* Slate 700 */
+    --input: #334155;
+    --ring: #4A63A5;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    font-size: 16px; /* Base font size, can tweak if needed */
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    overflow-y: scroll; /* Force scrollbar to prevent layout shift */
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm dark:bg-slate-900/70 dark:border-slate-800;
+  }
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-lg shadow-xl border border-slate-200/60 dark:bg-slate-800/90 dark:border-slate-700;
+  }
+  
+  /* 3D Floating Animations */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: float 6s ease-in-out 3s infinite;
+  }
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}

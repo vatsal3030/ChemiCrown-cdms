@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                  String   @id @default(uuid()) // Links to Supabase Auth UID
+  email               String   @unique
+  password            String?  // Hashed password for local auth
+  role                Role     @default(CUSTOMER)
+  firstName           String?
+  lastName            String?
+  phone               String?
+  profileImageUrl     String?
+  resetPasswordOtp    String?
+  resetPasswordExpires DateTime?
+  createdAt           DateTime @default(now())
+  deletedAt           DateTime?
+  
+  employeeProfile Employee?
+  customerProfile Customer?
+  auditLogs       AuditLog[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  MANAGER
+  SALES
+  CUSTOMER
+}
+
+model Employee {
+  id          String @id @default(uuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
+  jobTitle    String?
+  department  String?
+  attendances Attendance[]
+  salaries    Salary[]
+  deletedAt   DateTime?
+}
+
+model Customer {
+  id          String @id @default(uuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
+  companyName String
+  gstNumber   String?
+  address     String?
+  isVerified  Boolean @default(false) // Admin must verify before ordering
+  isActive    Boolean @default(true) // Deprecated: use deletedAt
+  deletedAt   DateTime?
+  orders      Order[]
+  inquiries   Inquiry[]
+  
+  @@index([isVerified, isActive])
+}
+
+model Supplier {
+  id          String @id @default(uuid())
+  name        String
+  phone       String?
+  email       String?
+  isActive    Boolean @default(true) // Deprecated: use deletedAt
+  deletedAt   DateTime?
+  transactions InventoryTransaction[]
+}
+
+model Category {
+  id       String @id @default(uuid())
+  name     String @unique
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  name        String   // e.g., GP Thinner
+  description String
+  unit        String   // Litre, Kg, Drum, Barrel
+  imageUrl    String?  // Product image representation
+  datasheetUrl String? // Link to PDF datasheet in Supabase Storage
+  casNumber   String?
+  unNumber    String?
+  safetyNotes String?
+  storageInstructions String?
+  price       Float
+  isActive    Boolean  @default(true) // Deprecated: use deletedAt
+  deletedAt   DateTime?
+  createdBy   String?  // Auditability
+  updatedBy   String?  // Auditability
+  
+  inventory   Inventory?
+  orderItems  OrderItem[]
+  
+  @@index([categoryId, isActive])
+}
+
+model Inventory {
+  id           String @id @default(uuid())
+  productId    String @unique
+  product      Product @relation(fields: [productId], references: [id])
+  quantity     Int
+  minThreshold Int
+  transactions InventoryTransaction[]
+}
+
+model InventoryTransaction {
+  id          String   @id @default(uuid())
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  type        TransactionType // IN, OUT, ADJUSTMENT
+  quantity    Int
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  remarks     String?
+  createdBy   String?  // Auditability
+  updatedBy   String?  // Auditability
+  createdAt   DateTime @default(now())
+}
+
+enum TransactionType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Inquiry {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  subject     String
+  message     String
+  status      InquiryStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+}
+
+enum InquiryStatus {
+  PENDING
+  RESPONDED
+  CLOSED
+}
+
+model Quotation {
+  id         String   @id @default(uuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  amount     Float
+  fileUrl    String?  // Generated PDF stored in Supabase Storage
+  validUntil DateTime
+  status     QuoteStatus @default(DRAFT)
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+model Order {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  status     OrderStatus @default(PENDING)
+  total      Float
+  createdBy  String?  // Auditability
+  updatedBy  String?  // Auditability
+  items      OrderItem[]
+  quotation  Quotation?
+  payment    Payment?
+  history    OrderStatusHistory[]
+  createdAt  DateTime @default(now())
+  deletedAt  DateTime?
+
+  @@index([customerId, status])
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id])
+  oldStatus OrderStatus
+  newStatus OrderStatus
+  changedAt DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   // e.g., "UPDATED_INVENTORY"
+  entity    String   // e.g., "Inventory"
+  entityId  String
+  createdAt DateTime @default(now())
+}
+
+model Attendance {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  date       DateTime @default(now())
+  status     AttendanceStatus @default(PRESENT)
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LEAVE
+}
+
+model Salary {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  month      String   // e.g., "YYYY-MM"
+  amount     Float
+  status     SalaryStatus @default(PENDING)
+  paidAt     DateTime?
+}
+
+enum SalaryStatus {
+  PENDING
+  PAID
+}
+
+model Payment {
+  id                 String   @id @default(uuid())
+  orderId            String   @unique
+  order              Order    @relation(fields: [orderId], references: [id])
+  razorpayOrderId    String?  @unique
+  razorpayPaymentId  String?  @unique
+  razorpaySignature  String?
+  amount             Float
+  status             PaymentStatus @default(PENDING)
+  createdAt          DateTime @default(now())
+  
+  @@index([status])
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
