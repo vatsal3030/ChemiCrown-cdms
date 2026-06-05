@@ -70,6 +70,7 @@ const ordersRoutes = require('./src/routes/orders.routes');
 const inventoryRoutes = require('./src/routes/inventory.routes');
 const analyticsRoutes = require('./src/routes/analytics.routes');
 const notificationsRoutes = require('./src/routes/notifications.routes');
+const categoryRoutes = require('./src/routes/category.routes');
 
 // API Routes will be mounted here
 app.use('/api/auth', authRoutes);
@@ -78,6 +79,7 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Global Error Handlers
 app.use(notFoundHandler);

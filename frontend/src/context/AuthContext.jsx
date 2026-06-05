@@ -33,6 +33,11 @@ export function AuthProvider({ children }) {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
+        setStoredAccounts(prev => {
+          const newAccounts = prev.map(a => a.id === data.user.id ? { ...a, ...data.user } : a);
+          localStorage.setItem('chemicrown_accounts', JSON.stringify(newAccounts));
+          return newAccounts;
+        });
       } else {
         localStorage.removeItem('token');
         setUser(null);
@@ -64,7 +69,9 @@ export function AuthProvider({ children }) {
   const switchAccount = (accountId) => {
     const account = storedAccounts.find(a => a.id === accountId);
     if (account) {
-      login(account, account.token); // this will also set user state
+      setUser(account);
+      localStorage.setItem('token', account.token);
+      fetchUser(account.token);
     }
   };
 

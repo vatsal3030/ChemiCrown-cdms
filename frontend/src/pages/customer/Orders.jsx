@@ -12,6 +12,7 @@ export default function Orders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const fetchOrders = async () => {
     try {
@@ -60,6 +61,11 @@ export default function Orders() {
     }
   };
 
+  const filteredOrders = orders.filter(order => {
+    if (statusFilter !== 'all' && order.status !== statusFilter) return false;
+    return true;
+  });
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center gap-3">
@@ -84,9 +90,23 @@ export default function Orders() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter size={16} /> Filter
-          </Button>
+          <div className="flex gap-2">
+            <div className="relative flex items-center">
+              <Filter size={16} className="absolute left-3 text-slate-400" />
+              <select 
+                value={statusFilter} 
+                onChange={e => setStatusFilter(e.target.value)}
+                className="pl-9 pr-8 rounded-md border border-input bg-background py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary appearance-none cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="PROCESSING">Processing</option>
+                <option value="DISPATCHED">Dispatched</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -109,8 +129,10 @@ export default function Orders() {
                 <tr><td colSpan="5" className="p-8 text-center text-slate-500">Loading orders...</td></tr>
               ) : orders.length === 0 ? (
                 <tr><td colSpan="5" className="p-8 text-center text-slate-500">No orders found.</td></tr>
+              ) : filteredOrders.length === 0 ? (
+                <tr><td colSpan="5" className="p-8 text-center text-slate-500">No orders match your filter.</td></tr>
               ) : (
-                orders.map((order) => (
+                filteredOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-50 truncate max-w-[150px]">
                       {order.id}

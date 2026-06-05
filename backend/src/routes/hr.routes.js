@@ -3,6 +3,7 @@ const router = express.Router();
 const hrController = require('../controllers/hr.controller');
 
 router.get('/', hrController.getEmployees);
+router.post('/', hrController.addEmployee);
 router.post('/:id/salary', hrController.updateSalary);
 router.delete('/:id', hrController.deleteEmployee);
 

@@ -149,6 +149,8 @@ const updateProfile = async (req, res) => {
     if (lastName) updateData.lastName = lastName;
     if (phone) updateData.phone = phone;
 
+    console.log('Update Profile Request:', { body: req.body, file: req.file ? 'Present' : 'Missing' });
+
     if (req.file) {
       const uploadResult = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -187,7 +189,7 @@ const getPendingCustomers = async (req, res, next) => {
       company: c.companyName || `${c.user.firstName} ${c.user.lastName}`,
       email: c.user.email,
       gst: c.gstNumber || 'N/A',
-      appliedAt: c.createdAt.toISOString().split('T')[0]
+      appliedAt: c.user.createdAt ? c.user.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     }));
     
     res.status(200).json({ success: true, customers: formatted });

@@ -10,6 +10,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import Home from './pages/Home';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Catalog from './pages/Catalog';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -44,6 +45,7 @@ function DynamicTitle() {
     else if (path.startsWith('/dashboard')) {
       const subpath = path.replace('/dashboard', '');
       if (subpath === '') title = 'Dashboard | ChemiCrown CDMS';
+      else if (subpath === '/catalog') title = 'Catalog | ChemiCrown CDMS';
       else if (subpath === '/inventory') title = 'Inventory | ChemiCrown CDMS';
       else if (subpath === '/orders') title = 'Orders | ChemiCrown CDMS';
       else if (subpath === '/hr') title = 'HR Management | ChemiCrown CDMS';
@@ -73,9 +75,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
-          <Route path="catalog" element={
-            <div className="p-24 text-center text-muted-foreground text-xl">Product Catalog Coming Soon</div>
-          } />
+          <Route path="catalog" element={<Catalog />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="forgot-password" element={<ForgotPassword />} />
@@ -102,6 +102,7 @@ function App() {
               <Route path="me" element={<MyAttendance />} />
             </Route>
 
+            <Route path="catalog" element={<Catalog />} />
             <Route path="orders" element={<Orders />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="settings" element={<Settings />} />

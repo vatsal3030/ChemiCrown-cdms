@@ -27,10 +27,12 @@ const createOrder = async (req, res, next) => {
       data: {
         customerId,
         status: 'PENDING',
-        orderItems: {
+        total: totalAmount,
+        items: {
           create: {
-            chemicalId,
-            quantity
+            productId: chemicalId,
+            quantity,
+            price: unitPrice
           }
         }
       }
@@ -117,7 +119,7 @@ const getOrders = async (req, res, next) => {
       where,
       orderBy: { [sortField || 'createdAt']: sortOrder || 'desc' },
       include: {
-        orderItems: true
+        items: true
       }
     });
 
@@ -125,7 +127,7 @@ const getOrders = async (req, res, next) => {
       id: o.id,
       createdAt: o.createdAt,
       status: o.status,
-      total: o.orderItems.reduce((acc, item) => acc + (item.quantity * 500), 0)
+      total: o.total || o.items.reduce((acc, item) => acc + (item.quantity * item.price), 0)
     }));
 
     res.status(200).json({ success: true, data: formatted });

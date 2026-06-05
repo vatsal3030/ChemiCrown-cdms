@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Package, LayoutDashboard, ShoppingCart, Settings, Bell, Search, Menu, Users, FileText, ClipboardCheck, LogOut, ShieldCheck, ChevronUp, UserPlus } from 'lucide-react';
+import { Package, LayoutDashboard, ShoppingCart, Settings, Bell, Search, Menu, Users, FileText, ClipboardCheck, LogOut, ShieldCheck, ChevronUp, UserPlus, Store } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ export default function DashboardLayout() {
 
   const allNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'MANAGER', 'SALES', 'CUSTOMER'] },
+    { name: 'Product Catalog', path: '/dashboard/catalog', icon: Store, roles: ['CUSTOMER'] },
     { name: 'Verify Customers', path: '/dashboard/verify', icon: ShieldCheck, roles: ['SUPER_ADMIN'] },
     { name: 'Inventory', path: '/dashboard/inventory', icon: Package, roles: ['SUPER_ADMIN', 'MANAGER'] },
     { name: 'HR Management', path: '/dashboard/hr', icon: Users, roles: ['SUPER_ADMIN', 'MANAGER'] },
@@ -74,8 +75,12 @@ export default function DashboardLayout() {
                     onClick={() => { switchAccount(account.id); setShowAccountSwitcher(false); }}
                     className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors ${user.id === account.id ? 'bg-primary/10' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs">
-                      {account.firstName ? account.firstName.charAt(0) : 'U'}
+                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                      {account.profileImageUrl ? (
+                        <img src={account.profileImageUrl} alt={account.firstName || 'User'} className="w-full h-full object-cover" />
+                      ) : (
+                        account.firstName ? account.firstName.charAt(0) : 'U'
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate ${user.id === account.id ? 'text-primary' : 'text-slate-900 dark:text-slate-50'}`}>{account.firstName}</p>
@@ -101,8 +106,12 @@ export default function DashboardLayout() {
             className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer group"
             onClick={() => setShowAccountSwitcher(!showAccountSwitcher)}
           >
-            <div className="w-9 h-9 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm">
-              {user.firstName ? user.firstName.charAt(0) : 'U'}
+            <div className="w-9 h-9 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
+              {user.profileImageUrl ? (
+                <img src={user.profileImageUrl} alt={user.firstName || 'User'} className="w-full h-full object-cover" />
+              ) : (
+                user.firstName ? user.firstName.charAt(0) : 'U'
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-slate-900 dark:text-slate-50 truncate">{user.firstName || 'User'}</p>

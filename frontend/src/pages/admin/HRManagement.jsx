@@ -3,6 +3,7 @@ import { Search, Plus, Filter, Trash2, ArrowUpDown, DollarSign } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
+import EmployeeModal from '@/components/admin/EmployeeModal';
 import toast from 'react-hot-toast';
 
 export default function HRManagement() {
@@ -12,6 +13,7 @@ export default function HRManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('firstName');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchEmployees = async () => {
     try {
@@ -67,7 +69,7 @@ export default function HRManagement() {
           <h1 className="text-3xl font-bold tracking-tight">HR Management</h1>
           <p className="text-slate-500 mt-1">Manage employee records, roles, and payroll.</p>
         </div>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2" onClick={() => setIsModalOpen(true)}>
           <Plus size={16} /> Add Employee
         </Button>
       </div>
@@ -144,6 +146,16 @@ export default function HRManagement() {
           </table>
         </div>
       </div>
+
+      <EmployeeModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        token={token}
+        onSuccess={() => {
+          setIsModalOpen(false);
+          fetchEmployees();
+        }}
+      />
     </div>
   );
 }

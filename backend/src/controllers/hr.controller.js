@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const bcrypt = require('bcryptjs');
 
 exports.getEmployees = async (req, res, next) => {
   try {
@@ -66,6 +67,45 @@ exports.deleteEmployee = async (req, res, next) => {
       data: { deletedAt: new Date() }
     });
     res.status(200).json({ success: true, message: 'Employee soft-deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.addEmployee = async (req, res, next) => {
+  try {
+    const { email, password, firstName, lastName, role, department, jobTitle } = req.body;
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email is already registered' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newEmployee = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          role: role || 'MANAGER'
+        }
+      });
+
+      const employee = await tx.employee.create({
+        data: {
+          userId: user.id,
+          department,
+          jobTitle
+        }
+      });
+
+      return { user, employee };
+    });
+
+    res.status(201).json({ success: true, message: 'Employee added successfully', data: newEmployee });
   } catch (error) {
     next(error);
   }

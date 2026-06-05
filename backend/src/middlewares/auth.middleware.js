@@ -30,7 +30,9 @@ const requireAuth = async (req, res, next) => {
       email: dbUser.email,
       role: dbUser.role,
       firstName: dbUser.firstName,
-      lastName: dbUser.lastName
+      lastName: dbUser.lastName,
+      profileImageUrl: dbUser.profileImageUrl,
+      phone: dbUser.phone
     };
 
     next();

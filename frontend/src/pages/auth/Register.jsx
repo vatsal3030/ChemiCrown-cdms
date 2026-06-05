@@ -33,10 +33,19 @@ export default function Register() {
     if (isLoading) return;
     setIsLoading(true);
     try {
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('role', role);
+      if (profileImage) {
+        formData.append('image', profileImage);
+      }
+
       const res = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, firstName, lastName, role })
+        body: formData
       });
       const data = await res.json();
       
