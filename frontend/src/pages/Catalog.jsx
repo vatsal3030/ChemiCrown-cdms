@@ -2,16 +2,24 @@ import { useState, useEffect } from 'react';
 import { Search, ShoppingCart, Info, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
 import useSWR from 'swr';
 import useDebounce from '@/hooks/useDebounce';
 
 export default function Catalog() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const navigate = useNavigate();
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    const q = searchParams.get('search');
+    if (q !== null && q !== searchTerm) {
+      setSearchTerm(q);
+    }
+  }, [searchParams]);
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
@@ -23,7 +31,7 @@ export default function Catalog() {
   };
 
   const { data: products, error, isValidating } = useSWR(
-    `${import.meta.env.VITE_API_URL}/api/inventory?search=${debouncedSearch}&limit=50`,
+    `${import.meta.env.VITE_API_URL}/api/inventory?search=${encodeURIComponent(debouncedSearch)}&limit=50`,
     fetcher
   );
 
