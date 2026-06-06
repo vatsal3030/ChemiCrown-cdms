@@ -9,7 +9,7 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     // Connect to backend server (assuming default port 5000 for dev)
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(import.meta.env.VITE_API_URL);
     
     newSocket.on('connect', () => {
       console.log('Connected to real-time server');
@@ -24,6 +24,18 @@ export function SocketProvider({ children }) {
         </div>, 
         { duration: 6000, icon: '🛍️' }
       );
+    });
+
+    newSocket.on('new_notification', (data) => {
+      // Data contains { userId, notification }
+      toast(data.notification.message, {
+        icon: '🔔',
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
     });
 
     setSocket(newSocket);

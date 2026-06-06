@@ -9,47 +9,78 @@ const razorpay = new Razorpay({
 
 const createOrder = async (req, res, next) => {
   try {
-    const { chemicalId, quantity } = req.body;
-    const customerId = req.user.id;
+    const { items } = req.body; // array of { chemicalId, quantity }
+    const userId = req.user.id;
 
-    // Check if customer is verified
-    const customer = await prisma.customer.findUnique({ where: { id: customerId } });
-    if (customer && !customer.isVerified) {
+    const customer = await prisma.customer.findUnique({ where: { userId } });
+    if (!customer) return res.status(403).json({ error: 'Customer profile required.' });
+    if (!customer.isVerified) {
       return res.status(403).json({ error: 'Your account is pending admin verification. You cannot place orders yet.' });
     }
 
-    // Mock unit price logic (Assuming 500 INR per unit)
-    const unitPrice = 500;
-    const totalAmount = unitPrice * quantity;
+    if (!items || !items.length) {
+      return res.status(400).json({ error: 'Cart is empty' });
+    }
 
-    // Create Order in Database
-    const dbOrder = await prisma.order.create({
-      data: {
-        customerId,
-        status: 'PENDING',
-        total: totalAmount,
-        items: {
-          create: {
-            productId: chemicalId,
-            quantity,
-            price: unitPrice
+    const { order, totalAmount } = await prisma.$transaction(async (tx) => {
+      let calcTotal = 0;
+      const orderItemsData = [];
+
+      for (const item of items) {
+        if (item.quantity <= 0) throw new Error(`Invalid quantity for product ${item.chemicalId}`);
+
+        const product = await tx.product.findUnique({ 
+          where: { id: item.chemicalId },
+          include: { inventory: true }
+        });
+
+        if (!product) throw new Error(`Product not found: ${item.chemicalId}`);
+        if (!product.inventory || product.inventory.quantity < item.quantity) {
+          throw new Error(`Insufficient stock for ${product.name}. Available: ${product.inventory?.quantity || 0}`);
+        }
+
+        // Deduct inventory
+        await tx.inventory.update({
+          where: { productId: product.id },
+          data: { quantity: { decrement: item.quantity } }
+        });
+
+        const itemTotal = product.price * item.quantity;
+        calcTotal += itemTotal;
+
+        orderItemsData.push({
+          productId: product.id,
+          quantity: item.quantity,
+          price: product.price
+        });
+      }
+
+      const dbOrder = await tx.order.create({
+        data: {
+          customerId: customer.id,
+          status: 'REQUESTED',
+          total: calcTotal,
+          items: {
+            create: orderItemsData
           }
         }
-      }
+      });
+
+      return { order: dbOrder, totalAmount: calcTotal };
     });
 
     // Create Order in Razorpay
     const options = {
-      amount: totalAmount * 100, // paise
+      amount: Math.round(totalAmount * 100), // paise
       currency: "INR",
-      receipt: `receipt_order_${dbOrder.id}`
+      receipt: `receipt_order_${order.id}`
     };
 
     const rzpOrder = await razorpay.orders.create(options);
 
     res.status(201).json({
       message: 'Order created',
-      orderId: dbOrder.id,
+      orderId: order.id,
       razorpayOrder: rzpOrder
     });
   } catch (error) {
@@ -136,4 +167,81 @@ const getOrders = async (req, res, next) => {
   }
 };
 
-module.exports = { createOrder, verifyPayment, getOrders };
+const getOrderById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    let where = { id };
+    if (req.user.role === 'CUSTOMER') {
+      const customer = await prisma.customer.findUnique({ where: { userId: req.user.id } });
+      if (!customer) return res.status(404).json({ error: 'Customer not found' });
+      where.customerId = customer.id;
+    }
+
+    const order = await prisma.order.findUnique({
+      where,
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        customer: {
+          include: {
+            user: { select: { firstName: true, lastName: true, email: true, phone: true } }
+          }
+        }
+      }
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    res.status(200).json({ success: true, data: order });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const cancelOrder = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const order = await prisma.order.findUnique({ 
+      where: { id },
+      include: { items: true }
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.status === 'CANCELLED') return res.status(400).json({ error: 'Order is already cancelled' });
+    if (order.status === 'DELIVERED') return res.status(400).json({ error: 'Delivered orders cannot be cancelled' });
+
+    // Implement a 1% cancellation charge
+    const cancellationFee = order.total * 0.01;
+    const refundAmount = order.total - cancellationFee;
+
+    await prisma.$transaction(async (tx) => {
+      // Restore inventory
+      for (const item of order.items) {
+        await tx.inventory.update({
+          where: { productId: item.productId },
+          data: { quantity: { increment: item.quantity } }
+        });
+      }
+
+      await tx.order.update({
+        where: { id },
+        data: { status: 'CANCELLED' }
+      });
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Order cancelled successfully', 
+      cancellationFee,
+      refundAmount 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder };

@@ -43,7 +43,7 @@ export default function Register() {
         formData.append('image', profileImage);
       }
 
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
         method: 'POST',
         body: formData
       });
@@ -63,7 +63,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 py-12">
+    <div className="flex-1 flex items-center justify-center bg-muted/30 px-4 py-12">
       <div className="max-w-2xl w-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
         <div className="p-8 md:p-10">
           <div className="flex flex-col items-center">

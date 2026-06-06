@@ -85,10 +85,23 @@ const createTestNotification = async (req, res, next) => {
   }
 };
 
+const deleteAllNotifications = async (req, res, next) => {
+  try {
+    await prisma.notification.deleteMany({
+      where: { userId: req.user.id }
+    });
+    
+    res.status(200).json({ success: true, message: 'All notifications deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  deleteAllNotifications,
   createTestNotification
 };

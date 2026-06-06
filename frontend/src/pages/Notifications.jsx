@@ -12,7 +12,7 @@ export default function Notifications() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/notifications', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -32,7 +32,7 @@ export default function Notifications() {
 
   const markAllAsRead = async () => {
     try {
-      await fetch('http://localhost:5000/api/notifications/read-all', {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/read-all`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -45,7 +45,7 @@ export default function Notifications() {
 
   const markAsRead = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/${id}/read`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -58,20 +58,36 @@ export default function Notifications() {
   const deleteNotification = async (id) => {
     if (!window.confirm('Are you sure you want to delete this notification?')) return;
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}`, {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchNotifications();
       toast.success('Notification deleted');
     } catch (err) {
       toast.error('Failed to delete notification');
+      fetchNotifications();
+    }
+  };
+
+  const deleteAllNotifications = async () => {
+    if (!window.confirm('Are you sure you want to delete all notifications? This action cannot be undone.')) return;
+    try {
+      setNotifications([]);
+      await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/all`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('All notifications deleted');
+    } catch (err) {
+      toast.error('Failed to delete all notifications');
+      fetchNotifications();
     }
   };
 
   const generateTestNotification = async () => {
     try {
-      await fetch('http://localhost:5000/api/notifications/test', {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/test`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -98,10 +114,15 @@ export default function Notifications() {
             <p className="text-slate-500 mt-1">Manage your alerts and system updates.</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={generateTestNotification}>Create Test Notification</Button>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-0">
+          <Button variant="outline" onClick={generateTestNotification}>Test Notification</Button>
           {notifications.some(n => !n.isRead) && (
-            <Button variant="default" onClick={markAllAsRead}>Mark all as read</Button>
+            <Button variant="default" onClick={markAllAsRead}>Mark all read</Button>
+          )}
+          {notifications.length > 0 && (
+            <Button variant="destructive" onClick={deleteAllNotifications}>
+              <Trash2 size={16} className="mr-2" /> Delete All
+            </Button>
           )}
         </div>
       </div>

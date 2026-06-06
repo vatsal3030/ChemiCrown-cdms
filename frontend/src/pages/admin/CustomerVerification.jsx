@@ -11,7 +11,7 @@ export default function CustomerVerification() {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/auth/pending-customers', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/pending-customers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -31,19 +31,23 @@ export default function CustomerVerification() {
 
   const verifyCustomer = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/auth/verify-customer/${id}`, {
+      // Optimistic update
+      setCustomers(prev => prev.filter(c => c.id !== id));
+      
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/verify-customer/${id}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
         toast.success('Customer Verified Successfully!');
-        fetchCustomers();
       } else {
         toast.error('Verification failed');
+        fetchCustomers(); // Revert on failure
       }
     } catch (err) {
       toast.error('Network error');
+      fetchCustomers(); // Revert on failure
     }
   };
 
@@ -80,11 +84,26 @@ export default function CustomerVerification() {
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-muted-foreground">
-                    Loading pending requests...
-                  </td>
-                </tr>
+                Array(3).fill(0).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-6 py-4">
+                      <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-48 mb-2"></div>
+                      <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+                        <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : customers.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="px-6 py-12 text-center text-muted-foreground">

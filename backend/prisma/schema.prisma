@@ -29,8 +29,12 @@ model User {
 
 enum Role {
   SUPER_ADMIN
+  OWNER
   MANAGER
+  INVENTORY_MANAGER
   SALES
+  MARKETING
+  DIGITAL_MARKETING
   CUSTOMER
 }
 
@@ -40,6 +44,8 @@ model Employee {
   user        User   @relation(fields: [userId], references: [id])
   jobTitle    String?
   department  String?
+  joiningDate DateTime @default(now())
+  isActive    Boolean @default(true)
   attendances Attendance[]
   salaries    Salary[]
   deletedAt   DateTime?
@@ -57,6 +63,7 @@ model Customer {
   deletedAt   DateTime?
   orders      Order[]
   inquiries   Inquiry[]
+  reviews     Review[]
   
   @@index([isVerified, isActive])
 }
@@ -69,6 +76,7 @@ model Supplier {
   isActive    Boolean @default(true) // Deprecated: use deletedAt
   deletedAt   DateTime?
   transactions InventoryTransaction[]
+  products    Product[]
 }
 
 model Category {
@@ -79,25 +87,45 @@ model Category {
 
 model Product {
   id          String   @id @default(uuid())
+  sku         String?  @unique
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id])
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
   name        String   // e.g., GP Thinner
   description String
-  unit        String   // Litre, Kg, Drum, Barrel
-  imageUrl    String?  // Product image representation
+  unit        String   // Packaging type: Litre, Kg, Drum, Barrel
+  packageSize Float?   // e.g., 50, 25
+  baseUnit    String?  // e.g., "Kg", "Litre"
+  imageUrls   String[] // Array of product images
   datasheetUrl String? // Link to PDF datasheet in Supabase Storage
   casNumber   String?
   unNumber    String?
+  brand       String?
+  manufacturer String?
+  itemForm    String?  // e.g., Liquid, Powder, Solid
+  purity      String?  // e.g., 99.9%
+  grade       String?  // e.g., AR, LR, Technical
+  mfgDate     DateTime? // Manufacturing Date
+  expiryDate  DateTime? // Expiry Date
   safetyNotes String?
   storageInstructions String?
   price       Float
+  isMadeInIndia Boolean @default(false)
+  
+  @@index([name])
+  @@index([casNumber])
+  @@index([categoryId])
+  @@index([deletedAt])
   isActive    Boolean  @default(true) // Deprecated: use deletedAt
+  isAvailable Boolean  @default(true) // Admin toggle for availability
   deletedAt   DateTime?
   createdBy   String?  // Auditability
   updatedBy   String?  // Auditability
   
   inventory   Inventory?
   orderItems  OrderItem[]
+  reviews     Review[]
   
   @@index([categoryId, isActive])
 }
@@ -192,8 +220,10 @@ model Order {
 }
 
 enum OrderStatus {
+  REQUESTED
   PENDING
   PROCESSING
+  PACKAGED
   DISPATCHED
   DELIVERED
   CANCELLED
@@ -285,3 +315,15 @@ enum PaymentStatus {
   SUCCESS
   FAILED
 }
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  customerId String
+  customer  Customer @relation(fields: [customerId], references: [id])
+  createdAt DateTime @default(now())
+}
+

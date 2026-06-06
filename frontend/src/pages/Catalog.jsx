@@ -3,45 +3,39 @@ import { Search, ShoppingCart, Info, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import useSWR from 'swr';
+import useDebounce from '@/hooks/useDebounce';
 
 export default function Catalog() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/inventory?search=${searchTerm}&limit=50`);
-      const json = await res.json();
-      if (json.success) {
-        setProducts(json.data);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to load catalog');
-    } finally {
-      setLoading(false);
-    }
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  const fetcher = async (url) => {
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Failed to load catalog');
+    return json.data.filter(p => p.isAvailable !== false);
   };
 
-  useEffect(() => {
-    // Debounce search slightly
-    const timeoutId = setTimeout(() => {
-      fetchProducts();
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  const { data: products, error, isValidating } = useSWR(
+    `${import.meta.env.VITE_API_URL}/api/inventory?search=${debouncedSearch}&limit=50`,
+    fetcher
+  );
+
+  const loading = !products && !error;
 
   const handleBuyNow = (product) => {
-    // Navigate to checkout with product info in state (simulated)
-    navigate('/dashboard/checkout', { state: { product } });
+    addToCart(product, 1);
+    navigate('/dashboard/checkout');
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 pb-20">
       {/* Hero Section */}
       <div className="bg-primary/5 border-b border-border py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
@@ -66,13 +60,26 @@ export default function Catalog() {
       {/* Product Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {[1,2,3,4,5,6,7,8].map(i => (
-              <div key={i} className="bg-card rounded-2xl p-4 border border-border shadow-sm h-[400px] animate-pulse flex flex-col">
-                <div className="w-full h-48 bg-slate-200 dark:bg-slate-800 rounded-xl mb-4"></div>
-                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2 mb-auto"></div>
-                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full mt-4"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1,2,3,4,5,6].map(i => (
+              <div key={i} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col animate-pulse">
+                {/* Image Skeleton */}
+                <div className="relative aspect-square bg-slate-200 dark:bg-slate-800 border-b border-border w-full"></div>
+                {/* Content Skeleton */}
+                <div className="p-5 flex flex-col flex-1">
+                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-4"></div>
+                  <div className="space-y-2 mb-6">
+                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+                  </div>
+                  <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-full mb-1 mt-auto"></div>
+                  <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-4/5 mb-6"></div>
+                  
+                  <div className="mt-auto flex items-center justify-between pt-4">
+                    <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
+                    <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-28 rounded-full"></div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -84,11 +91,18 @@ export default function Catalog() {
             <Button variant="outline" className="mt-6" onClick={() => setSearchTerm('')}>Clear Search</Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {products.map((product) => {
               const inStock = product.inventory?.quantity > 0;
               return (
-                <div key={product.id} className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-1">
+                <div 
+                  key={product.id} 
+                  className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-1 cursor-pointer"
+                  onClick={() => {
+                    navigate(`/dashboard/catalog/${product.id}`);
+                    window.scrollTo(0, 0);
+                  }}
+                >
                   {/* Image Container */}
                   <div className="relative aspect-square bg-slate-100 dark:bg-slate-900 overflow-hidden border-b border-border">
                     {product.imageUrl ? (
@@ -121,7 +135,7 @@ export default function Catalog() {
                     
                     <div className="text-xs text-muted-foreground mb-3 space-y-1">
                       {product.casNumber && <p><span className="font-medium">CAS:</span> <span className="font-mono">{product.casNumber}</span></p>}
-                      <p><span className="font-medium">Unit:</span> {product.unit}</p>
+                      <p><span className="font-medium">Unit:</span> {product.packageSize ? `${product.packageSize} ${product.baseUnit} ${product.unit}` : product.unit}</p>
                     </div>
 
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
@@ -134,7 +148,10 @@ export default function Catalog() {
                         <p className="text-2xl font-bold text-primary leading-none">₹{product.price}</p>
                       </div>
                       <Button 
-                        onClick={() => handleBuyNow(product)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBuyNow(product);
+                        }}
                         disabled={!inStock}
                         className="rounded-xl shadow-sm hover:shadow"
                       >

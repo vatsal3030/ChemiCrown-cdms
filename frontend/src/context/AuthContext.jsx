@@ -9,25 +9,9 @@ export function AuthProvider({ children }) {
   // Still maintaining multi-account switcher capability securely
   const [storedAccounts, setStoredAccounts] = useState([]);
 
-  useEffect(() => {
-    // Load accounts from local storage
-    const saved = localStorage.getItem('chemicrown_accounts');
-    if (saved) {
-      setStoredAccounts(JSON.parse(saved));
-    }
-
-    // Check current token
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchUser(token);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
   const fetchUser = async (token) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/me', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -48,6 +32,24 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Load accounts from local storage
+    const saved = localStorage.getItem('chemicrown_accounts');
+    if (saved) {
+      setStoredAccounts(JSON.parse(saved));
+    }
+
+    // Check current token
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchUser(token);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  
 
   const login = (userData, token) => {
     setUser(userData);

@@ -20,14 +20,24 @@ const PORT = process.env.PORT || 5000;
 
 // Security and utility middleware
 app.use(helmet());
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',') 
+  : ['http://localhost:5173'];
+
 app.use(cors({
-  origin: 'http://localhost:5173', // Default Vite frontend port
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
 // Rate Limiter middleware
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1.5 * 60 * 1000, // 1.5 minutes
   max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
   message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
@@ -71,6 +81,7 @@ const inventoryRoutes = require('./src/routes/inventory.routes');
 const analyticsRoutes = require('./src/routes/analytics.routes');
 const notificationsRoutes = require('./src/routes/notifications.routes');
 const categoryRoutes = require('./src/routes/category.routes');
+const reviewRoutes = require('./src/routes/review.routes');
 
 // API Routes will be mounted here
 app.use('/api/auth', authRoutes);
@@ -80,6 +91,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Global Error Handlers
 app.use(notFoundHandler);

@@ -6,18 +6,24 @@ import toast from 'react-hot-toast';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, storedAccounts, switchAccount } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleQuickLogin = (accountId) => {
+    switchAccount(accountId);
+    toast.success('Switched account');
+    navigate('/dashboard');
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     if (isLoading) return;
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -39,7 +45,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <div className="flex-1 flex items-center justify-center bg-muted/30 px-4 py-12">
       <div className="max-w-md w-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
         <div className="p-8">
           <div className="flex flex-col items-center">
@@ -47,6 +53,46 @@ export default function Login() {
           </div>
           <h2 className="text-3xl font-extrabold text-center text-foreground mb-2">Welcome Back</h2>
           <p className="text-center text-muted-foreground mb-8 text-base">Sign in to your ChemiCrown portal</p>
+
+          {storedAccounts && storedAccounts.length > 0 && (
+            <div className="mb-6">
+              <p className="text-sm font-medium text-slate-500 mb-3">Quick Login</p>
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-2 pb-2">
+                {storedAccounts.map(account => (
+                  <button 
+                    key={account.id}
+                    onClick={() => handleQuickLogin(account.id)}
+                    type="button"
+                    className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden shrink-0">
+                        {account.profileImageUrl ? (
+                          <img src={account.profileImageUrl} alt={account.firstName || 'User'} className="w-full h-full object-cover" />
+                        ) : (
+                          account.firstName ? account.firstName.charAt(0) : 'U'
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-foreground">{account.firstName}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{account.role.replace('_', ' ').toLowerCase()}</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
+                  </button>
+                ))}
+              </div>
+              
+              <div className="relative mt-6 mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-card text-muted-foreground">or use email</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>

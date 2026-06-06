@@ -15,7 +15,7 @@ export default function NotificationDropdown() {
   const fetchNotifications = async () => {
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:5000/api/notifications', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -44,7 +44,7 @@ export default function NotificationDropdown() {
 
   const markAllAsRead = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/notifications/read-all', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/read-all`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -58,7 +58,7 @@ export default function NotificationDropdown() {
 
   const markAsRead = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/${id}/read`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -71,7 +71,7 @@ export default function NotificationDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       <Button variant="ghost" size="icon" className="relative" onClick={() => setIsOpen(!isOpen)}>
-        <Bell size={20} className="text-slate-600 dark:text-slate-300" />
+        <Bell size={24} className="text-slate-600 dark:text-slate-300" />
         {unreadCount > 0 && (
           <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full animate-pulse" />
         )}

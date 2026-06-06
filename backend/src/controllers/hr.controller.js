@@ -21,7 +21,7 @@ exports.getEmployees = async (req, res, next) => {
     const employees = await prisma.user.findMany({
       where: {
         ...where,
-        role: { in: ['MANAGER', 'SALES'] }
+        role: { not: 'CUSTOMER' } // Fetch all non-customer employees including OWNER
       },
       include: {
         employeeProfile: true
@@ -42,13 +42,23 @@ exports.updateSalary = async (req, res, next) => {
     const { id } = req.params;
     const { amount } = req.body;
 
-    const employee = await prisma.employee.findUnique({ where: { userId: id } });
-    if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+    let employee = await prisma.employee.findUnique({ where: { userId: id } });
+    if (!employee) {
+      employee = await prisma.employee.create({
+        data: {
+          userId: id,
+          department: 'Unassigned',
+          jobTitle: 'Employee',
+          isActive: true
+        }
+      });
+    }
 
     const newSalary = await prisma.salary.create({
       data: {
         employeeId: employee.id,
         amount: parseFloat(amount),
+        month: req.body.month || new Date().toISOString().substring(0, 7),
         status: 'PAID'
       }
     });
@@ -74,7 +84,7 @@ exports.deleteEmployee = async (req, res, next) => {
 
 exports.addEmployee = async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName, role, department, jobTitle } = req.body;
+    const { email, password, firstName, lastName, role, department, jobTitle, phone, joiningDate, isActive } = req.body;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -90,6 +100,7 @@ exports.addEmployee = async (req, res, next) => {
           password: hashedPassword,
           firstName,
           lastName,
+          phone,
           role: role || 'MANAGER'
         }
       });
@@ -98,7 +109,9 @@ exports.addEmployee = async (req, res, next) => {
         data: {
           userId: user.id,
           department,
-          jobTitle
+          jobTitle,
+          joiningDate: joiningDate ? new Date(joiningDate) : undefined,
+          isActive: isActive !== undefined ? isActive : true
         }
       });
 
@@ -106,6 +119,145 @@ exports.addEmployee = async (req, res, next) => {
     });
 
     res.status(201).json({ success: true, message: 'Employee added successfully', data: newEmployee });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateEmployee = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, phone, role, department, jobTitle, joiningDate, isActive } = req.body;
+
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: { id },
+        data: { firstName, lastName, phone, role }
+      });
+
+      if (department !== undefined || jobTitle !== undefined || joiningDate !== undefined || isActive !== undefined) {
+        await tx.employee.upsert({
+          where: { userId: id },
+          create: {
+            userId: id,
+            department,
+            jobTitle,
+            joiningDate: joiningDate ? new Date(joiningDate) : undefined,
+            isActive: isActive !== undefined ? isActive : true
+          },
+          update: {
+            department,
+            jobTitle,
+            joiningDate: joiningDate ? new Date(joiningDate) : undefined,
+            isActive: isActive !== undefined ? isActive : true
+          }
+        });
+      }
+
+      return user;
+    });
+
+    res.status(200).json({ success: true, message: 'Employee updated successfully', data: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.markAttendance = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status, date } = req.body;
+    
+    let employee = await prisma.employee.findUnique({ where: { userId: id } });
+    if (!employee) {
+      employee = await prisma.employee.create({
+        data: {
+          userId: id,
+          department: 'Unassigned',
+          jobTitle: 'Employee',
+          isActive: true
+        }
+      });
+    }
+
+    const targetDate = date ? new Date(date) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(targetDate.getDate() + 1);
+
+    const existing = await prisma.attendance.findFirst({
+      where: {
+        employeeId: employee.id,
+        date: { gte: targetDate, lt: nextDay }
+      }
+    });
+
+    let attendance;
+    if (existing) {
+      attendance = await prisma.attendance.update({
+        where: { id: existing.id },
+        data: { status }
+      });
+    } else {
+      attendance = await prisma.attendance.create({
+        data: { employeeId: employee.id, date: targetDate, status }
+      });
+    }
+
+    res.status(200).json({ success: true, data: attendance });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getAttendance = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    let employee = await prisma.employee.findUnique({ where: { userId: id } });
+    if (!employee) return res.status(200).json({ success: true, data: [] });
+
+    const attendances = await prisma.attendance.findMany({
+      where: { employeeId: employee.id },
+      orderBy: { date: 'desc' },
+      take: 30
+    });
+
+    res.status(200).json({ success: true, data: attendances });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getSalaries = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    let employee = await prisma.employee.findUnique({ where: { userId: id } });
+    if (!employee) return res.status(200).json({ success: true, data: [] });
+
+    const salaries = await prisma.salary.findMany({
+      where: { employeeId: employee.id },
+      orderBy: { month: 'desc' }
+    });
+
+    res.status(200).json({ success: true, data: salaries });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.sendWarning = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { message } = req.body;
+    
+    const notification = await prisma.notification.create({
+      data: {
+        userId: id,
+        message: `[WARNING from HR] ${message}`
+      }
+    });
+
+    res.status(200).json({ success: true, data: notification });
   } catch (error) {
     next(error);
   }

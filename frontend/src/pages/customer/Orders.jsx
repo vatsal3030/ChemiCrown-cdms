@@ -3,6 +3,7 @@ import { ShoppingCart, Search, Filter, Trash2, ArrowUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function Orders() {
@@ -13,11 +14,12 @@ export default function Orders() {
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [statusFilter, setStatusFilter] = useState('all');
+  const navigate = useNavigate();
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/orders?search=${searchTerm}&sortField=${sortField}&sortOrder=${sortOrder}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders?search=${searchTerm}&sortField=${sortField}&sortOrder=${sortOrder}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
@@ -47,7 +49,7 @@ export default function Orders() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this order?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${id}`, { 
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, { 
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -99,8 +101,10 @@ export default function Orders() {
                 className="pl-9 pr-8 rounded-md border border-input bg-background py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary appearance-none cursor-pointer"
               >
                 <option value="all">All Statuses</option>
+                <option value="REQUESTED">Requested</option>
                 <option value="PENDING">Pending</option>
                 <option value="PROCESSING">Processing</option>
+                <option value="PACKAGED">Packaged</option>
                 <option value="DISPATCHED">Dispatched</option>
                 <option value="DELIVERED">Delivered</option>
                 <option value="CANCELLED">Cancelled</option>
@@ -150,7 +154,10 @@ export default function Orders() {
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/orders/${order.id}`)}>
+                        View Details
+                      </Button>
                       <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90 hover:bg-destructive/10" onClick={() => handleDelete(order.id)}>
                         <Trash2 size={16} />
                       </Button>

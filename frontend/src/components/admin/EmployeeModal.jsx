@@ -9,9 +9,12 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
     lastName: '',
     email: '',
     password: '',
+    phone: '',
     role: 'MANAGER',
     department: '',
-    jobTitle: ''
+    jobTitle: '',
+    joiningDate: '',
+    isActive: true
   });
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +24,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
     e.preventDefault();
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/hr', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,15 +82,26 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
-            <input 
-              required
-              type="email" 
-              value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
+              <input 
+                required
+                type="email" 
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Phone Number</label>
+              <input 
+                type="tel" 
+                value={formData.phone}
+                onChange={e => setFormData({...formData, phone: e.target.value})}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -111,8 +125,12 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 onChange={e => setFormData({...formData, role: e.target.value})}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
+                <option value="OWNER">Owner</option>
                 <option value="MANAGER">Manager</option>
+                <option value="INVENTORY_MANAGER">Inventory Manager</option>
                 <option value="SALES">Sales Rep</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="DIGITAL_MARKETING">Digital Marketing</option>
               </select>
             </div>
             <div className="space-y-2">
@@ -128,15 +146,39 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Job Title</label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Job Title</label>
+              <input 
+                required
+                type="text" 
+                value={formData.jobTitle}
+                onChange={e => setFormData({...formData, jobTitle: e.target.value})}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Joining Date</label>
+              <input 
+                type="date" 
+                value={formData.joiningDate}
+                onChange={e => setFormData({...formData, joiningDate: e.target.value})}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             <input 
-              required
-              type="text" 
-              value={formData.jobTitle}
-              onChange={e => setFormData({...formData, jobTitle: e.target.value})}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              type="checkbox" 
+              id="isActive"
+              checked={formData.isActive}
+              onChange={e => setFormData({...formData, isActive: e.target.checked})}
+              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
             />
+            <label htmlFor="isActive" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Active Employee
+            </label>
           </div>
 
           <div className="pt-4 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800 mt-6">

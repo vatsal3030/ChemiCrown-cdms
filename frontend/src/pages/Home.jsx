@@ -9,7 +9,7 @@ export default function Home() {
         {/* Animated Background Elements */}
         <div className="absolute inset-0 z-0">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[100px] animate-pulse-slow"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-[30rem] h-[30rem] bg-secondary/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute bottom-1/4 right-1/4 w-120 h-120 bg-secondary/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
         </div>
         
         {/* Abstract 3D Chemical "Objects" simulated with CSS */}
@@ -28,7 +28,7 @@ export default function Home() {
           
           <h1 className="mx-auto max-w-5xl text-5xl font-extrabold tracking-tight text-white sm:text-7xl mb-8 leading-tight drop-shadow-lg">
             Precision Chemicals for <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-secondary animate-pulse-slow">Modern Industry</span>
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-indigo-300 to-secondary animate-pulse-slow">Modern Industry</span>
           </h1>
           
           <p className="mx-auto max-w-2xl text-lg sm:text-xl text-slate-300 mb-12 leading-relaxed font-light">
@@ -101,7 +101,7 @@ export default function Home() {
       <section className="py-32 bg-primary relative overflow-hidden">
         {/* Decorative Circles */}
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-white/5 blur-[80px]"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[40rem] h-[40rem] rounded-full bg-black/20 blur-[100px]"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-160 h-160 rounded-full bg-black/20 blur-[100px]"></div>
         
         <div className="container mx-auto px-4 text-center relative z-10">
           <h2 className="text-4xl md:text-6xl font-extrabold text-primary-foreground mb-8 drop-shadow-md">Ready to streamline your supply chain?</h2>

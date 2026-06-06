@@ -9,13 +9,16 @@ const validateRequest = (schema) => {
       });
       next();
     } catch (error) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        details: error.errors.map(err => ({
-          path: err.path.join('.'),
-          message: err.message
-        }))
-      });
+      if (error.errors) {
+        return res.status(400).json({
+          error: 'Validation Error',
+          details: error.errors.map(err => ({
+            path: err.path.join('.'),
+            message: err.message
+          }))
+        });
+      }
+      return res.status(400).json({ error: 'Validation Error', details: error.message });
     }
   };
 };

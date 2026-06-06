@@ -43,16 +43,41 @@ exports.getDashboardStats = async (req, res, next) => {
     });
     const lowInventoryAlerts = allInventory.filter(i => i.quantity <= i.minThreshold).length;
 
-    // 5. Monthly Revenue Trend (Mock 6 months structure but filled with actual DB logic if exists)
-    // For simplicity, we just return empty or current month if DB is small
-    const revenueData = [
-      { name: 'Jan', value: 0 },
-      { name: 'Feb', value: 0 },
-      { name: 'Mar', value: 0 },
-      { name: 'Apr', value: 0 },
-      { name: 'May', value: 0 },
-      { name: 'Jun', value: totalRevenue }, // Dump all revenue in current month for demo
-    ];
+    // 5. Monthly Revenue Trend (Last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1); // Start of the month
+
+    const recentPayments = await prisma.payment.findMany({
+      where: {
+        status: 'SUCCESS',
+        createdAt: { gte: sixMonthsAgo }
+      },
+      select: { amount: true, createdAt: true }
+    });
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const revenueMap = {};
+
+    // Initialize last 6 months with 0
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const m = monthNames[d.getMonth()];
+      revenueMap[m] = 0;
+    }
+
+    recentPayments.forEach(p => {
+      const m = monthNames[p.createdAt.getMonth()];
+      if (revenueMap[m] !== undefined) {
+        revenueMap[m] += p.amount;
+      }
+    });
+
+    const revenueData = Object.keys(revenueMap).map(key => ({
+      name: key,
+      value: revenueMap[key]
+    }));
 
     // 6. Top Products Inventory
     const topInventory = await prisma.inventory.findMany({
@@ -72,6 +97,13 @@ exports.getDashboardStats = async (req, res, next) => {
       { name: 'On Leave', value: 0 },
     ];
 
+    // 8. Recent Orders
+    const recentOrders = await prisma.order.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: { customer: true }
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -85,7 +117,8 @@ exports.getDashboardStats = async (req, res, next) => {
         },
         revenueData,
         inventoryData,
-        attendanceData
+        attendanceData,
+        recentOrders
       }
     });
   } catch (error) {

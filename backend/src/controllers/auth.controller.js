@@ -111,6 +111,10 @@ const login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    if (user.deletedAt) {
+      return res.status(401).json({ error: 'Your account has been deactivated. Please contact administration.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });

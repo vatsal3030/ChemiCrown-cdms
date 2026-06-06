@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Package, ShoppingCart, Users, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 
@@ -25,7 +27,7 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/analytics/dashboard', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/analytics/dashboard`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const result = await res.json();
@@ -43,6 +45,10 @@ export default function Dashboard() {
   }, []);
 
   const COLORS = ['#10B981', '#EF4444', '#F59E0B'];
+
+  if (user?.role === 'CUSTOMER') {
+    return <Navigate to="/dashboard/catalog" replace />;
+  }
 
   if (loading) return <div className="p-8 text-center">Loading live dashboard data...</div>;
 
@@ -192,18 +198,21 @@ export default function Dashboard() {
 
         {/* Recent Activity Feed */}
         <div className="glass p-6 rounded-2xl border border-border lg:col-span-2">
-          <h3 className="text-lg font-bold mb-4">Recent Activity</h3>
+          <h3 className="text-lg font-bold mb-4">Recent Orders</h3>
           <div className="space-y-4">
-            {[1, 2, 3].map((_, i) => (
-              <div key={i} className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 text-slate-500">
+            {data.recentOrders?.length === 0 && <p className="text-sm text-slate-500">No recent orders.</p>}
+            {data.recentOrders?.map((order) => (
+              <div key={order.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 text-slate-500">
                   <ShoppingCart size={18} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-50">New Order #ORD-89{i} placed by Acme Corp</p>
-                  <p className="text-xs text-slate-500 mt-1">2 hours ago</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-50">New Order placed by {order.customer?.companyName || 'Unknown Customer'}</p>
+                  <p className="text-xs text-slate-500 mt-1">{new Date(order.createdAt).toLocaleString()}</p>
                 </div>
-                <Button variant="outline" size="sm">View</Button>
+                <Link to="/dashboard/orders">
+                  <Button variant="outline" size="sm">View</Button>
+                </Link>
               </div>
             ))}
           </div>
