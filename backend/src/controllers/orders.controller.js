@@ -9,11 +9,25 @@ const razorpay = new Razorpay({
 
 const createOrder = async (req, res, next) => {
   try {
-    const { items } = req.body; // array of { chemicalId, quantity }
+    const { items, distanceKm, shippingAddress, orderNotes } = req.body; // array of { chemicalId, quantity }
     const userId = req.user.id;
 
-    const customer = await prisma.customer.findUnique({ where: { userId } });
-    if (!customer) return res.status(403).json({ error: 'Customer profile required.' });
+    let customer = await prisma.customer.findUnique({ where: { userId } });
+    
+    // Auto-create customer profile if missing (helps smoothly onboard legacy users or fast-registrations)
+    if (!customer) {
+      if (req.user.role === 'CUSTOMER') {
+        customer = await prisma.customer.create({
+          data: {
+            userId,
+            companyName: req.body.companyName || 'Retail Customer',
+            isVerified: true // Set to true to allow immediate ordering
+          }
+        });
+      } else {
+        return res.status(403).json({ error: 'Customer profile required.' });
+      }
+    }
     if (!customer.isVerified) {
       return res.status(403).json({ error: 'Your account is pending admin verification. You cannot place orders yet.' });
     }
@@ -55,18 +69,30 @@ const createOrder = async (req, res, next) => {
         });
       }
 
+      const distanceCost = (distanceKm || 0) * 10;
+      const hazardousShippingCost = calcTotal > 0 ? 2500 : 0;
+      const taxAmount = calcTotal * 0.18;
+      const finalTotal = calcTotal + distanceCost + hazardousShippingCost + taxAmount;
+
       const dbOrder = await tx.order.create({
         data: {
           customerId: customer.id,
           status: 'REQUESTED',
-          total: calcTotal,
+          total: finalTotal,
+          baseCost: calcTotal,
+          distanceKm: distanceKm || 0,
+          distanceCost: distanceCost,
+          hazardousShippingCost: hazardousShippingCost,
+          taxAmount: taxAmount,
+          shippingAddress: shippingAddress,
+          orderNotes: orderNotes,
           items: {
             create: orderItemsData
           }
         }
       });
 
-      return { order: dbOrder, totalAmount: calcTotal };
+      return { order: dbOrder, totalAmount: finalTotal };
     });
 
     // Create Order in Razorpay

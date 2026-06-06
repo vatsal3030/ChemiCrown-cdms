@@ -26,10 +26,13 @@ import CustomerVerification from './pages/admin/CustomerVerification';
 import HRManagement from './pages/admin/HRManagement';
 import EmployeeDetails from './pages/admin/EmployeeDetails';
 import StockHistory from './pages/admin/StockHistory';
+import RecycleBin from './pages/admin/RecycleBin';
+import Tasks from './pages/admin/Tasks';
 import MyAttendance from './pages/employee/MyAttendance';
 import Orders from './pages/customer/Orders';
 import OrderDetails from './pages/customer/OrderDetails';
 import Checkout from './pages/customer/Checkout';
+import Cart from './pages/customer/Cart';
 import ProductDetails from './pages/ProductDetails';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
@@ -57,6 +60,8 @@ function DynamicTitle() {
       else if (subpath === '/orders') title = 'Orders | ChemiCrown CDMS';
       else if (subpath.startsWith('/orders/')) title = 'Order Details | ChemiCrown CDMS';
       else if (subpath === '/hr') title = 'HR Management | ChemiCrown CDMS';
+      else if (subpath === '/recycle-bin') title = 'Recycle Bin | ChemiCrown CDMS';
+      else if (subpath === '/tasks') title = 'Tasks | ChemiCrown CDMS';
       else if (subpath === '/me') title = 'My Attendance | ChemiCrown CDMS';
       else if (subpath === '/settings') title = 'Settings | ChemiCrown CDMS';
       else if (subpath === '/verify') title = 'Verify Customers | ChemiCrown CDMS';
@@ -98,6 +103,7 @@ function App() {
                   {/* Super Admin & Owner Only */}
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']} />}>
                     <Route path="verify" element={<CustomerVerification />} />
+                    <Route path="recycle-bin" element={<RecycleBin />} />
                   </Route>
 
                   {/* Admin & Manager */}
@@ -117,6 +123,7 @@ function App() {
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
                     <Route path="hr" element={<HRManagement />} />
                     <Route path="hr/:id" element={<EmployeeDetails />} />
+                    <Route path="tasks" element={<Tasks />} />
                   </Route>
                   
                   {/* Employees */}
@@ -126,6 +133,7 @@ function App() {
 
                   <Route path="catalog" element={<Catalog />} />
                   <Route path="catalog/:id" element={<ProductDetails />} />
+                  <Route path="cart" element={<Cart />} />
                   <Route path="checkout" element={<Checkout />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="notifications" element={<Notifications />} />

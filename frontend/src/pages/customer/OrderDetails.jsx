@@ -27,7 +27,7 @@ export default function OrderDetails() {
         } else {
           toast.error(json.error || 'Failed to load order');
         }
-      } catch (error) {
+      } catch {
         toast.error('Network error while loading order');
       } finally {
         setLoading(false);
@@ -83,8 +83,8 @@ export default function OrderDetails() {
                 <div key={item.id} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0 last:pb-0">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center">
-                      {item.product.imageUrl ? (
-                        <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                      {item.product.imageUrls && item.product.imageUrls.length > 0 ? (
+                        <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-full h-full object-cover" />
                       ) : (
                         <Package className="text-slate-400" />
                       )}

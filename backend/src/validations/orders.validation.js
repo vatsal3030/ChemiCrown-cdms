@@ -2,8 +2,18 @@ const { z } = require('zod');
 
 const createOrderSchema = z.object({
   body: z.object({
-    chemicalId: z.string().uuid(),
-    quantity: z.number().int().positive(),
+    items: z.array(z.object({
+      chemicalId: z.string().uuid(),
+      quantity: z.number().int().positive(),
+    })).min(1, "Cart cannot be empty"),
+    companyName: z.string().min(2, "Company name is required"),
+    gstNumber: z.string().min(5, "Valid GST/Tax ID is required"),
+    phone: z.string().min(10, "Valid phone number is required"),
+    email: z.string().email("Valid email is required"),
+    shippingAddress: z.string().min(10, "Complete shipping address is required"),
+    orderNotes: z.string().optional(),
+    paymentMethod: z.enum(['bank_transfer', 'razorpay']).optional(),
+    distanceKm: z.number().nonnegative().optional(),
   }),
   query: z.any(),
   params: z.any(),

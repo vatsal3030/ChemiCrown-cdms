@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import toast from 'react-hot-toast';
+
 import useSWR from 'swr';
 import useDebounce from '@/hooks/useDebounce';
 
 export default function Catalog() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const navigate = useNavigate();
   const { addToCart } = useCart();
@@ -113,8 +113,8 @@ export default function Catalog() {
                 >
                   {/* Image Container */}
                   <div className="relative aspect-square bg-slate-100 dark:bg-slate-900 overflow-hidden border-b border-border">
-                    {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {product.imageUrls && product.imageUrls.length > 0 ? (
+                      <img src={product.imageUrls[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                         <BeakerIcon className="w-16 h-16 opacity-50 mb-2" />

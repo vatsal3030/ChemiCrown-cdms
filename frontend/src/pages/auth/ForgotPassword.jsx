@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Beaker, Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ForgotPassword() {
@@ -9,6 +9,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   
   const [resendTimer, setResendTimer] = useState(0);
 
@@ -22,35 +23,89 @@ export default function ForgotPassword() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
-    // Simulate sending OTP via Nodemailer
-    toast.success(`OTP sent to ${email}`);
-    setStep(2);
-    setResendTimer(60); // 60 seconds cooldown
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || `OTP sent to ${email}`);
+        setStep(2);
+        setResendTimer(60);
+      } else {
+        toast.error(data.error || 'Failed to send OTP');
+      }
+    } catch {
+      toast.error('Network error');
+    }
   };
 
-  const handleVerifyOtp = (e) => {
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
     if (otp.length < 6) {
       toast.error('Please enter a valid 6-digit OTP');
       return;
     }
-    toast.success('OTP verified successfully!');
-    setStep(3);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('OTP verified successfully!');
+        setStep(3);
+      } else {
+        toast.error(data.error || 'Invalid OTP');
+      }
+    } catch {
+      toast.error('Network error');
+    }
   };
 
-  const handleResetPassword = (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
-    // Simulate password reset
-    toast.success('Password reset successfully! Please log in.');
-    navigate('/login');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, newPassword })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Password reset successfully! Please log in.');
+        navigate('/login');
+      } else {
+        toast.error(data.error || 'Failed to reset password');
+      }
+    } catch {
+      toast.error('Network error');
+    }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (resendTimer === 0) {
-      toast.success(`A new OTP has been sent to ${email}`);
-      setResendTimer(60);
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success(`A new OTP has been sent to ${email}`);
+          setResendTimer(60);
+        } else {
+          toast.error(data.error || 'Failed to resend OTP');
+        }
+      } catch {
+        toast.error('Network error');
+      }
     }
   };
 
@@ -132,13 +187,20 @@ export default function ForgotPassword() {
                     <Lock className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <input 
-                    type="password" 
+                    type={showPassword ? "text" : "password"} 
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" 
+                    className="block w-full pl-10 pr-10 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" 
                     placeholder="••••••••"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </div>
               <button type="submit" className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 transition-colors">

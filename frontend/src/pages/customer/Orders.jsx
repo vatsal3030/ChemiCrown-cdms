@@ -26,7 +26,7 @@ export default function Orders() {
       if (json.success) {
         setOrders(json.data);
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch orders');
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ export default function Orders() {
         toast.success('Order soft-deleted successfully');
         fetchOrders();
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete order');
     }
   };

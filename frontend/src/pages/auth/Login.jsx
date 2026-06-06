@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Beaker, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
@@ -11,11 +11,14 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleQuickLogin = (accountId) => {
     switchAccount(accountId);
     toast.success('Switched account');
-    navigate('/dashboard');
+    toast.success('Switched account');
+    navigate(from, { replace: true });
   };
 
   const handleLogin = async (e) => {
@@ -33,11 +36,12 @@ export default function Login() {
       if (res.ok) {
         login(data.user, data.token);
         toast.success('Successfully logged in!');
-        navigate('/dashboard');
+        toast.success('Successfully logged in!');
+        navigate(from, { replace: true });
       } else {
         toast.error(data.error || 'Login failed');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error');
     } finally {
       setIsLoading(false);

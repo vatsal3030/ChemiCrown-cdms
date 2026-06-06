@@ -79,7 +79,9 @@ const hrRoutes = require('./src/routes/hr.routes');
 const ordersRoutes = require('./src/routes/orders.routes');
 const inventoryRoutes = require('./src/routes/inventory.routes');
 const analyticsRoutes = require('./src/routes/analytics.routes');
-const notificationsRoutes = require('./src/routes/notifications.routes');
+const notificationRoutes = require('./src/routes/notifications.routes');
+const trashRoutes = require('./src/routes/trash.routes');
+const tasksRoutes = require('./src/routes/tasks.routes');
 const categoryRoutes = require('./src/routes/category.routes');
 const reviewRoutes = require('./src/routes/review.routes');
 
@@ -89,7 +91,9 @@ app.use('/api/hr', hrRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/notifications', notificationsRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/trash', trashRoutes);
+app.use('/api/tasks', tasksRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/reviews', reviewRoutes);
 

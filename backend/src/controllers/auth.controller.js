@@ -215,4 +215,90 @@ const verifyCustomer = async (req, res, next) => {
   }
 };
 
-module.exports = { syncUser, getMe, register, login, updateProfile, getPendingCustomers, verifyCustomer };
+const { sendOtpEmail } = require('../services/email.service');
+const crypto = require('crypto');
+
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Return 200 to prevent email enumeration
+      return res.status(200).json({ success: true, message: 'If that email is registered, an OTP has been sent.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    await prisma.user.update({
+      where: { email },
+      data: { resetPasswordOtp: otp, resetPasswordExpires: expires }
+    });
+
+    await sendOtpEmail(email, otp);
+
+    res.status(200).json({ success: true, message: 'If that email is registered, an OTP has been sent.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (!user || user.resetPasswordOtp !== otp || new Date() > user.resetPasswordExpires) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    res.status(200).json({ success: true, message: 'OTP verified successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) return res.status(400).json({ error: 'Email, OTP, and new password are required' });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (!user || user.resetPasswordOtp !== otp || new Date() > user.resetPasswordExpires) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { email },
+      data: { 
+        password: hashedPassword,
+        resetPasswordOtp: null,
+        resetPasswordExpires: null
+      }
+    });
+
+    res.status(200).json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  syncUser,
+  getMe,
+  register,
+  login,
+  updateProfile,
+  getPendingCustomers,
+  verifyCustomer,
+  forgotPassword,
+  verifyOtp,
+  resetPassword
+};

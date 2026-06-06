@@ -23,7 +23,7 @@ export default function NotificationDropdown() {
         setNotifications(data.notifications.slice(0, 5)); // Just top 5 for dropdown
         setUnreadCount(data.notifications.filter(n => !n.isRead).length);
       }
-    } catch (err) {
+    } catch {
       console.error('Failed to fetch notifications', err);
     }
   };
@@ -51,7 +51,7 @@ export default function NotificationDropdown() {
       if (res.ok) {
         fetchNotifications();
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to mark all as read');
     }
   };
@@ -63,7 +63,7 @@ export default function NotificationDropdown() {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchNotifications();
-    } catch (err) {
+    } catch {
       toast.error('Failed to mark as read');
     }
   };

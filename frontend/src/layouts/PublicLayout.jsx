@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Beaker, Menu, X, MapPin, Phone, Mail, ChevronDown, ArrowRight } from 'lucide-react';
+import { Menu, X, MapPin, Phone, Mail, ChevronDown, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 

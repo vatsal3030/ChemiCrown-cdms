@@ -7,12 +7,6 @@ export default function StockLogsModal({ isOpen, onClose, product, token }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (isOpen && product && token) {
-      fetchLogs();
-    }
-  }, [isOpen, product, token]);
-
   const fetchLogs = async () => {
     setLoading(true);
     try {
@@ -32,6 +26,12 @@ export default function StockLogsModal({ isOpen, onClose, product, token }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && product && token) {
+      fetchLogs();
+    }
+  }, [isOpen, product, token]);
 
   if (!isOpen || !product) return null;
 

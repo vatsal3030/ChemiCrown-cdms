@@ -19,7 +19,7 @@ export default function Notifications() {
       if (data.success) {
         setNotifications(data.notifications);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
@@ -38,7 +38,7 @@ export default function Notifications() {
       });
       fetchNotifications();
       toast.success('All marked as read');
-    } catch (err) {
+    } catch {
       toast.error('Failed to update notifications');
     }
   };
@@ -50,7 +50,7 @@ export default function Notifications() {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchNotifications();
-    } catch (err) {
+    } catch {
       toast.error('Failed to mark as read');
     }
   };
@@ -64,7 +64,7 @@ export default function Notifications() {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Notification deleted');
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete notification');
       fetchNotifications();
     }
@@ -79,7 +79,7 @@ export default function Notifications() {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('All notifications deleted');
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete all notifications');
       fetchNotifications();
     }
@@ -97,7 +97,7 @@ export default function Notifications() {
       // Dispatch a custom event to force the dropdown to reload
       // This is a quick workaround since they don't share state context currently
       window.dispatchEvent(new Event('new_notification'));
-    } catch (err) {
+    } catch {
       toast.error('Failed to generate test notification');
     }
   };

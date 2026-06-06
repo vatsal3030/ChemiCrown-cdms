@@ -204,7 +204,7 @@ export default function ProductFormPage() {
       } else {
         toast.error(json.error || 'Failed to save product');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error');
     } finally {
       setLoading(false);

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 export default function AddStockModal({ isOpen, onClose, product, token, onSuccess }) {
   const [addedQuantity, setAddedQuantity] = useState('');
-  const [supplierId, setSupplierId] = useState('');
+  const [supplierId] = useState('');
   const [remarks, setRemarks] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -51,7 +51,7 @@ export default function AddStockModal({ isOpen, onClose, product, token, onSucce
       } else {
         toast.error(json.error || 'Failed to update stock');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to update stock');
     } finally {
       setLoading(false);

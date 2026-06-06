@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const hrController = require('../controllers/hr.controller');
+const { requireAuth } = require('../middlewares/auth.middleware');
+const { requireRole } = require('../middlewares/rbac.middleware');
+
+const hrAccess = requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR']);
+
+router.use(requireAuth);
+router.use(hrAccess);
 
 router.get('/', hrController.getEmployees);
 router.post('/', hrController.addEmployee);

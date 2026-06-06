@@ -8,7 +8,7 @@ class GlobalErrorBoundary extends React.Component {
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
@@ -32,7 +32,7 @@ class GlobalErrorBoundary extends React.Component {
               An unexpected error occurred in the application. Our team has been notified. Please try refreshing the page or navigating back home.
             </p>
             
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <div className="text-left bg-slate-100 dark:bg-slate-800 p-4 rounded-lg mb-8 overflow-auto max-h-48 text-xs font-mono text-slate-700 dark:text-slate-300">
                 <p className="font-bold mb-2">{this.state.error.toString()}</p>
                 <p className="whitespace-pre-wrap">{this.state.errorInfo?.componentStack}</p>

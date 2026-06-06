@@ -25,6 +25,7 @@ model User {
   employeeProfile Employee?
   customerProfile Customer?
   auditLogs       AuditLog[]
+  tasksAssigned   Task[]   @relation("TaskAssigner")
 }
 
 enum Role {
@@ -49,6 +50,7 @@ model Employee {
   attendances Attendance[]
   salaries    Salary[]
   deletedAt   DateTime?
+  tasks       Task[]   @relation("TaskAssignee")
 }
 
 model Customer {
@@ -207,6 +209,13 @@ model Order {
   customer   Customer @relation(fields: [customerId], references: [id])
   status     OrderStatus @default(PENDING)
   total      Float
+  baseCost   Float?
+  distanceKm Float?
+  distanceCost Float?
+  hazardousShippingCost Float?
+  taxAmount  Float?
+  shippingAddress String?
+  orderNotes String?
   createdBy  String?  // Auditability
   updatedBy  String?  // Auditability
   items      OrderItem[]
@@ -300,20 +309,39 @@ model Payment {
   id                 String   @id @default(uuid())
   orderId            String   @unique
   order              Order    @relation(fields: [orderId], references: [id])
-  razorpayOrderId    String?  @unique
-  razorpayPaymentId  String?  @unique
+  paymentMethod      String   // e.g., "razorpay", "bank_transfer"
+  razorpayOrderId    String?
+  razorpayPaymentId  String?
   razorpaySignature  String?
   amount             Float
   status             PaymentStatus @default(PENDING)
   createdAt          DateTime @default(now())
-  
-  @@index([status])
 }
 
 enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus @default(PENDING)
+  assignedToId String
+  assignedTo   Employee @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  assignedById String
+  assignedBy   User     @relation("TaskAssigner", fields: [assignedById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 }
 
 model Review {

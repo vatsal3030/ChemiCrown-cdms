@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Filter, Trash2, ArrowUpDown, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,15 @@ export default function Inventory() {
   const [stockFilter, setStockFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const setPage = (newPage) => {
+    setSearchParams(prev => {
+      prev.set('page', newPage.toString());
+      return prev;
+    }, { replace: true });
+  };
+  
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
 
@@ -116,7 +124,7 @@ export default function Inventory() {
         toast.error(json.error || 'Failed to delete product');
         mutate(); // Revert
       }
-    } catch (error) {
+    } catch {
       toast.error('Network error. Failed to delete product');
       mutate(); // Revert
     }

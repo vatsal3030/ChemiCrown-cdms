@@ -18,7 +18,7 @@ export default function CustomerVerification() {
       if (data.success) {
         setCustomers(data.customers);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to load pending customers');
     } finally {
       setLoading(false);
@@ -45,7 +45,7 @@ export default function CustomerVerification() {
         toast.error('Verification failed');
         fetchCustomers(); // Revert on failure
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error');
       fetchCustomers(); // Revert on failure
     }

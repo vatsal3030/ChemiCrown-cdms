@@ -1,0 +1,122 @@
+import { useState, useEffect } from 'react';
+import { Trash2, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
+import toast from 'react-hot-toast';
+
+export default function RecycleBin() {
+  const { token, user } = useAuth();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTrash = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/trash`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        setItems(json.data);
+      }
+    } catch {
+      toast.error('Failed to load recycle bin');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrash();
+  }, [token]);
+
+  const handleRestore = async (id, type) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/trash/restore`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ id, type })
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(json.message);
+        fetchTrash();
+      } else {
+        toast.error(json.error || 'Failed to restore');
+      }
+    } catch {
+      toast.error('Network error');
+    }
+  };
+
+  if (!['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(user?.role)) {
+    return (
+      <div className="p-8 text-center mt-20">
+        <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold">Access Denied</h2>
+        <p className="text-muted-foreground mt-2">You do not have permission to view the Recycle Bin.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-red-600 flex items-center gap-2">
+          <Trash2 size={28} /> Recycle Bin
+        </h1>
+        <p className="text-slate-500 mt-1">Restore soft-deleted products and employees. Items older than 30 days are permanently purged.</p>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-8 text-center text-slate-500">Loading trash...</div>
+        ) : items.length === 0 ? (
+          <div className="p-12 text-center">
+            <Trash2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white">Recycle Bin is empty</h3>
+            <p className="text-slate-500 mt-1">No soft-deleted items found.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 dark:bg-slate-900/50">
+                <tr>
+                  <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Name / ID</th>
+                  <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Deleted On</th>
+                  <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                {items.map(item => (
+                  <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${item.type === 'PRODUCT' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'}`}>
+                        {item.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-medium">
+                      {item.name} {item.sku && <span className="text-slate-400 text-xs ml-2">({item.sku})</span>}
+                    </td>
+                    <td className="px-6 py-4 text-slate-500">
+                      {new Date(item.deletedAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button onClick={() => handleRestore(item.id, item.type)} variant="outline" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">
+                        <RotateCcw size={16} className="mr-2" /> Restore
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

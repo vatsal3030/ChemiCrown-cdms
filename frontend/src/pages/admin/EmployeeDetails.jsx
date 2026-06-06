@@ -35,7 +35,7 @@ export default function EmployeeDetails() {
         const salRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${id}/salary`, { headers: { Authorization: `Bearer ${token}` }});
         const salData = await salRes.json();
         if (salData.success) setSalaries(salData.data);
-      } catch (error) {
+      } catch {
         toast.error("Failed to load employee details");
       } finally {
         setLoading(false);

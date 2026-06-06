@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { CreditCard, ShieldCheck, Building, ShoppingCart, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,25 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { MapAddressPicker } from '@/components/ui/MapAddressPicker';
+
+// Haversine formula to calculate distance in km
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  return R * c;
+}
+
+const WAREHOUSE_LAT = 21.7411471;
+const WAREHOUSE_LNG = 72.0706172;
+const COST_PER_KM = 10; // ₹10 per km
 
 export default function Checkout() {
   const { user, token } = useAuth();
@@ -18,12 +37,28 @@ export default function Checkout() {
     shippingAddress: '',
     phone: '',
     email: user?.email || '',
-    notes: ''
+    notes: '',
+    lat: null,
+    lng: null
   });
+
+  const distanceKm = calculateDistance(WAREHOUSE_LAT, WAREHOUSE_LNG, formData.lat, formData.lng);
+  const distanceCost = distanceKm * COST_PER_KM;
+
+  const handleLocationChange = useCallback((lat, lng) => {
+    setFormData(prev => {
+      if (prev.lat === lat && prev.lng === lng) return prev;
+      return { ...prev, lat, lng };
+    });
+  }, []);
 
   const handlePayment = async () => {
     if (!formData.companyName || !formData.gstNumber || !formData.shippingAddress || !formData.phone || !formData.email) {
-      toast.error("Please fill in all required fields.");
+      toast.error("Please fill in all required text fields.");
+      return;
+    }
+    if (!formData.lat || !formData.lng) {
+      toast.error("Please select a delivery location on the map.");
       return;
     }
 
@@ -48,7 +83,17 @@ export default function Checkout() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ items, ...formData })
+        body: JSON.stringify({ 
+          items, 
+          companyName: formData.companyName,
+          gstNumber: formData.gstNumber,
+          phone: formData.phone,
+          email: formData.email,
+          shippingAddress: formData.shippingAddress,
+          orderNotes: formData.notes,
+          distanceKm,
+          paymentMethod: 'bank_transfer'
+        })
       });
 
       const data = await res.json();
@@ -68,8 +113,8 @@ export default function Checkout() {
   };
 
   const gstAmount = cartTotal * 0.18;
-  const shippingAmount = cartTotal > 0 ? 2500 : 0;
-  const finalTotal = cartTotal + gstAmount + shippingAmount;
+  const shippingAmount = cartTotal > 0 ? 2500 : 0; // Hazardous Material Shipping
+  const finalTotal = cartTotal + gstAmount + shippingAmount + distanceCost;
 
   if (cartItems.length === 0) {
     return (
@@ -101,8 +146,8 @@ export default function Checkout() {
               {cartItems.map(item => (
                 <div key={item.product.id} className="flex gap-4">
                   <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-lg overflow-hidden shrink-0">
-                    {item.product.imageUrl ? (
-                      <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                    {item.product.imageUrls && item.product.imageUrls.length > 0 ? (
+                      <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300"><ShoppingCart size={20} /></div>
                     )}
@@ -140,6 +185,10 @@ export default function Checkout() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">GST (18%)</span>
                 <span className="font-medium text-foreground">₹{gstAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Delivery Distance Cost ({distanceKm.toFixed(1)} km)</span>
+                <span className="font-medium text-foreground">₹{distanceCost.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-bold text-xl border-t border-border pt-4 mt-4 text-primary">
                 <span>Total Amount</span>
@@ -205,6 +254,9 @@ export default function Checkout() {
                   onChange={(e) => setFormData({...formData, shippingAddress: e.target.value})}
                   required
                 />
+              </div>
+              <div>
+                <MapAddressPicker onLocationChange={handleLocationChange} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Order Notes (Optional)</label>

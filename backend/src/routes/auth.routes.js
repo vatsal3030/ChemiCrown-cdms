@@ -1,5 +1,5 @@
 const express = require('express');
-const { syncUser, getMe, register, login, updateProfile, getPendingCustomers, verifyCustomer } = require('../controllers/auth.controller');
+const { syncUser, getMe, register, login, updateProfile, getPendingCustomers, verifyCustomer, forgotPassword, verifyOtp, resetPassword } = require('../controllers/auth.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { validateRequest } = require('../middlewares/validate.middleware');
 const { syncUserSchema } = require('../validations/auth.validation');
@@ -17,6 +17,11 @@ router.get('/me', requireAuth, getMe);
 router.post('/register', upload.single('image'), register);
 router.post('/login', login);
 router.put('/profile', requireAuth, upload.single('image'), updateProfile);
+
+// Password Reset endpoints
+router.post('/forgot-password', forgotPassword);
+router.post('/verify-otp', verifyOtp);
+router.post('/reset-password', resetPassword);
 
 // Admin customer verification
 const { requireRole } = require('../middlewares/rbac.middleware');

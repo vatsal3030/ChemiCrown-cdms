@@ -11,8 +11,8 @@ export default function Register() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [companyName, setCompanyName] = useState('');
+  
+  
   const [role, setRole] = useState('CUSTOMER');
   
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +55,7 @@ export default function Register() {
       } else {
         toast.error(data.error || 'Registration failed');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error');
     } finally {
       setIsLoading(false);

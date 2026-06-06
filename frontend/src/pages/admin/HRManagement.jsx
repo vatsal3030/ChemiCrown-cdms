@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function HRManagement() {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ export default function HRManagement() {
       if (json.success) {
         setEmployees(json.data);
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch employees');
     } finally {
       setLoading(false);
@@ -70,7 +70,7 @@ export default function HRManagement() {
         toast.error('Failed to remove employee');
         fetchEmployees(); // Revert
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to remove employee');
       fetchEmployees(); // Revert
     }
@@ -88,7 +88,7 @@ export default function HRManagement() {
       });
       if (res.ok) toast.success(`Attendance marked as ${status}`);
       else toast.error('Failed to mark attendance');
-    } catch (error) {
+    } catch {
       toast.error('Failed to mark attendance');
     }
   };
@@ -111,7 +111,7 @@ export default function HRManagement() {
       } else {
         toast.error('Failed to pay salary');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to pay salary');
     }
   };
@@ -134,7 +134,7 @@ export default function HRManagement() {
       } else {
         toast.error('Failed to send message');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to send message');
     }
   };
@@ -231,7 +231,7 @@ export default function HRManagement() {
                 {activeTab === 'attendance' && <th className="px-6 py-4">Today's Action</th>}
                 {activeTab === 'payroll' && <th className="px-6 py-4">Pay Salary</th>}
                 {activeTab === 'communications' && <th className="px-6 py-4">Send Message</th>}
-                {activeTab === 'directory' && <th className="px-6 py-4 text-right">Actions</th>}
+                {activeTab === 'directory' && ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(user?.role) && <th className="px-6 py-4 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -316,7 +316,7 @@ export default function HRManagement() {
                       </td>
                     )}
 
-                    {activeTab === 'directory' && (
+                    {activeTab === 'directory' && ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(user?.role) && (
                       <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                         <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/hr/${emp.id}`)} className="text-primary hover:text-primary/90">
                           <Eye size={14} className="mr-2" /> View Profile

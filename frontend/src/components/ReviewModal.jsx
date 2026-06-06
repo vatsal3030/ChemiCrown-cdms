@@ -38,7 +38,7 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
       } else {
         toast.error(json.error || 'Failed to submit review');
       }
-    } catch (error) {
+    } catch {
       toast.error('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -60,8 +60,8 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
             <div className="w-16 h-16 bg-white dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
-              {orderItem.product.imageUrl ? (
-                <img src={orderItem.product.imageUrl} alt={orderItem.product.name} className="w-full h-full object-cover" />
+              {orderItem.product.imageUrls && orderItem.product.imageUrls.length > 0 ? (
+                <img src={orderItem.product.imageUrls[0]} alt={orderItem.product.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-300">
                   No Image

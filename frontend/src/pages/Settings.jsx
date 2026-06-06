@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Lock, Bell, Shield, Save } from 'lucide-react';
+import { User, Lock, Bell, Shield, Save, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
@@ -18,6 +18,9 @@ export default function Settings() {
   const [profileImage, setProfileImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(user?.profileImageUrl || null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -53,7 +56,7 @@ export default function Settings() {
       } else {
         toast.error(json.error || 'Failed to update profile');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error occurred');
     } finally {
       setIsSaving(false);
@@ -154,15 +157,51 @@ export default function Settings() {
               <div className="space-y-4 max-w-md">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Current Password</label>
-                  <Input type="password" placeholder="••••••••" />
+                <div className="relative">
+                  <Input 
+                    type={showCurrentPassword ? "text" : "password"} 
+                    placeholder="••••••••" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">New Password</label>
-                  <Input type="password" placeholder="••••••••" />
+                <div className="relative">
+                  <Input 
+                    type={showNewPassword ? "text" : "password"} 
+                    placeholder="••••••••" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Confirm New Password</label>
-                  <Input type="password" placeholder="••••••••" />
+                <div className="relative">
+                  <Input 
+                    type={showConfirmPassword ? "text" : "password"} 
+                    placeholder="••••••••" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 </div>
               </div>
               <div className="pt-4">
