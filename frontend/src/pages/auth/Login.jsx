@@ -36,7 +36,6 @@ export default function Login() {
       if (res.ok) {
         login(data.user, data.token);
         toast.success('Successfully logged in!');
-        toast.success('Successfully logged in!');
         navigate(from, { replace: true });
       } else {
         toast.error(data.error || 'Login failed');
