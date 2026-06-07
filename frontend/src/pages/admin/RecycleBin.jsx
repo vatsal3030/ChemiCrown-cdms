@@ -64,11 +64,14 @@ export default function RecycleBin() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-red-600 flex items-center gap-2">
-          <Trash2 size={28} /> Recycle Bin
-        </h1>
-        <p className="text-slate-500 mt-1">Restore soft-deleted products and employees. Items older than 30 days are permanently purged.</p>
+      <div className="page-header">
+        <div className="page-header-icon bg-destructive/10 text-destructive">
+          <Trash2 size={22} />
+        </div>
+        <div>
+          <h1 className="page-title">Recycle Bin</h1>
+          <p className="page-subtitle">Restore soft-deleted items. Items older than 30 days are permanently purged.</p>
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">

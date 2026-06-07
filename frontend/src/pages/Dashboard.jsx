@@ -60,8 +60,6 @@ export default function Dashboard() {
     recentOrders: []
   });
 
-  if (user?.role === 'CUSTOMER') return <Navigate to="/dashboard/catalog" replace />;
-
   const fetchData = async (isRefresh = false) => {
     try {
       if (isRefresh) setRefreshing(true);
@@ -82,19 +80,22 @@ export default function Dashboard() {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Customer redirect — MUST come after all hooks
+  if (user?.role === 'CUSTOMER') return <Navigate to="/dashboard/catalog" replace />;
+
   const { stats, revenueData, inventoryData, attendanceData } = data;
 
   const OrderStatusBadge = ({ status }) => {
     const map = {
       REQUESTED: 'badge-info',
       PENDING: 'badge-warning',
-      PROCESSING: 'badge-purple',
+      PROCESSING: 'badge-secondary',
       PACKAGED: 'badge-info',
       DISPATCHED: 'badge-info',
       DELIVERED: 'badge-success',
-      CANCELLED: 'badge-error',
+      CANCELLED: 'badge-destructive',
     };
-    return <span className={`badge ${map[status] || 'badge-neutral'}`}>{status}</span>;
+    return <span className={`badge ${map[status] || 'badge-secondary'}`}>{status}</span>;
   };
 
   if (loading) {

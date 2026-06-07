@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { CreditCard, ShieldCheck, Building, ShoppingCart, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,20 +32,38 @@ export default function Checkout() {
   const { cartItems, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    companyName: '',
-    gstNumber: '',
-    shippingAddress: '',
-    phone: '',
-    email: user?.email || '',
-    notes: '',
-    lat: null,
-    lng: null
+
+  const SESSION_KEY = `checkout_form_${user?.id || 'guest'}`;
+
+  // Restore from sessionStorage on mount to survive refresh
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(`checkout_form_${user?.id || 'guest'}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      companyName: '',
+      gstNumber: '',
+      shippingAddress: '',
+      phone: user?.phone || '',
+      email: user?.email || '',
+      notes: '',
+      lat: null,
+      lng: null
+    };
   });
+
   const isProcessing = useRef(false);
 
-  const isDirty = Object.values(formData).some(val => val !== '' && val !== null && val !== (user?.email || ''));
+  // Persist form to sessionStorage on every change
+  useEffect(() => {
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(formData)); }
+    catch {}
+  }, [formData, SESSION_KEY]);
+
+  const isDirty = !!(formData.companyName || formData.gstNumber || formData.shippingAddress);
   useUnsavedChangesWarning(isDirty && !loading);
+
 
   const distanceKm = calculateDistance(WAREHOUSE_LAT, WAREHOUSE_LNG, formData.lat, formData.lng);
   const distanceCost = distanceKm * COST_PER_KM;
@@ -106,11 +124,12 @@ export default function Checkout() {
       const data = await res.json();
 
       if (res.ok) {
-        toast.success("Order Placed Successfully!");
+        toast.success('Order placed successfully!');
         clearCart();
+        try { sessionStorage.removeItem(SESSION_KEY); } catch {}
         navigate('/dashboard/orders');
       } else {
-        toast.error(data.error || "Failed to place order.");
+        toast.error(data.error || 'Failed to place order.');
       }
     } catch (error) {
       toast.error("Network error");
@@ -120,9 +139,9 @@ export default function Checkout() {
     }
   };
 
-  const gstAmount = cartTotal * 0.18;
-  const shippingAmount = cartTotal > 0 ? 2500 : 0; // Hazardous Material Shipping
-  const finalTotal = cartTotal + gstAmount + shippingAmount + distanceCost;
+  const gstAmount = Number((cartTotal * 0.18).toFixed(2));
+  const hazardousFee = cartTotal > 0 ? 500 : 0; // Hazardous material handling fee
+  const finalTotal = Number((cartTotal + gstAmount + hazardousFee + distanceCost).toFixed(2));
 
   if (cartItems.length === 0) {
     return (
@@ -187,15 +206,15 @@ export default function Checkout() {
                 <span className="font-medium text-foreground">₹{cartTotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Hazardous Shipping</span>
-                <span className="font-medium text-foreground">₹{shippingAmount.toFixed(2)}</span>
+                <span className="text-muted-foreground">Hazardous Handling Fee</span>
+                <span className="font-medium text-foreground">₹{hazardousFee.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">GST (18%)</span>
                 <span className="font-medium text-foreground">₹{gstAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Delivery Distance Cost ({distanceKm.toFixed(1)} km)</span>
+                <span className="text-muted-foreground">Delivery Distance Cost ({distanceKm.toFixed(1)} km × ₹{COST_PER_KM}/km)</span>
                 <span className="font-medium text-foreground">₹{distanceCost.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-bold text-xl border-t border-border pt-4 mt-4 text-primary">

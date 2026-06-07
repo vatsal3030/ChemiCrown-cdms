@@ -106,13 +106,14 @@ export default function HRManagement() {
         body: JSON.stringify({ month: new Date().toISOString().substring(0, 7) })
       });
       if (res.ok) {
-        toast.success('Salary paid successfully');
-        mutate(`${import.meta.env.VITE_API_URL}/api/hr`); // Refresh data
+        toast.success('Salary record created successfully');
+        fetchEmployees();
       } else {
-        toast.error('Failed to pay salary');
+        const json = await res.json();
+        toast.error(json.error || 'Failed to create salary record');
       }
     } catch {
-      toast.error('Failed to pay salary');
+      toast.error('Failed to create salary record');
     }
   };
 
@@ -309,7 +310,7 @@ export default function HRManagement() {
                       (() => {
                         const baseSalary = emp.employeeProfile?.baseSalary || 0;
                         const pfRate = emp.employeeProfile?.pfRate || 12;
-                        const attendance = emp.employeeProfile?.attendance || [];
+                        const attendance = emp.employeeProfile?.attendances || [];
                         let absentDays = 0;
                         attendance.forEach(a => {
                           if (a.status === 'ABSENT') absentDays += 1;

@@ -26,14 +26,15 @@ exports.getEmployees = async (req, res, next) => {
       include: {
         employeeProfile: {
           include: {
-            attendance: {
+            attendances: {
               where: {
                 date: {
-                  startsWith: new Date().toISOString().substring(0, 7)
+                  gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                  lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
                 }
               }
             },
-            salaries: true
+            salaries: { orderBy: { month: 'desc' }, take: 3 }
           }
         }
       },
@@ -53,7 +54,7 @@ exports.getMyPayroll = async (req, res, next) => {
     const employee = await prisma.employee.findUnique({
       where: { userId: req.user.id },
       include: {
-        attendance: {
+        attendances: {
           orderBy: { date: 'desc' }
         },
         salaries: {
@@ -80,7 +81,7 @@ exports.updateSalary = async (req, res, next) => {
 
     let employee = await prisma.employee.findUnique({ 
       where: { userId: id },
-      include: { attendance: true }
+      include: { attendances: true }
     });
 
     if (!employee) {
@@ -91,7 +92,10 @@ exports.updateSalary = async (req, res, next) => {
     const pfRate = employee.pfRate || 12;
 
     // Calculate absent days for the target month
-    const monthAttendance = employee.attendance.filter(a => a.date.startsWith(targetMonth));
+    const [yearNum, monthNum] = targetMonth.split('-').map(Number);
+    const monthStart = new Date(yearNum, monthNum - 1, 1);
+    const monthEnd = new Date(yearNum, monthNum, 1);
+    const monthAttendance = employee.attendances.filter(a => a.date >= monthStart && a.date < monthEnd);
     let absentDays = 0;
     monthAttendance.forEach(a => {
       if (a.status === 'ABSENT') absentDays += 1;

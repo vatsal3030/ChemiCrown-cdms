@@ -17,13 +17,15 @@ export default function Login() {
   const handleQuickLogin = (accountId) => {
     switchAccount(accountId);
     toast.success('Switched account');
-    toast.success('Switched account');
     navigate(from, { replace: true });
   };
+
+  const [pendingVerification, setPendingVerification] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     if (isLoading) return;
+    setPendingVerification(false);
     setIsLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
@@ -37,6 +39,8 @@ export default function Login() {
         login(data.user, data.token);
         toast.success('Successfully logged in!');
         navigate(from, { replace: true });
+      } else if (data.requiresVerification) {
+        setPendingVerification(true);
       } else {
         toast.error(data.error || 'Login failed');
       }
@@ -102,6 +106,20 @@ export default function Login() {
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-card text-muted-foreground">or use email</span>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {pendingVerification && (
+            <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Account Pending Verification</p>
+                <p className="text-xs text-amber-700 mt-0.5">Your account has not been verified by an administrator yet. Please wait for approval before logging in.</p>
               </div>
             </div>
           )}

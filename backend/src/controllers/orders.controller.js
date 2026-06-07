@@ -153,10 +153,10 @@ const verifyPayment = async (req, res, next) => {
         }
       });
 
-      // 2. Update Order Status
+      // 2. Update Order Status to DELIVERED after payment confirmation
       await prisma.order.update({
         where: { id: orderId },
-        data: { status: 'PAID' }
+        data: { status: 'DELIVERED' }
       });
 
       res.status(200).json({ message: 'Payment verified successfully' });

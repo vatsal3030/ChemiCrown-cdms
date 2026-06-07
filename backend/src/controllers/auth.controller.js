@@ -51,7 +51,7 @@ const getMe = async (req, res, next) => {
 
 const register = async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName, role } = req.body;
+    const { email, password, firstName, lastName, companyName, gstNumber, address } = req.body;
     
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -75,23 +75,41 @@ const register = async (req, res, next) => {
       profileImageUrl = uploadResult.secure_url;
     }
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        profileImageUrl,
-        role: role || (email === 'admin@chemicrown.com' ? 'SUPER_ADMIN' : 'CUSTOMER')
+    const finalRole = email === 'admin@chemicrown.com' ? 'SUPER_ADMIN' : 'CUSTOMER';
+
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          profileImageUrl,
+          role: finalRole
+        }
+      });
+
+      // Always create Customer profile for CUSTOMER role — isVerified = false
+      if (finalRole === 'CUSTOMER') {
+        await tx.customer.create({
+          data: {
+            userId: newUser.id,
+            companyName: companyName || `${firstName} ${lastName}`,
+            gstNumber: gstNumber || null,
+            address: address || null,
+            isVerified: false // Admin must verify before customer can log in
+          }
+        });
       }
+
+      return newUser;
     });
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
+    // Do NOT return a session token — customer must wait for verification
     res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, profileImageUrl: user.profileImageUrl }
+      message: 'Registration successful! Your account is pending admin verification. You will be able to log in once verified.',
+      requiresVerification: finalRole === 'CUSTOMER',
+      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }
     });
   } catch (error) {
     next(error);
@@ -120,9 +138,15 @@ const login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Verify Customer Status
-    if (user.role === 'CUSTOMER' && user.customerProfile && !user.customerProfile.isVerified) {
-      return res.status(401).json({ error: 'Account pending admin verification. Please wait until an admin verifies your account.' });
+    // Verify Customer Status — block unverified customers regardless
+    if (user.role === 'CUSTOMER') {
+      const customerProfile = user.customerProfile;
+      if (!customerProfile || !customerProfile.isVerified) {
+        return res.status(403).json({ 
+          error: 'Your account is pending admin verification. You will receive access once an administrator approves your account.',
+          requiresVerification: true
+        });
+      }
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
@@ -205,11 +229,42 @@ const getPendingCustomers = async (req, res, next) => {
 const verifyCustomer = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await prisma.customer.update({
-      where: { id },
-      data: { isVerified: true }
+    const customer = await prisma.customer.findUnique({ where: { id }, include: { user: true } });
+    if (!customer) return res.status(404).json({ success: false, error: 'Customer not found' });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.customer.update({ where: { id }, data: { isVerified: true } });
+      await tx.notification.create({
+        data: {
+          userId: customer.userId,
+          message: `Your account has been verified! You can now place orders on ChemiCrown.`
+        }
+      });
     });
-    res.status(200).json({ success: true, message: 'Customer verified' });
+
+    res.status(200).json({ success: true, message: 'Customer verified successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const rejectCustomer = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const customer = await prisma.customer.findUnique({ where: { id } });
+    if (!customer) return res.status(404).json({ success: false, error: 'Customer not found' });
+    if (customer.isVerified) return res.status(400).json({ success: false, error: 'Cannot reject an already verified customer' });
+
+    // Delete customer profile and deactivate user in a transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.customer.delete({ where: { id } });
+      await tx.user.update({
+        where: { id: customer.userId },
+        data: { deletedAt: new Date() }
+      });
+    });
+
+    res.status(200).json({ success: true, message: 'Customer rejected and removed' });
   } catch (error) {
     next(error);
   }
@@ -290,14 +345,48 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || !user.password) {
+      return res.status(400).json({ error: 'Cannot change password for this account type' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword }
+    });
+
+    res.status(200).json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   syncUser,
   getMe,
   register,
   login,
   updateProfile,
+  changePassword,
   getPendingCustomers,
   verifyCustomer,
+  rejectCustomer,
   forgotPassword,
   verifyOtp,
   resetPassword

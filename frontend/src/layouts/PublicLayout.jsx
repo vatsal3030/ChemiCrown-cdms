@@ -26,11 +26,11 @@ export default function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container flex h-18 max-w-screen-2xl items-center px-4 mx-auto justify-between">
-          <Link to="/" className="flex items-center space-x-3 mr-6">
-            <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-10 w-10 group-hover:scale-105 transition-transform object-contain" />
-            <span className="font-extrabold text-2xl tracking-tight text-primary">ChemiCrown</span>
+      <nav className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur-xl supports-backdrop-filter:bg-background/70 shadow-sm">
+        <div className="container flex h-16 max-w-screen-2xl items-center px-4 mx-auto justify-between">
+          <Link to="/" className="flex items-center space-x-2.5 mr-6 group">
+            <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-9 w-9 object-contain group-hover:scale-105 transition-transform" />
+            <span className="font-extrabold text-xl tracking-tight" style={{ color: '#1F2E54' }}>ChemiCrown</span>
           </Link>
 
           {/* Desktop Navigation */}

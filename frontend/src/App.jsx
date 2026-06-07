@@ -126,7 +126,7 @@ function App() {
                   </Route>
                   
                   {/* Orders - accessible by multiple roles */}
-                  <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'CUSTOMER', 'MARKETING']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'CUSTOMER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
                     <Route path="orders" element={<Orders />} />
                     <Route path="orders/:id" element={<OrderDetails />} />
                   </Route>
@@ -138,10 +138,13 @@ function App() {
                     <Route path="wishlist" element={<Wishlist />} />
                   </Route>
 
+                  <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
+                    <Route path="tasks" element={<Tasks />} />
+                  </Route>
+
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
                     <Route path="hr" element={<HRManagement />} />
                     <Route path="hr/:id" element={<EmployeeDetails />} />
-                    <Route path="tasks" element={<Tasks />} />
                     <Route path="payroll" element={<Payroll />} />
                   </Route>
 

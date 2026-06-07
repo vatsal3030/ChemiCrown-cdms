@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 
 export default function ProductFormPage() {
   const { id } = useParams();
@@ -22,29 +23,46 @@ export default function ProductFormPage() {
 
   const isEditing = id && id !== 'new';
 
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    unit: 'Litre',
-    packageSize: '',
-    baseUnit: 'Litre',
-    price: '',
-    casNumber: '',
-    sku: '',
-    supplierId: '',
-    safetyNotes: '',
-    storageInstructions: '',
-    mfgDate: '',
-    expiryDate: '',
-    categoryId: '',
-    minThreshold: 10,
-    isAvailable: true,
-    brand: '',
-    manufacturer: '',
-    itemForm: '',
-    purity: '',
-    grade: ''
+  const SESSION_KEY = `product_form_${id || 'new'}`;
+
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      name: '',
+      description: '',
+      unit: 'Litre',
+      packageSize: '',
+      baseUnit: 'Litre',
+      price: '',
+      casNumber: '',
+      sku: '',
+      supplierId: '',
+      safetyNotes: '',
+      storageInstructions: '',
+      mfgDate: '',
+      expiryDate: '',
+      categoryId: '',
+      minThreshold: 10,
+      isAvailable: true,
+      brand: '',
+      manufacturer: '',
+      itemForm: '',
+      purity: '',
+      grade: ''
+    };
   });
+
+  useEffect(() => {
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(formData)); }
+    catch {}
+  }, [formData, SESSION_KEY]);
+
+  const isDirty = !!(formData.name || formData.description || formData.price);
+  useUnsavedChangesWarning(isDirty && !loading);
+
 
   useEffect(() => {
     // Fetch categories and units
@@ -200,6 +218,7 @@ export default function ProductFormPage() {
       const json = await res.json();
       if (res.ok) {
         toast.success(isEditing ? 'Product updated successfully' : 'Product created successfully');
+        try { sessionStorage.removeItem(SESSION_KEY); } catch {}
         navigate('/dashboard/inventory');
       } else {
         toast.error(json.error || 'Failed to save product');

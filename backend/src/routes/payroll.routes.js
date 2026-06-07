@@ -4,18 +4,18 @@ const payrollController = require('../controllers/payroll.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 
-const hrAccess = requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']);
-
 router.use(requireAuth);
 
-// Employee self-service
-router.get('/my', payrollController.getMyPayroll);
+// Admin routes — OWNER, SUPER_ADMIN, MANAGER (HR)
+const adminOnly = requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']);
 
-// Admin/HR access
-router.get('/', hrAccess, payrollController.getAllSalaries);
-router.post('/generate', hrAccess, payrollController.generateMonthlyPayroll);
-router.post('/:id/pay', hrAccess, payrollController.markAsPaid);
-router.get('/pf/:employeeId', hrAccess, payrollController.getPFLedger);
-router.post('/pf/:employeeId/settle', hrAccess, payrollController.settlePF);
+router.get('/', adminOnly, payrollController.getAllSalaries);
+router.post('/generate', adminOnly, payrollController.generateMonthlyPayroll);
+router.post('/:id/pay', adminOnly, payrollController.markAsPaid);
+router.get('/pf/:employeeId', adminOnly, payrollController.getPFLedger);
+router.post('/pf/:employeeId/settle', adminOnly, payrollController.settlePF);
+
+// Employee self-service
+router.get('/my', requireRole(['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING', 'SUPER_ADMIN', 'OWNER']), payrollController.getMyPayroll);
 
 module.exports = router;

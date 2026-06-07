@@ -9,7 +9,12 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     // Connect to backend server (assuming default port 5000 for dev)
-    const newSocket = io(import.meta.env.VITE_API_URL);
+    const newSocket = io(import.meta.env.VITE_API_URL, {
+      reconnectionAttempts: 5,    // Max 5 reconnect attempts
+      reconnectionDelay: 2000,    // 2s between attempts
+      timeout: 10000,             // 10s connection timeout
+      transports: ['websocket', 'polling']
+    });
     
     newSocket.on('connect', () => {
       console.log('Connected to real-time server');

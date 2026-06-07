@@ -33,7 +33,6 @@ exports.getAllSalaries = async (req, res, next) => {
 /**
  * POST /api/payroll/generate
  * Auto-generate payroll for all active employees for a given month.
- * Computes: baseSalary, absentDays, deductions, PF, netPay
  * Idempotent: skips employees who already have a slip for the month.
  */
 exports.generateMonthlyPayroll = async (req, res, next) => {
@@ -43,17 +42,16 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid month format. Use YYYY-MM' });
     }
 
+    const [year, monthNum] = month.split('-').map(Number);
+    const monthStart = new Date(year, monthNum - 1, 1);
+    const monthEnd = new Date(year, monthNum, 1);
+
     const employees = await prisma.employee.findMany({
       where: { isActive: true, deletedAt: null },
       include: {
         user: { select: { firstName: true, lastName: true } },
-        attendance: {
-          where: {
-            date: {
-              gte: new Date(`${month}-01`),
-              lt: new Date(new Date(`${month}-01`).setMonth(new Date(`${month}-01`).getMonth() + 1))
-            }
-          }
+        attendances: {
+          where: { date: { gte: monthStart, lt: monthEnd } }
         },
         salaries: { where: { month } }
       }
@@ -81,7 +79,7 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
 
         // Count absent days and half days
         let absentDays = 0;
-        emp.attendance.forEach(a => {
+        emp.attendances.forEach(a => {
           if (a.status === 'ABSENT') absentDays += 1;
           else if (a.status === 'HALF_DAY') absentDays += 0.5;
         });
@@ -103,7 +101,7 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
           }
         });
 
-        // Update PF ledger
+        // Upsert PF ledger
         await tx.pFLedger.upsert({
           where: { employeeId: emp.id },
           create: { employeeId: emp.id, balance: pfContribution, lastUpdatedMonth: month },
@@ -160,7 +158,14 @@ exports.getMyPayroll = async (req, res, next) => {
 
     const pfLedger = await prisma.pFLedger.findUnique({ where: { employeeId: employee.id } });
 
-    res.json({ success: true, data: { salaries, pfBalance: pfLedger?.balance || 0, lastUpdatedMonth: pfLedger?.lastUpdatedMonth } });
+    res.json({
+      success: true,
+      data: {
+        salaries,
+        pfBalance: pfLedger?.balance || 0,
+        lastUpdatedMonth: pfLedger?.lastUpdatedMonth
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -193,14 +198,13 @@ exports.settlePF = async (req, res, next) => {
     }
 
     const settled = await prisma.$transaction(async (tx) => {
-      const result = await tx.pFLedger.update({
+      return tx.pFLedger.update({
         where: { employeeId },
         data: { balance: 0, settledAt: new Date() }
       });
-      return result;
     });
 
-    res.json({ success: true, message: `PF of ₹${ledger.balance} settled for employee`, data: settled });
+    res.json({ success: true, message: `PF of ₹${ledger.balance} settled`, data: settled });
   } catch (error) {
     next(error);
   }

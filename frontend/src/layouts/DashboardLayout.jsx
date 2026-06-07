@@ -58,6 +58,9 @@ const buildNavSections = (role) => {
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(role)) {
     people.items.push({ name: 'HR Management', path: '/dashboard/hr', icon: Users });
     people.items.push({ name: 'Payroll', path: '/dashboard/payroll', icon: Wallet });
+  }
+  // Tasks visible to all staff
+  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {
     people.items.push({ name: 'Tasks', path: '/dashboard/tasks', icon: CheckSquare });
   }
   if (['SUPER_ADMIN', 'OWNER'].includes(role)) {
@@ -152,7 +155,7 @@ export default function DashboardLayout() {
         className={`fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out md:relative md:translate-x-0 ${
           isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${collapsed ? 'md:w-[72px]' : 'w-64'}`}
-        style={{ background: 'var(--sidebar)' }}
+        style={{ background: 'var(--sidebar)', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {/* Logo */}
         <div className={`h-16 flex items-center border-b shrink-0 ${collapsed ? 'justify-center px-4' : 'px-5 gap-3'}`}
@@ -168,8 +171,8 @@ export default function DashboardLayout() {
           )}
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 space-y-6">
+        {/* Nav — scrollbar hidden via CSS (aside selector in index.css) */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 space-y-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {navSections.map((section) => (
             <div key={section.label}>
               {!collapsed && (

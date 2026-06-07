@@ -11,14 +11,14 @@ export default function Register() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  
-  const [role, setRole] = useState('CUSTOMER');
-  
+  const [companyName, setCompanyName] = useState('');
+  const [gstNumber, setGstNumber] = useState('');
+  const [address, setAddress] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -38,10 +38,10 @@ export default function Register() {
       formData.append('password', password);
       formData.append('firstName', firstName);
       formData.append('lastName', lastName);
-      formData.append('role', role);
-      if (profileImage) {
-        formData.append('image', profileImage);
-      }
+      formData.append('companyName', companyName);
+      formData.append('gstNumber', gstNumber);
+      formData.append('address', address);
+      if (profileImage) formData.append('image', profileImage);
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
         method: 'POST',
@@ -50,8 +50,8 @@ export default function Register() {
       const data = await res.json();
       
       if (res.ok) {
-        toast.success('Registration successful! Please log in.');
-        navigate('/login');
+        setRegistered(true);
+        toast.success('Registration submitted! Awaiting admin verification.');
       } else {
         toast.error(data.error || 'Registration failed');
       }
@@ -61,6 +61,31 @@ export default function Register() {
       setIsLoading(false);
     }
   };
+
+  // Show success/verification pending state
+  if (registered) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-muted/30 px-4 py-12">
+        <div className="max-w-md w-full bg-card rounded-2xl shadow-xl border border-border p-10 text-center">
+          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m4-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-3">Account Pending Verification</h2>
+          <p className="text-muted-foreground mb-2 text-base">
+            Your registration was successful! Our team will review your account and verify it shortly.
+          </p>
+          <p className="text-sm text-muted-foreground mb-8">
+            You will be able to log in once an administrator approves your account. This usually takes 1-2 business days.
+          </p>
+          <Link to="/login" className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors">
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/30 px-4 py-12">

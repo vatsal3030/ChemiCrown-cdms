@@ -23,7 +23,7 @@ export default function NotificationDropdown() {
         setNotifications(data.notifications.slice(0, 5)); // Just top 5 for dropdown
         setUnreadCount(data.notifications.filter(n => !n.isRead).length);
       }
-    } catch {
+    } catch (err) {
       console.error('Failed to fetch notifications', err);
     }
   };

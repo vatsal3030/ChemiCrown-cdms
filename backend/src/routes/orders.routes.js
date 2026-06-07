@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.use(requireAuth);
 // Allow CUSTOMER, SALES, SUPER_ADMIN to interact with orders
-router.use(requireRole(['CUSTOMER', 'SALES', 'SUPER_ADMIN']));
+router.use(requireRole(['CUSTOMER', 'SALES', 'SUPER_ADMIN', 'OWNER', 'MANAGER', 'MARKETING', 'INVENTORY_MANAGER']));
 
 router.post('/', validateRequest(createOrderSchema), createOrder);
 router.post('/verify', validateRequest(verifyPaymentSchema), verifyPayment);

@@ -1,5 +1,5 @@
 const express = require('express');
-const { syncUser, getMe, register, login, updateProfile, getPendingCustomers, verifyCustomer, forgotPassword, verifyOtp, resetPassword } = require('../controllers/auth.controller');
+const { syncUser, getMe, register, login, updateProfile, changePassword, getPendingCustomers, verifyCustomer, rejectCustomer, forgotPassword, verifyOtp, resetPassword } = require('../controllers/auth.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { validateRequest } = require('../middlewares/validate.middleware');
 const { syncUserSchema } = require('../validations/auth.validation');
@@ -17,6 +17,7 @@ router.get('/me', requireAuth, getMe);
 router.post('/register', upload.single('image'), register);
 router.post('/login', login);
 router.put('/profile', requireAuth, upload.single('image'), updateProfile);
+router.post('/change-password', requireAuth, changePassword);
 
 // Password Reset endpoints
 router.post('/forgot-password', forgotPassword);
@@ -25,7 +26,8 @@ router.post('/reset-password', resetPassword);
 
 // Admin customer verification
 const { requireRole } = require('../middlewares/rbac.middleware');
-router.get('/pending-customers', requireAuth, requireRole(['SUPER_ADMIN']), getPendingCustomers);
-router.post('/verify-customer/:id', requireAuth, requireRole(['SUPER_ADMIN']), verifyCustomer);
+router.get('/pending-customers', requireAuth, requireRole(['SUPER_ADMIN', 'OWNER']), getPendingCustomers);
+router.post('/verify-customer/:id', requireAuth, requireRole(['SUPER_ADMIN', 'OWNER']), verifyCustomer);
+router.delete('/reject-customer/:id', requireAuth, requireRole(['SUPER_ADMIN', 'OWNER']), rejectCustomer);
 
 module.exports = router;
