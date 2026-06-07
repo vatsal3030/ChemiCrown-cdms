@@ -24,7 +24,18 @@ exports.getEmployees = async (req, res, next) => {
         role: { not: 'CUSTOMER' } // Fetch all non-customer employees including OWNER
       },
       include: {
-        employeeProfile: true
+        employeeProfile: {
+          include: {
+            attendance: {
+              where: {
+                date: {
+                  startsWith: new Date().toISOString().substring(0, 7)
+                }
+              }
+            },
+            salaries: true
+          }
+        }
       },
       orderBy: {
         [sortField]: sortOrder
@@ -37,29 +48,71 @@ exports.getEmployees = async (req, res, next) => {
   }
 };
 
+exports.getMyPayroll = async (req, res, next) => {
+  try {
+    const employee = await prisma.employee.findUnique({
+      where: { userId: req.user.id },
+      include: {
+        attendance: {
+          orderBy: { date: 'desc' }
+        },
+        salaries: {
+          orderBy: { month: 'desc' }
+        }
+      }
+    });
+
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee profile not found' });
+    }
+
+    res.status(200).json({ success: true, data: employee });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.updateSalary = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { amount } = req.body;
+    const { month } = req.body;
+    const targetMonth = month || new Date().toISOString().substring(0, 7);
 
-    let employee = await prisma.employee.findUnique({ where: { userId: id } });
+    let employee = await prisma.employee.findUnique({ 
+      where: { userId: id },
+      include: { attendance: true }
+    });
+
     if (!employee) {
-      employee = await prisma.employee.create({
-        data: {
-          userId: id,
-          department: 'Unassigned',
-          jobTitle: 'Employee',
-          isActive: true
-        }
-      });
+      return res.status(404).json({ success: false, message: 'Employee profile not found' });
     }
+
+    const baseSalary = employee.baseSalary || 0;
+    const pfRate = employee.pfRate || 12;
+
+    // Calculate absent days for the target month
+    const monthAttendance = employee.attendance.filter(a => a.date.startsWith(targetMonth));
+    let absentDays = 0;
+    monthAttendance.forEach(a => {
+      if (a.status === 'ABSENT') absentDays += 1;
+      if (a.status === 'HALF_DAY') absentDays += 0.5;
+    });
+
+    const deductions = baseSalary > 0 ? (baseSalary / 30) * absentDays : 0;
+    const pfContribution = baseSalary > 0 ? (baseSalary * pfRate) / 100 : 0;
+    const netPay = baseSalary - deductions - pfContribution;
 
     const newSalary = await prisma.salary.create({
       data: {
         employeeId: employee.id,
-        amount: parseFloat(amount),
-        month: req.body.month || new Date().toISOString().substring(0, 7),
-        status: 'PAID'
+        amount: baseSalary,
+        deductions,
+        pfContribution,
+        netPay: Math.max(0, netPay),
+        absentDays,
+        month: targetMonth,
+        status: 'PAID',
+        paidAt: new Date()
       }
     });
 
@@ -84,7 +137,7 @@ exports.deleteEmployee = async (req, res, next) => {
 
 exports.addEmployee = async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName, role, department, jobTitle, phone, joiningDate, isActive } = req.body;
+    const { email, password, firstName, lastName, role, department, jobTitle, phone, joiningDate, isActive, baseSalary, ctc, pfRate } = req.body;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -111,7 +164,10 @@ exports.addEmployee = async (req, res, next) => {
           department,
           jobTitle,
           joiningDate: joiningDate ? new Date(joiningDate) : undefined,
-          isActive: isActive !== undefined ? isActive : true
+          isActive: isActive !== undefined ? isActive : true,
+          baseSalary: baseSalary ? parseFloat(baseSalary) : null,
+          ctc: ctc ? parseFloat(ctc) : null,
+          pfRate: pfRate ? parseFloat(pfRate) : 12.0
         }
       });
 
@@ -127,7 +183,7 @@ exports.addEmployee = async (req, res, next) => {
 exports.updateEmployee = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, phone, role, department, jobTitle, joiningDate, isActive } = req.body;
+    const { firstName, lastName, phone, role, department, jobTitle, joiningDate, isActive, baseSalary, ctc, pfRate } = req.body;
 
     const updatedUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.update({
@@ -143,13 +199,19 @@ exports.updateEmployee = async (req, res, next) => {
             department,
             jobTitle,
             joiningDate: joiningDate ? new Date(joiningDate) : undefined,
-            isActive: isActive !== undefined ? isActive : true
+            isActive: isActive !== undefined ? isActive : true,
+            baseSalary: baseSalary ? parseFloat(baseSalary) : null,
+            ctc: ctc ? parseFloat(ctc) : null,
+            pfRate: pfRate ? parseFloat(pfRate) : 12.0
           },
           update: {
             department,
             jobTitle,
             joiningDate: joiningDate ? new Date(joiningDate) : undefined,
-            isActive: isActive !== undefined ? isActive : true
+            isActive: isActive !== undefined ? isActive : true,
+            baseSalary: baseSalary ? parseFloat(baseSalary) : null,
+            ctc: ctc ? parseFloat(ctc) : null,
+            pfRate: pfRate ? parseFloat(pfRate) : null
           }
         });
       }

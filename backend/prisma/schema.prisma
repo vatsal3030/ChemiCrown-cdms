@@ -26,6 +26,7 @@ model User {
   customerProfile Customer?
   auditLogs       AuditLog[]
   tasksAssigned   Task[]   @relation("TaskAssigner")
+  favorites       Favorite[]
 }
 
 enum Role {
@@ -51,6 +52,9 @@ model Employee {
   salaries    Salary[]
   deletedAt   DateTime?
   tasks       Task[]   @relation("TaskAssignee")
+  baseSalary  Float?   // HR Payroll
+  ctc         Float?   // Cost to Company
+  pfRate      Float?   // e.g. 12.0
 }
 
 model Customer {
@@ -128,6 +132,7 @@ model Product {
   inventory   Inventory?
   orderItems  OrderItem[]
   reviews     Review[]
+  favorites   Favorite[]
   
   @@index([categoryId, isActive])
 }
@@ -295,7 +300,11 @@ model Salary {
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [id])
   month      String   // e.g., "YYYY-MM"
-  amount     Float
+  amount     Float    // Base amount processed
+  deductions Float    @default(0)
+  pfContribution Float @default(0)
+  netPay     Float    @default(0)
+  absentDays Int      @default(0)
   status     SalaryStatus @default(PENDING)
   paidAt     DateTime?
 }
@@ -303,6 +312,17 @@ model Salary {
 enum SalaryStatus {
   PENDING
   PAID
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
 }
 
 model Payment {

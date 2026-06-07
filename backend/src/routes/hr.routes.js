@@ -7,6 +7,9 @@ const { requireRole } = require('../middlewares/rbac.middleware');
 const hrAccess = requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR']);
 
 router.use(requireAuth);
+
+router.get('/me', hrController.getMyPayroll);
+
 router.use(hrAccess);
 
 router.get('/', hrController.getEmployees);

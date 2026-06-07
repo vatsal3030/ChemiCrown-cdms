@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
+import { useUnsavedChangesWarning } from '../../hooks/useUnsavedChangesWarning';
 
 export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -14,10 +15,16 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
     department: '',
     jobTitle: '',
     joiningDate: '',
-    isActive: true
+    isActive: true,
+    baseSalary: '',
+    ctc: '',
+    pfRate: '12'
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const isDirty = Object.values(formData).some(val => val !== '' && val !== 'MANAGER' && val !== '12');
+  useUnsavedChangesWarning(isOpen && isDirty && !loading);
 
   if (!isOpen) return null;
 
@@ -178,7 +185,40 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Payroll & Compensation</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Base Salary (₹)</label>
+                <input 
+                  type="number" 
+                  value={formData.baseSalary}
+                  onChange={e => setFormData({...formData, baseSalary: e.target.value})}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">CTC (₹)</label>
+                <input 
+                  type="number" 
+                  value={formData.ctc}
+                  onChange={e => setFormData({...formData, ctc: e.target.value})}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">PF Rate (%)</label>
+                <input 
+                  type="number" 
+                  value={formData.pfRate}
+                  onChange={e => setFormData({...formData, pfRate: e.target.value})}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 mt-4">
             <input 
               type="checkbox" 
               id="isActive"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Package, LayoutDashboard, ShoppingCart, Settings, Menu, Users, ClipboardCheck, LogOut, ShieldCheck, ChevronUp, UserPlus, Store, X, Trash2, CheckSquare } from 'lucide-react';
+import { Package, LayoutDashboard, ShoppingCart, Settings, Menu, Users, ClipboardCheck, LogOut, ShieldCheck, ChevronUp, UserPlus, Store, X, Trash2, CheckSquare, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
@@ -8,7 +8,7 @@ import NavbarSearch from '@/components/layout/NavbarSearch';
 
 export default function DashboardLayout() {
   const location = useLocation();
-  const { user, storedAccounts, logout, switchAccount } = useAuth();
+  const { user, storedAccounts, logout, logoutAll, switchAccount } = useAuth();
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(() => {
@@ -28,6 +28,7 @@ export default function DashboardLayout() {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING'] },
     { name: 'Product Catalog', path: '/dashboard/catalog', icon: Store, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER', 'SALES', 'CUSTOMER'] },
     { name: 'My Cart', path: '/dashboard/cart', icon: ShoppingCart, roles: ['CUSTOMER'] },
+    { name: 'My Wishlist', path: '/dashboard/wishlist', icon: Heart, roles: ['CUSTOMER'] },
     { name: 'Verify Customers', path: '/dashboard/verify', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'OWNER'] },
     { name: 'Inventory', path: '/dashboard/inventory', icon: Package, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER'] },
     { name: 'Stock History', path: '/dashboard/stock-history', icon: ClipboardCheck, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER'] },
@@ -35,8 +36,8 @@ export default function DashboardLayout() {
     { name: 'HR Management', path: '/dashboard/hr', icon: Users, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER'] },
     { name: 'My Attendance', path: '/dashboard/me', icon: ClipboardCheck, roles: ['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING'] },
     { name: 'Orders', path: '/dashboard/orders', icon: ShoppingCart, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'CUSTOMER', 'MARKETING'] },
-    { name: 'Settings', path: '/dashboard/settings', icon: Settings, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'CUSTOMER'] },
     { name: 'Recycle Bin', path: '/dashboard/recycle-bin', icon: Trash2, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER'] },
+    { name: 'Settings', path: '/dashboard/settings', icon: Settings, roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'CUSTOMER'] },
   ];
 
   // Filter items based on the user's role
@@ -127,7 +128,11 @@ export default function DashboardLayout() {
                   <UserPlus size={16} />
                   Add Account
                 </Link>
-                <button onClick={logout} className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors mt-1">
+                <button onClick={logout} className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mt-1">
+                  <LogOut size={16} />
+                  Log out
+                </button>
+                <button onClick={logoutAll} className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors mt-1">
                   <LogOut size={16} />
                   Log out all accounts
                 </button>

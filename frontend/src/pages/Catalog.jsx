@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Info, CheckCircle2, XCircle } from 'lucide-react';
+import { Search, ShoppingCart, Info, CheckCircle2, XCircle, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 import useSWR from 'swr';
 import useDebounce from '@/hooks/useDebounce';
@@ -12,7 +13,9 @@ export default function Catalog() {
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart } = useCart();
+  const { user, token } = useAuth();
 
   useEffect(() => {
     const q = searchParams.get('search');
@@ -37,9 +40,61 @@ export default function Catalog() {
 
   const loading = !products && !error;
 
+  const favFetcher = async (url) => {
+    if (!token) return [];
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const json = await res.json();
+    return json.success ? json.data : [];
+  };
+
+  const { data: favoritesData, mutate: mutateFavorites } = useSWR(
+    user ? `${import.meta.env.VITE_API_URL}/api/favorites` : null,
+    favFetcher
+  );
+
+  const favoriteIds = new Set(favoritesData?.map(f => f.productId) || []);
+
+  const handleToggleFavorite = async (e, productId) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    
+    // Optimistic UI update could be done here if needed
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ productId })
+      });
+      if (res.ok) {
+        mutateFavorites();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleBuyNow = (product) => {
+    if (!user) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     addToCart(product, 1);
     navigate('/dashboard/checkout');
+  };
+
+  const handleAddToCart = (e, product) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    addToCart(product, 1);
   };
 
   return (
@@ -107,7 +162,8 @@ export default function Catalog() {
                   key={product.id} 
                   className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-1 cursor-pointer"
                   onClick={() => {
-                    navigate(`/dashboard/catalog/${product.id}`);
+                    const isDashboard = location.pathname.startsWith('/dashboard');
+                    navigate(`${isDashboard ? '/dashboard/catalog' : '/catalog'}/${product.id}`);
                     window.scrollTo(0, 0);
                   }}
                 >
@@ -121,8 +177,17 @@ export default function Catalog() {
                         <span className="text-sm font-medium">No Image Available</span>
                       </div>
                     )}
-                    {/* Badge */}
-                    <div className="absolute top-3 right-3">
+                    {/* Badges and Heart */}
+                    <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+                      <button
+                        onClick={(e) => handleToggleFavorite(e, product.id)}
+                        className="p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-800 shadow-sm hover:scale-110 transition-transform"
+                      >
+                        <Heart 
+                          size={18} 
+                          className={favoriteIds.has(product.id) ? "fill-red-500 text-red-500" : "text-slate-500 dark:text-slate-400"} 
+                        />
+                      </button>
                       {inStock ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 backdrop-blur-sm shadow-sm border border-green-200 dark:border-green-800">
                           <CheckCircle2 size={12} /> In Stock

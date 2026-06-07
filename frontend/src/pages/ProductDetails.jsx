@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Beaker, Star, Shield, Archive, CheckCircle2, XCircle, ChevronRight, X, Maximize2 } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, ShoppingCart, Beaker, Star, Shield, Archive, CheckCircle2, XCircle, ChevronRight, X, Maximize2, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import useSWR from 'swr';
 
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +20,46 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { token } = useAuth();
+
+  const favFetcher = async (url) => {
+    if (!token) return [];
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const json = await res.json();
+    return json.success ? json.data : [];
+  };
+
+  const { data: favoritesData, mutate: mutateFavorites } = useSWR(
+    user ? `${import.meta.env.VITE_API_URL}/api/favorites` : null,
+    favFetcher
+  );
+
+  const isFavorited = favoritesData?.some(f => f.productId === id);
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/favorites/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ productId: id })
+      });
+      if (res.ok) {
+        mutateFavorites();
+        const json = await res.json();
+        toast.success(json.action === 'added' ? 'Added to Wishlist' : 'Removed from Wishlist');
+      }
+    } catch (err) {
+      toast.error('Failed to update wishlist');
+    }
+  };
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -56,18 +100,76 @@ export default function ProductDetails() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-12 pb-20 animate-pulse">
-        <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded mb-8"></div>
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          <div className="md:col-span-5 lg:col-span-4 aspect-square bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
-          <div className="md:col-span-7 lg:col-span-5 space-y-4">
-            <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
-            <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
-            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full mt-6"></div>
-            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-5/6"></div>
-            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-4/6"></div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 pb-20 animate-pulse">
+        {/* Back Button Skeleton */}
+        <div className="h-9 w-36 bg-slate-200 dark:bg-slate-800 rounded mb-[-20px]"></div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start relative">
+          {/* Left Column Skeleton */}
+          <div className="md:col-span-5 lg:col-span-4 space-y-4">
+            <div className="aspect-square bg-slate-200 dark:bg-slate-800 rounded-2xl w-full border border-slate-100 dark:border-slate-800"></div>
+            <div className="flex gap-2 overflow-hidden pb-2">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0 border-2 border-slate-100 dark:border-slate-800"></div>
+              ))}
+            </div>
           </div>
-          <div className="lg:col-span-3 bg-slate-200 dark:bg-slate-800 rounded-2xl h-64"></div>
+          
+          {/* Middle Column Skeleton */}
+          <div className="md:col-span-7 lg:col-span-5 space-y-6">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-6">
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20 mb-2"></div>
+              <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded w-full mb-2"></div>
+              <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded w-2/3"></div>
+              <div className="flex gap-4 mt-3">
+                <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+                <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="flex flex-col gap-1">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+                  <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-full max-w-[150px]"></div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="pt-4">
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-32 mb-2"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-5/6"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column (Buy Box) Skeleton */}
+          <div className="md:col-span-12 lg:col-span-3">
+            <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-card space-y-5 shadow-sm">
+              <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+              <div className="space-y-1">
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full max-w-[200px]"></div>
+              </div>
+              <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
+              
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+                  <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded flex-1"></div>
+                </div>
+                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-full mt-2"></div>
+                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-full"></div>
+                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-full mt-3"></div>
+              </div>
+              
+              <div className="flex justify-center pt-2">
+                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -76,7 +178,7 @@ export default function ProductDetails() {
   if (!product) {
     return <div className="p-20 text-center">
       <h2 className="text-2xl font-bold">Product Not Found</h2>
-      <Button className="mt-4" onClick={() => navigate('/dashboard/catalog')}>Back to Catalog</Button>
+      <Button className="mt-4" onClick={() => navigate('/catalog')}>Back to Catalog</Button>
     </div>;
   }
 
@@ -88,8 +190,11 @@ export default function ProductDetails() {
   const images = product.imageUrls?.length > 0 ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12 pb-20 animate-in fade-in duration-500">
-      <Button variant="ghost" onClick={() => navigate('/dashboard/catalog')} className="mb-[-20px]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 pb-20 animate-in fade-in duration-500">
+      <Button variant="ghost" onClick={() => {
+        const isDashboard = location.pathname.startsWith('/dashboard');
+        navigate(isDashboard ? '/dashboard/catalog' : '/catalog');
+      }} className="mb-[-20px]">
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Catalog
       </Button>
 
@@ -257,6 +362,10 @@ export default function ProductDetails() {
                     className="w-full rounded-full shadow-md bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold border-none"
                     disabled={!inStock}
                     onClick={() => {
+                      if (!user) {
+                        navigate('/login', { state: { from: location } });
+                        return;
+                      }
                       addToCart(product, quantity);
                     }}
                   >
@@ -266,6 +375,10 @@ export default function ProductDetails() {
                     className="w-full rounded-full shadow-md bg-orange-500 hover:bg-orange-600 text-white font-bold border-none"
                     disabled={!inStock}
                     onClick={() => {
+                      if (!user) {
+                        navigate('/login', { state: { from: location } });
+                        return;
+                      }
                       addToCart(product, quantity);
                       navigate('/dashboard/checkout');
                     }}
@@ -274,6 +387,15 @@ export default function ProductDetails() {
                   </Button>
                 </>
               )}
+              
+              <Button 
+                variant="outline" 
+                className={`w-full rounded-full shadow-sm font-bold mt-3 ${isFavorited ? 'border-red-200 text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600' : 'text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50'}`}
+                onClick={handleToggleFavorite}
+              >
+                <Heart className={`w-4 h-4 mr-2 ${isFavorited ? 'fill-red-500' : ''}`} /> 
+                {isFavorited ? 'Remove from Wishlist' : 'Add to Wishlist'}
+              </Button>
             </div>
 
             <div className="text-xs text-muted-foreground flex items-center justify-center gap-1 pt-2">
@@ -374,7 +496,8 @@ export default function ProductDetails() {
                 key={rel.id} 
                 className="bg-card rounded-2xl border border-border p-4 cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all group"
                 onClick={() => {
-                  navigate(`/dashboard/catalog/${rel.id}`);
+                  const isDashboard = location.pathname.startsWith('/dashboard');
+                  navigate(`${isDashboard ? '/dashboard/catalog' : '/catalog'}/${rel.id}`);
                   window.scrollTo(0,0);
                 }}
               >

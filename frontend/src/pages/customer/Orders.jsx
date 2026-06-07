@@ -144,7 +144,7 @@ export default function Orders() {
                     <td className="px-6 py-4 text-slate-500">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 font-medium">₹{order.total}</td>
+                    <td className="px-6 py-4 font-medium">₹{Number(order.total).toFixed(2)}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         order.status === 'PAID' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { CreditCard, ShieldCheck, Building, ShoppingCart, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { useCart } from '../../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { MapAddressPicker } from '@/components/ui/MapAddressPicker';
+import { useUnsavedChangesWarning } from '../../hooks/useUnsavedChangesWarning';
 
 // Haversine formula to calculate distance in km
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -41,6 +42,10 @@ export default function Checkout() {
     lat: null,
     lng: null
   });
+  const isProcessing = useRef(false);
+
+  const isDirty = Object.values(formData).some(val => val !== '' && val !== null && val !== (user?.email || ''));
+  useUnsavedChangesWarning(isDirty && !loading);
 
   const distanceKm = calculateDistance(WAREHOUSE_LAT, WAREHOUSE_LNG, formData.lat, formData.lng);
   const distanceCost = distanceKm * COST_PER_KM;
@@ -67,6 +72,8 @@ export default function Checkout() {
       return;
     }
     
+    if (isProcessing.current) return;
+    isProcessing.current = true;
     setLoading(true);
     
     try {
@@ -109,6 +116,7 @@ export default function Checkout() {
       toast.error("Network error");
     } finally {
       setLoading(false);
+      isProcessing.current = false;
     }
   };
 
@@ -122,7 +130,7 @@ export default function Checkout() {
         <ShoppingCart className="w-16 h-16 text-slate-300 mx-auto mb-4" />
         <h2 className="text-2xl font-bold">Your Cart is Empty</h2>
         <p className="text-muted-foreground mt-2 mb-6">Looks like you haven't added any products to your cart yet.</p>
-        <Button onClick={() => navigate('/dashboard/catalog')}>Browse Catalog</Button>
+        <Button onClick={() => navigate('/catalog')}>Browse Catalog</Button>
       </div>
     );
   }

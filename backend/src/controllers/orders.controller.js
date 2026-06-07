@@ -7,10 +7,19 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET || 'secret_placeholder'
 });
 
+const processedRequests = new Map();
+
 const createOrder = async (req, res, next) => {
   try {
     const { items, distanceKm, shippingAddress, orderNotes } = req.body; // array of { chemicalId, quantity }
     const userId = req.user.id;
+
+    const idempotencyKey = `${userId}-${JSON.stringify(items)}`;
+    if (processedRequests.has(idempotencyKey)) {
+      return res.status(409).json({ error: 'Duplicate order detected. Please wait before placing the same order again.' });
+    }
+    processedRequests.set(idempotencyKey, true);
+    setTimeout(() => processedRequests.delete(idempotencyKey), 5000);
 
     let customer = await prisma.customer.findUnique({ where: { userId } });
     
@@ -53,11 +62,15 @@ const createOrder = async (req, res, next) => {
           throw new Error(`Insufficient stock for ${product.name}. Available: ${product.inventory?.quantity || 0}`);
         }
 
-        // Deduct inventory
-        await tx.inventory.update({
-          where: { productId: product.id },
+        // Deduct inventory atomically to prevent race condition
+        const updateRes = await tx.inventory.updateMany({
+          where: { productId: product.id, quantity: { gte: item.quantity } },
           data: { quantity: { decrement: item.quantity } }
         });
+
+        if (updateRes.count === 0) {
+          throw new Error(`Insufficient stock for ${product.name} during checkout race condition.`);
+        }
 
         const itemTotal = product.price * item.quantity;
         calcTotal += itemTotal;
@@ -69,10 +82,11 @@ const createOrder = async (req, res, next) => {
         });
       }
 
-      const distanceCost = (distanceKm || 0) * 10;
+      const distanceCost = Number(((distanceKm || 0) * 10).toFixed(2));
       const hazardousShippingCost = calcTotal > 0 ? 2500 : 0;
-      const taxAmount = calcTotal * 0.18;
-      const finalTotal = calcTotal + distanceCost + hazardousShippingCost + taxAmount;
+      const taxAmount = Number((calcTotal * 0.18).toFixed(2));
+      calcTotal = Number(calcTotal.toFixed(2));
+      const finalTotal = Number((calcTotal + distanceCost + hazardousShippingCost + taxAmount).toFixed(2));
 
       const dbOrder = await tx.order.create({
         data: {
@@ -99,7 +113,7 @@ const createOrder = async (req, res, next) => {
     const options = {
       amount: Math.round(totalAmount * 100), // paise
       currency: "INR",
-      receipt: `receipt_order_${order.id}`
+      receipt: `rcpt_${order.id.substring(0, 8)}`
     };
 
     const rzpOrder = await razorpay.orders.create(options);

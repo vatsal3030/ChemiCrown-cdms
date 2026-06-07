@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, ArrowUpDown, DollarSign, MessageSquare, AlertCircle, Eye, Users, CalendarCheck, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import EmployeeModal from '@/components/admin/EmployeeModal';
 import { useNavigate } from 'react-router-dom';
@@ -102,12 +103,11 @@ export default function HRManagement() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify({ amount: salaryAmount })
+        body: JSON.stringify({ month: new Date().toISOString().substring(0, 7) })
       });
       if (res.ok) {
         toast.success('Salary paid successfully');
-        setSelectedEmployee(null);
-        setSalaryAmount('');
+        mutate(`${import.meta.env.VITE_API_URL}/api/hr`); // Refresh data
       } else {
         toast.error('Failed to pay salary');
       }
@@ -229,14 +229,40 @@ export default function HRManagement() {
                 <th className="px-6 py-4">Role</th>
                 {activeTab === 'directory' && <th className="px-6 py-4">Department / Joining Date</th>}
                 {activeTab === 'attendance' && <th className="px-6 py-4">Today's Action</th>}
-                {activeTab === 'payroll' && <th className="px-6 py-4">Pay Salary</th>}
+                {activeTab === 'payroll' && (
+                  <>
+                    <th className="px-6 py-4">Base Salary</th>
+                    <th className="px-6 py-4">Deductions</th>
+                    <th className="px-6 py-4">PF</th>
+                    <th className="px-6 py-4">Net Pay</th>
+                    <th className="px-6 py-4 text-right">Action</th>
+                  </>
+                )}
                 {activeTab === 'communications' && <th className="px-6 py-4">Send Message</th>}
                 {activeTab === 'directory' && ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(user?.role) && <th className="px-6 py-4 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {loading ? (
-                <tr><td colSpan="5" className="p-8 text-center text-slate-500">Loading employees...</td></tr>
+                <>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="w-8 h-8 rounded-full" />
+                          <div>
+                            <Skeleton className="h-4 w-32 mb-1" />
+                            <Skeleton className="h-3 w-48" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-8 w-24 rounded-lg" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-8 w-8 rounded-lg" /></td>
+                    </tr>
+                  ))}
+                </>
               ) : employees.length === 0 ? (
                 <tr><td colSpan="5" className="p-8 text-center text-slate-500">No employees found.</td></tr>
               ) : (
@@ -280,19 +306,33 @@ export default function HRManagement() {
                     )}
 
                     {activeTab === 'payroll' && (
-                      <td className="px-6 py-4">
-                        {selectedEmployee === emp.id ? (
-                          <div className="flex items-center gap-2">
-                            <Input type="number" placeholder="Amount (₹)" value={salaryAmount} onChange={e => setSalaryAmount(e.target.value)} className="w-32" />
-                            <Button size="sm" onClick={() => handlePaySalary(emp.id)}>Pay</Button>
-                            <Button size="sm" variant="ghost" onClick={() => setSelectedEmployee(null)}>Cancel</Button>
-                          </div>
-                        ) : (
-                          <Button size="sm" variant="outline" onClick={() => setSelectedEmployee(emp.id)}>
-                            <DollarSign size={14} className="mr-2" /> Process Pay
-                          </Button>
-                        )}
-                      </td>
+                      (() => {
+                        const baseSalary = emp.employeeProfile?.baseSalary || 0;
+                        const pfRate = emp.employeeProfile?.pfRate || 12;
+                        const attendance = emp.employeeProfile?.attendance || [];
+                        let absentDays = 0;
+                        attendance.forEach(a => {
+                          if (a.status === 'ABSENT') absentDays += 1;
+                          if (a.status === 'HALF_DAY') absentDays += 0.5;
+                        });
+                        const deductions = baseSalary > 0 ? (baseSalary / 30) * absentDays : 0;
+                        const pfContribution = baseSalary > 0 ? (baseSalary * pfRate) / 100 : 0;
+                        const netPay = Math.max(0, baseSalary - deductions - pfContribution);
+                        
+                        return (
+                          <>
+                            <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">₹{baseSalary.toFixed(2)}</td>
+                            <td className="px-6 py-4 text-red-600 font-medium">-₹{deductions.toFixed(2)} <span className="text-xs text-slate-500 font-normal">({absentDays} days)</span></td>
+                            <td className="px-6 py-4 text-orange-600 font-medium">-₹{pfContribution.toFixed(2)} <span className="text-xs text-slate-500 font-normal">({pfRate}%)</span></td>
+                            <td className="px-6 py-4 text-green-600 font-bold">₹{netPay.toFixed(2)}</td>
+                            <td className="px-6 py-4 text-right">
+                              <Button size="sm" onClick={() => handlePaySalary(emp.id)}>
+                                <DollarSign size={14} className="mr-2" /> Pay
+                              </Button>
+                            </td>
+                          </>
+                        );
+                      })()
                     )}
 
                     {activeTab === 'communications' && (

@@ -64,8 +64,30 @@ export function AuthProvider({ children }) {
   };
   
   const logout = () => {
+    if (user) {
+      setStoredAccounts(prev => {
+        const newAccounts = prev.filter(a => a.id !== user.id);
+        localStorage.setItem('chemicrown_accounts', JSON.stringify(newAccounts));
+        return newAccounts;
+      });
+    }
     setUser(null);
     localStorage.removeItem('token');
+  };
+
+  const logoutAll = () => {
+    setStoredAccounts([]);
+    localStorage.removeItem('chemicrown_accounts');
+    setUser(null);
+    localStorage.removeItem('token');
+  };
+
+  const removeStoredAccount = (accountId) => {
+    setStoredAccounts(prev => {
+      const newAccounts = prev.filter(a => a.id !== accountId);
+      localStorage.setItem('chemicrown_accounts', JSON.stringify(newAccounts));
+      return newAccounts;
+    });
   };
 
   const switchAccount = (accountId) => {
@@ -80,7 +102,7 @@ export function AuthProvider({ children }) {
   const token = localStorage.getItem('token');
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, storedAccounts, login, logout, switchAccount, setUser }}>
+    <AuthContext.Provider value={{ user, token, loading, storedAccounts, login, logout, logoutAll, removeStoredAccount, switchAccount, setUser }}>
       {children}
     </AuthContext.Provider>
   );

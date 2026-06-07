@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Beaker, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Beaker, Mail, Lock, Eye, EyeOff, ArrowRight, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, storedAccounts, switchAccount } = useAuth();
+  const { login, storedAccounts, switchAccount, removeStoredAccount } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -63,27 +63,36 @@ export default function Login() {
               <p className="text-sm font-medium text-slate-500 mb-3">Quick Login</p>
               <div className="space-y-2 max-h-40 overflow-y-auto pr-2 pb-2">
                 {storedAccounts.map(account => (
-                  <button 
-                    key={account.id}
-                    onClick={() => handleQuickLogin(account.id)}
-                    type="button"
-                    className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden shrink-0">
-                        {account.profileImageUrl ? (
-                          <img src={account.profileImageUrl} alt={account.firstName || 'User'} className="w-full h-full object-cover" />
-                        ) : (
-                          account.firstName ? account.firstName.charAt(0) : 'U'
-                        )}
+                  <div key={account.id} className="relative flex items-center group">
+                    <button 
+                      onClick={() => handleQuickLogin(account.id)}
+                      type="button"
+                      className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors pr-10"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden shrink-0">
+                          {account.profileImageUrl ? (
+                            <img src={account.profileImageUrl} alt={account.firstName || 'User'} className="w-full h-full object-cover" />
+                          ) : (
+                            account.firstName ? account.firstName.charAt(0) : 'U'
+                          )}
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-bold text-foreground">{account.firstName}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{account.role.replace('_', ' ').toLowerCase()}</p>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-foreground">{account.firstName}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{account.role.replace('_', ' ').toLowerCase()}</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
-                  </button>
+                      <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); removeStoredAccount(account.id); }}
+                      className="absolute right-3 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors z-10 opacity-0 group-hover:opacity-100"
+                      title="Remove account"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 ))}
               </div>
               

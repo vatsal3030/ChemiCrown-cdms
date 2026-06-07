@@ -32,6 +32,7 @@ import MyAttendance from './pages/employee/MyAttendance';
 import Orders from './pages/customer/Orders';
 import OrderDetails from './pages/customer/OrderDetails';
 import Checkout from './pages/customer/Checkout';
+import Wishlist from './pages/customer/Wishlist';
 import Cart from './pages/customer/Cart';
 import ProductDetails from './pages/ProductDetails';
 import Settings from './pages/Settings';
@@ -90,6 +91,7 @@ function App() {
                 <Route path="about" element={<About />} />
                 <Route path="contact" element={<Contact />} />
                 <Route path="catalog" element={<Catalog />} />
+                <Route path="catalog/:id" element={<ProductDetails />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />
@@ -99,10 +101,16 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'CUSTOMER', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER']} />}>
                 <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<Dashboard />} />
+                  <Route path="catalog" element={<Catalog />} />
+                  <Route path="catalog/:id" element={<ProductDetails />} />
                   
                   {/* Super Admin & Owner Only */}
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']} />}>
                     <Route path="verify" element={<CustomerVerification />} />
+                  </Route>
+
+                  {/* Super Admin, Owner, & Manager */}
+                  <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
                     <Route path="recycle-bin" element={<RecycleBin />} />
                   </Route>
 
@@ -119,6 +127,13 @@ function App() {
                     <Route path="orders" element={<Orders />} />
                     <Route path="orders/:id" element={<OrderDetails />} />
                   </Route>
+                  
+                  {/* Customer Routes */}
+                  <Route element={<ProtectedRoute allowedRoles={['CUSTOMER']} />}>
+                    <Route path="cart" element={<Cart />} />
+                    <Route path="checkout" element={<Checkout />} />
+                    <Route path="wishlist" element={<Wishlist />} />
+                  </Route>
 
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
                     <Route path="hr" element={<HRManagement />} />
@@ -131,10 +146,6 @@ function App() {
                     <Route path="me" element={<MyAttendance />} />
                   </Route>
 
-                  <Route path="catalog" element={<Catalog />} />
-                  <Route path="catalog/:id" element={<ProductDetails />} />
-                  <Route path="cart" element={<Cart />} />
-                  <Route path="checkout" element={<Checkout />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="notifications" element={<Notifications />} />
                 </Route>
