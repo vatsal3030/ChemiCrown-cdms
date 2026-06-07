@@ -12,6 +12,10 @@ exports.getInventory = async (req, res, next) => {
       page = 1, limit = 10
     } = req.query;
 
+    // Guard against NaN / invalid page values from frontend
+    const safePage  = Math.max(1, isNaN(parseInt(page))  ? 1 : parseInt(page));
+    const safeLimit = Math.max(1, isNaN(parseInt(limit)) ? 10 : parseInt(limit));
+
     const where = { deletedAt: null };
 
     if (search) {
@@ -59,8 +63,8 @@ exports.getInventory = async (req, res, next) => {
       where.id = { in: lowStockIds };
     }
 
-    const take = parseInt(limit);
-    const skip = (parseInt(page) - 1) * take;
+    const take = safeLimit;
+    const skip = (safePage - 1) * take;
 
     const [products, total] = await prisma.$transaction([
       prisma.product.findMany({
@@ -82,7 +86,7 @@ exports.getInventory = async (req, res, next) => {
       data: products,
       pagination: {
         total,
-        page: parseInt(page),
+        page: safePage,
         limit: take,
         totalPages: Math.ceil(total / take)
       }

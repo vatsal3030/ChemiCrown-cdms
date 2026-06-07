@@ -4,11 +4,11 @@ const bcrypt = require('bcryptjs');
 
 exports.getEmployees = async (req, res, next) => {
   try {
-    const { search, sortField = 'firstName', sortOrder = 'asc' } = req.query;
+    const { search, sortField = 'firstName', sortOrder = 'asc', showTerminated = 'true' } = req.query;
 
-    const where = {
-      deletedAt: null
-    };
+    // By default show all including terminated (HR needs to see them), unless explicitly filtered
+    const where = {};
+    if (showTerminated === 'false') where.deletedAt = null;
 
     if (search) {
       where.OR = [
@@ -34,7 +34,8 @@ exports.getEmployees = async (req, res, next) => {
                 }
               }
             },
-            salaries: { orderBy: { month: 'desc' }, take: 3 }
+            salaries: { orderBy: { month: 'desc' }, take: 3 },
+            warnings: { orderBy: { createdAt: 'desc' } }
           }
         }
       },
@@ -169,6 +170,7 @@ exports.addEmployee = async (req, res, next) => {
           jobTitle,
           joiningDate: joiningDate ? new Date(joiningDate) : undefined,
           isActive: isActive !== undefined ? isActive : true,
+          status: 'ACTIVE',
           baseSalary: baseSalary ? parseFloat(baseSalary) : null,
           ctc: ctc ? parseFloat(ctc) : null,
           pfRate: pfRate ? parseFloat(pfRate) : 12.0
@@ -348,18 +350,161 @@ exports.getSalaries = async (req, res, next) => {
 
 exports.sendWarning = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // employeeId (Employee table id)
     const { message } = req.body;
-    
+
+    // Legacy: still send notification
     const notification = await prisma.notification.create({
-      data: {
-        userId: id,
-        message: `[WARNING from HR] ${message}`
-      }
+      data: { userId: id, message: `[WARNING from HR] ${message}` }
     });
 
     res.status(200).json({ success: true, data: notification });
   } catch (error) {
     next(error);
   }
+};
+
+// ── NEW: Formal Warning System ────────────────────────────────────────────────
+
+exports.issueWarning = async (req, res, next) => {
+  try {
+    const { id } = req.params; // employee.id
+    const { type = 'VERBAL', reason } = req.body;
+
+    if (!reason) return res.status(400).json({ success: false, message: 'Reason is required' });
+
+    const employee = await prisma.employee.findUnique({
+      where: { id },
+      include: { user: { select: { id: true, firstName: true, lastName: true } } }
+    });
+    if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+
+    const [warning] = await prisma.$transaction([
+      prisma.employeeWarning.create({
+        data: { employeeId: id, type, reason, issuedBy: req.user.id }
+      }),
+      prisma.notification.create({
+        data: {
+          userId: employee.userId,
+          message: `[${type} WARNING] ${reason}`
+        }
+      })
+    ]);
+
+    // Audit log
+    prisma.auditLog.create({
+      data: {
+        userId: req.user.id, action: `ISSUED_${type}_WARNING`,
+        entity: 'Employee', entityId: id,
+        details: JSON.stringify({ reason })
+      }
+    }).catch(() => {});
+
+    res.status(201).json({ success: true, data: warning, message: `${type} warning issued` });
+  } catch (error) { next(error); }
+};
+
+exports.getWarnings = async (req, res, next) => {
+  try {
+    const { id } = req.params; // employee.id
+    const warnings = await prisma.employeeWarning.findMany({
+      where: { employeeId: id },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, data: warnings });
+  } catch (error) { next(error); }
+};
+
+exports.deleteWarning = async (req, res, next) => {
+  try {
+    const { warnId } = req.params;
+    await prisma.employeeWarning.delete({ where: { id: warnId } });
+    res.json({ success: true, message: 'Warning deleted' });
+  } catch (error) { next(error); }
+};
+
+// ── Terminate Employee ────────────────────────────────────────────────────────
+exports.terminateEmployee = async (req, res, next) => {
+  try {
+    const { id } = req.params; // employee.id
+    const { reason, effectiveDate } = req.body;
+    if (!reason) return res.status(400).json({ success: false, message: 'Reason is required' });
+
+    const employee = await prisma.employee.findUnique({ where: { id }, include: { user: true } });
+    if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+
+    const termDate = effectiveDate ? new Date(effectiveDate) : new Date();
+
+    await prisma.$transaction([
+      prisma.employee.update({
+        where: { id },
+        data: { status: 'TERMINATED', isActive: false, terminatedAt: termDate, terminationReason: reason }
+      }),
+      prisma.user.update({
+        where: { id: employee.userId },
+        data: { deletedAt: termDate } // prevents login
+      }),
+      prisma.notification.create({
+        data: { userId: employee.userId, message: `Your employment has been terminated effective ${termDate.toLocaleDateString('en-IN')}. Reason: ${reason}` }
+      })
+    ]);
+
+    prisma.auditLog.create({
+      data: { userId: req.user.id, action: 'TERMINATED_EMPLOYEE', entity: 'Employee', entityId: id, details: JSON.stringify({ reason, effectiveDate: termDate }) }
+    }).catch(() => {});
+
+    res.json({ success: true, message: 'Employee terminated' });
+  } catch (error) { next(error); }
+};
+
+// ── Suspend / Reinstate Employee ──────────────────────────────────────────────
+exports.suspendEmployee = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { from, to, reason } = req.body;
+    if (!from || !to) return res.status(400).json({ success: false, message: 'from and to dates required' });
+
+    const employee = await prisma.employee.findUnique({ where: { id }, include: { user: true } });
+    if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+
+    await prisma.$transaction([
+      prisma.employee.update({ where: { id }, data: { status: 'SUSPENDED', suspendedFrom: new Date(from), suspendedTo: new Date(to) } }),
+      prisma.notification.create({ data: { userId: employee.userId, message: `You have been suspended from ${from} to ${to}. Reason: ${reason || 'Not specified'}` } })
+    ]);
+
+    res.json({ success: true, message: 'Employee suspended' });
+  } catch (error) { next(error); }
+};
+
+exports.reinstateEmployee = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await prisma.employee.update({ where: { id }, data: { status: 'ACTIVE', suspendedFrom: null, suspendedTo: null, isActive: true } });
+    const emp = await prisma.employee.findUnique({ where: { id } });
+    await prisma.notification.create({ data: { userId: emp.userId, message: 'Your suspension has been lifted. You are reinstated as an active employee.' } });
+    res.json({ success: true, message: 'Employee reinstated' });
+  } catch (error) { next(error); }
+};
+
+// ── Update Salary Configuration ───────────────────────────────────────────────
+exports.updateSalaryConfig = async (req, res, next) => {
+  try {
+    const { id } = req.params; // employee.id
+    const { baseSalary, ctc, pfRate } = req.body;
+
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: {
+        ...(baseSalary !== undefined && { baseSalary: parseFloat(baseSalary) }),
+        ...(ctc !== undefined && { ctc: parseFloat(ctc) }),
+        ...(pfRate !== undefined && { pfRate: parseFloat(pfRate) })
+      }
+    });
+
+    prisma.auditLog.create({
+      data: { userId: req.user.id, action: 'UPDATED_SALARY_CONFIG', entity: 'Employee', entityId: id, details: JSON.stringify({ baseSalary, ctc, pfRate }) }
+    }).catch(() => {});
+
+    res.json({ success: true, data: updated, message: 'Salary configuration updated' });
+  } catch (error) { next(error); }
 };

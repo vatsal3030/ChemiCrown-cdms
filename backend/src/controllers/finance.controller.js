@@ -2,111 +2,344 @@ const prisma = require('../config/prisma');
 
 /**
  * GET /api/finance/overview
- * Revenue, expenses (payroll), gross profit — for OWNER/SUPER_ADMIN
- * Uses valid OrderStatus values: REQUESTED, PENDING, PROCESSING, PACKAGED, DISPATCHED, DELIVERED, CANCELLED
- * Revenue is counted from non-cancelled orders
+ * All-time P&L summary with optional date range
  */
-exports.getFinanceOverview = async (req, res, next) => {
+exports.getOverview = async (req, res, next) => {
   try {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const { from, to } = req.query;
+    const dateFilter = buildDateFilter(from, to);
 
-    // Valid revenue statuses (all non-cancelled, non-pending-only orders)
-    const revenueStatuses = ['PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'];
-
-    // Total Revenue (YTD)
-    const revenueAgg = await prisma.order.aggregate({
-      _sum: { total: true },
-      where: {
-        status: { in: revenueStatuses },
-        deletedAt: null,
-        createdAt: { gte: startOfYear }
-      }
+    // Revenue — from DELIVERED orders
+    const orders = await prisma.order.findMany({
+      where: { status: 'DELIVERED', createdAt: dateFilter },
+      include: { items: { include: { product: true } } }
     });
-    const totalRevenue = revenueAgg._sum.total || 0;
 
-    // Monthly Revenue (current month)
-    const monthRevenueAgg = await prisma.order.aggregate({
-      _sum: { total: true },
-      where: {
-        status: { in: revenueStatuses },
-        deletedAt: null,
-        createdAt: { gte: startOfMonth }
-      }
-    });
-    const monthRevenue = monthRevenueAgg._sum.total || 0;
+    const revenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+    const shippingRevenue = orders.reduce((s, o) => s + (o.distanceCost || 0), 0);
 
-    // Total Payroll Expenses (PAID salaries this year)
-    const currentYearPrefix = String(now.getFullYear());
-    const payrollAgg = await prisma.salary.aggregate({
-      _sum: { netPay: true, pfContribution: true },
-      where: {
-        status: 'PAID',
-        month: { startsWith: currentYearPrefix }
-      }
-    });
-    const totalPayrollExpense = (payrollAgg._sum.netPay || 0) + (payrollAgg._sum.pfContribution || 0);
+    // COGS — cost basis = purchase price proxy (use product price as proxy since no cost price field)
+    // Real COGS would use inventory transaction costs; using price as a conservative proxy
+    const cogs = orders.reduce((s, o) =>
+      s + o.items.reduce((is, item) => is + (item.price * item.quantity * 0.6), 0), 0);
+    // ↑ 60% cost ratio as conservative proxy — replace with actual cost_price when available
 
     // Gross Profit
-    const grossProfit = totalRevenue - totalPayrollExpense;
+    const grossProfit = revenue - cogs;
+    const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
 
-    // Monthly revenue breakdown (last 6 months)
-    const monthlyRevenue = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-      const agg = await prisma.order.aggregate({
-        _sum: { total: true },
-        where: {
-          status: { in: revenueStatuses },
-          deletedAt: null,
-          createdAt: { gte: d, lt: end }
-        }
-      });
-      monthlyRevenue.push({
-        month: d.toLocaleString('en-IN', { month: 'short', year: '2-digit' }),
-        revenue: Number((agg._sum.total || 0).toFixed(2))
-      });
-    }
+    // Payroll costs — PAID salaries
+    const paidSalaries = await prisma.salary.findMany({
+      where: { status: 'PAID', paidAt: dateFilter }
+    });
+    const payrollCost = paidSalaries.reduce((s, sl) => s + (sl.netPay || 0), 0);
 
-    // Monthly payroll (last 6 months)
-    const monthlyPayroll = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const agg = await prisma.salary.aggregate({
-        _sum: { netPay: true },
-        where: { status: 'PAID', month: monthStr }
-      });
-      monthlyPayroll.push({
-        month: d.toLocaleString('en-IN', { month: 'short', year: '2-digit' }),
-        expense: Number((agg._sum.netPay || 0).toFixed(2))
-      });
-    }
+    // Manual expenses
+    const expenses = await prisma.expense.findMany({
+      where: { date: dateFilter },
+      orderBy: { date: 'desc' }
+    });
+    const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
 
-    // Pending salary slips count
-    const pendingSalaries = await prisma.salary.count({ where: { status: 'PENDING' } });
+    // Tax collected (from orders — VAT/GST placeholder)
+    const taxCollected = orders.reduce((s, o) => s + (o.taxAmount || 0), 0);
 
-    // Total & paid order counts
-    const totalOrders = await prisma.order.count({ where: { deletedAt: null } });
-    const deliveredOrders = await prisma.order.count({ where: { status: 'DELIVERED', deletedAt: null } });
+    // Net Profit
+    const netProfit = grossProfit - payrollCost - totalExpenses;
+    const netMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+
+    // Pending revenue (orders not yet delivered)
+    const pendingOrders = await prisma.order.findMany({
+      where: {
+        status: { in: ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED'] },
+        createdAt: dateFilter
+      }
+    });
+    const pendingRevenue = pendingOrders.reduce((s, o) => s + (o.total || 0), 0);
+
+    // Monthly revenue trend (for chart — all months from first order)
+    const monthlyRevenue = await getMonthlyRevenueTrend(from, to);
+
+    // Expense breakdown by category
+    const expenseByCategory = expenses.reduce((acc, e) => {
+      acc[e.category] = (acc[e.category] || 0) + e.amount;
+      return acc;
+    }, {});
+
+    // Payroll by month
+    const payrollByMonth = paidSalaries.reduce((acc, s) => {
+      acc[s.month] = (acc[s.month] || 0) + s.netPay;
+      return acc;
+    }, {});
+
+    // Recent ledger entries (last 20)
+    const recentLedger = await prisma.financeLedger.findMany({
+      where: { date: dateFilter },
+      orderBy: { date: 'desc' },
+      take: 20
+    });
 
     res.json({
       success: true,
       data: {
-        totalRevenue: Number(totalRevenue.toFixed(2)),
-        monthRevenue: Number(monthRevenue.toFixed(2)),
-        totalPayrollExpense: Number(totalPayrollExpense.toFixed(2)),
-        grossProfit: Number(grossProfit.toFixed(2)),
-        pendingSalaries,
-        totalOrders,
-        paidOrders: deliveredOrders,
+        revenue,
+        shippingRevenue,
+        cogs,
+        grossProfit,
+        grossMargin,
+        payrollCost,
+        totalExpenses,
+        taxCollected,
+        netProfit,
+        netMargin,
+        pendingRevenue,
+        orderCount: orders.length,
+        pendingOrderCount: pendingOrders.length,
         monthlyRevenue,
-        monthlyPayroll
+        expenseByCategory,
+        payrollByMonth,
+        recentLedger,
+        recentExpenses: expenses.slice(0, 10),
+        dateRange: { from: from || null, to: to || null }
       }
     });
   } catch (error) {
     next(error);
   }
 };
+
+/**
+ * GET /api/finance/ledger
+ * Full ledger with filters and pagination
+ */
+exports.getLedger = async (req, res, next) => {
+  try {
+    const { from, to, type, category, page = 1, limit = 50 } = req.query;
+    const safePage  = Math.max(1, isNaN(parseInt(page))  ? 1 : parseInt(page));
+    const safeLimit = Math.max(1, isNaN(parseInt(limit)) ? 50 : parseInt(limit));
+
+    const where = {};
+    if (from || to) where.date = buildDateFilter(from, to);
+    if (type) where.type = type;
+    if (category) where.category = { contains: category, mode: 'insensitive' };
+
+    const [entries, total] = await Promise.all([
+      prisma.financeLedger.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        skip: (safePage - 1) * safeLimit,
+        take: safeLimit
+      }),
+      prisma.financeLedger.count({ where })
+    ]);
+
+    res.json({
+      success: true,
+      data: entries,
+      pagination: { total, page: safePage, limit: safeLimit, totalPages: Math.ceil(total / safeLimit) }
+    });
+  } catch (error) { next(error); }
+};
+
+/**
+ * GET /api/finance/expenses
+ * List manual expenses
+ */
+exports.getExpenses = async (req, res, next) => {
+  try {
+    const { from, to, category, page = 1, limit = 20 } = req.query;
+    const safePage  = Math.max(1, parseInt(page) || 1);
+    const safeLimit = Math.max(1, parseInt(limit) || 20);
+    const where = {};
+    if (from || to) where.date = buildDateFilter(from, to);
+    if (category && category !== 'all') where.category = category;
+
+    const [expenses, total] = await Promise.all([
+      prisma.expense.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        skip: (safePage - 1) * safeLimit,
+        take: safeLimit
+      }),
+      prisma.expense.count({ where })
+    ]);
+
+    res.json({ success: true, data: expenses, pagination: { total, page: safePage, limit: safeLimit, totalPages: Math.ceil(total / safeLimit) } });
+  } catch (error) { next(error); }
+};
+
+/**
+ * POST /api/finance/expenses
+ * Create manual expense + ledger entry
+ */
+exports.createExpense = async (req, res, next) => {
+  try {
+    const { category, amount, description, date, receiptUrl } = req.body;
+    if (!category || !amount || !description || !date) {
+      return res.status(400).json({ success: false, message: 'category, amount, description, and date are required' });
+    }
+    if (parseFloat(amount) <= 0) {
+      return res.status(400).json({ success: false, message: 'Amount must be positive' });
+    }
+
+    const [expense] = await prisma.$transaction([
+      prisma.expense.create({
+        data: { category, amount: parseFloat(amount), description, date: new Date(date), receiptUrl, createdBy: req.user.id }
+      }),
+      prisma.financeLedger.create({
+        data: {
+          type: 'DEBIT',
+          category,
+          amount: parseFloat(amount),
+          description,
+          date: new Date(date),
+          createdBy: req.user.id,
+          isAutomatic: false
+        }
+      })
+    ]);
+
+    res.status(201).json({ success: true, data: expense, message: 'Expense recorded' });
+  } catch (error) { next(error); }
+};
+
+/**
+ * PUT /api/finance/expenses/:id
+ */
+exports.updateExpense = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { category, amount, description, date, receiptUrl } = req.body;
+    const expense = await prisma.expense.update({
+      where: { id },
+      data: {
+        ...(category && { category }),
+        ...(amount && { amount: parseFloat(amount) }),
+        ...(description && { description }),
+        ...(date && { date: new Date(date) }),
+        ...(receiptUrl !== undefined && { receiptUrl })
+      }
+    });
+    res.json({ success: true, data: expense });
+  } catch (error) { next(error); }
+};
+
+/**
+ * DELETE /api/finance/expenses/:id
+ */
+exports.deleteExpense = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await prisma.expense.delete({ where: { id } });
+    res.json({ success: true, message: 'Expense deleted' });
+  } catch (error) { next(error); }
+};
+
+/**
+ * POST /api/finance/sync-ledger
+ * Admin: retroactively sync all historical orders and salaries into the ledger
+ * This is a one-time or on-demand operation
+ */
+exports.syncLedger = async (req, res, next) => {
+  try {
+    // Sync delivered orders → CREDIT entries
+    const orders = await prisma.order.findMany({
+      where: { status: 'DELIVERED' },
+      include: { items: true }
+    });
+
+    // Sync paid salaries → DEBIT entries
+    const salaries = await prisma.salary.findMany({ where: { status: 'PAID' } });
+
+    let creditCount = 0;
+    let debitCount = 0;
+
+    for (const order of orders) {
+      const exists = await prisma.financeLedger.findFirst({ where: { referenceId: order.id, type: 'CREDIT' } });
+      if (!exists) {
+        await prisma.financeLedger.create({
+          data: {
+            type: 'CREDIT',
+            category: 'REVENUE',
+            amount: order.total || 0,
+            description: `Order #${order.id.substring(0, 8).toUpperCase()} delivered`,
+            referenceId: order.id,
+            date: order.updatedAt || order.createdAt,
+            isAutomatic: true
+          }
+        });
+        creditCount++;
+      }
+    }
+
+    for (const sal of salaries) {
+      const exists = await prisma.financeLedger.findFirst({ where: { referenceId: sal.id, type: 'DEBIT' } });
+      if (!exists) {
+        await prisma.financeLedger.create({
+          data: {
+            type: 'DEBIT',
+            category: 'PAYROLL',
+            amount: sal.netPay || 0,
+            description: `Payroll ${sal.month} - Employee ${sal.employeeId.substring(0, 8)}`,
+            referenceId: sal.id,
+            date: sal.paidAt || new Date(),
+            isAutomatic: true
+          }
+        });
+        debitCount++;
+      }
+    }
+
+    res.json({ success: true, message: `Synced ${creditCount} revenue entries and ${debitCount} payroll entries` });
+  } catch (error) { next(error); }
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function buildDateFilter(from, to) {
+  if (!from && !to) return undefined;
+  const filter = {};
+  if (from) filter.gte = new Date(from);
+  if (to) {
+    const toDate = new Date(to);
+    toDate.setHours(23, 59, 59, 999);
+    filter.lte = toDate;
+  }
+  return filter;
+}
+
+async function getMonthlyRevenueTrend(from, to) {
+  // Get first order date if no from
+  let startDate = from ? new Date(from) : null;
+  if (!startDate) {
+    const firstOrder = await prisma.order.findFirst({ orderBy: { createdAt: 'asc' }, where: { status: 'DELIVERED' } });
+    startDate = firstOrder?.createdAt || new Date();
+  }
+  const endDate = to ? new Date(to) : new Date();
+
+  const deliveredOrders = await prisma.order.findMany({
+    where: { status: 'DELIVERED', createdAt: { gte: startDate, lte: endDate } },
+    select: { total: true, createdAt: true, distanceCost: true }
+  });
+
+  const map = {};
+  for (const o of deliveredOrders) {
+    const key = o.createdAt.toISOString().substring(0, 7); // YYYY-MM
+    if (!map[key]) map[key] = { month: key, revenue: 0, orders: 0 };
+    map[key].revenue += o.total || 0;
+    map[key].orders += 1;
+  }
+
+  // Paid salaries by month
+  const paidSalaries = await prisma.salary.findMany({
+    where: { status: 'PAID', paidAt: { gte: startDate, lte: endDate } },
+    select: { netPay: true, month: true }
+  });
+  for (const s of paidSalaries) {
+    const key = s.month;
+    if (!map[key]) map[key] = { month: key, revenue: 0, orders: 0 };
+    map[key].payroll = (map[key].payroll || 0) + s.netPay;
+  }
+
+  return Object.values(map).sort((a, b) => a.month.localeCompare(b.month));
+}

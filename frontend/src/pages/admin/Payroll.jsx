@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
   Wallet, CheckCircle2, Clock, Plus, Search, Filter,
-  DollarSign, CreditCard, Banknote, Smartphone, X, ShieldCheck
+  DollarSign, CreditCard, Banknote, Smartphone, X, ShieldCheck,
+  Trash2, Edit3, Users, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -158,6 +159,34 @@ export default function Payroll() {
     }
   };
 
+  const handleBulkPay = async () => {
+    const pending = salaries.filter(s => s.status === 'PENDING');
+    if (pending.length === 0) return toast.error('No pending slips to pay');
+    if (!window.confirm(`Mark ALL ${pending.length} pending slips for ${month} as PAID (Digital Transfer)?`)) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/bulk-pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ month, paymentMethod: 'DIGITAL_TRANSFER' })
+      });
+      const json = await res.json();
+      if (json.success) { toast.success(json.message); fetchSalaries(); }
+      else toast.error(json.message || 'Failed');
+    } catch { toast.error('Network error'); }
+  };
+
+  const handleDeleteSlip = async (id) => {
+    if (!window.confirm('Delete this pending salary slip?')) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/${id}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) { toast.success('Slip deleted'); fetchSalaries(); }
+      else toast.error(json.message || 'Failed');
+    } catch { toast.error('Network error'); }
+  };
+
   const filtered = salaries.filter(s => {
     const name = `${s.employee?.user?.firstName || ''} ${s.employee?.user?.lastName || ''}`.toLowerCase();
     return name.includes(search.toLowerCase());
@@ -166,6 +195,7 @@ export default function Payroll() {
   const totalPaid = salaries.filter(s => s.status === 'PAID').reduce((a, s) => a + s.netPay, 0);
   const totalPending = salaries.filter(s => s.status === 'PENDING').reduce((a, s) => a + s.netPay, 0);
   const totalPF = salaries.reduce((a, s) => a + s.pfContribution, 0);
+  const pendingCount = salaries.filter(s => s.status === 'PENDING').length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -184,13 +214,18 @@ export default function Payroll() {
           <h1 className="page-title">Payroll Management</h1>
           <p className="page-subtitle">Generate monthly salaries, track deductions, and manage PF contributions.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <input
             type="month"
             value={month}
             onChange={e => setMonth(e.target.value)}
             className="px-3 py-2 rounded-xl border border-border bg-card text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
           />
+          {pendingCount > 0 && (
+            <Button variant="outline" onClick={handleBulkPay} className="gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50">
+              <Users size={15} /> Bulk Pay ({pendingCount})
+            </Button>
+          )}
           <Button
             onClick={handleGenerate}
             disabled={generating}
@@ -316,22 +351,29 @@ export default function Payroll() {
                   </td>
                   <td className="data-table-cell text-rose-600 font-medium">-₹{slip.deductions.toFixed(2)}</td>
                   <td className="data-table-cell text-amber-600 font-medium">-₹{slip.pfContribution.toFixed(2)}</td>
-                  <td className="data-table-cell font-bold text-foreground text-base">₹{slip.netPay.toFixed(2)}</td>
+                   <td className="data-table-cell font-bold text-foreground text-base">₹{slip.netPay.toFixed(2)}</td>
                   <td className="data-table-cell"><SalaryStatusBadge status={slip.status} confirmed={slip.confirmedByEmployee} /></td>
                   <td className="data-table-cell">
                     <div className="text-xs text-muted-foreground">{slip.paymentMethod?.replace('_', ' ') || '—'}</div>
                   </td>
                   <td className="data-table-cell text-right">
+                    <div className="flex items-center justify-end gap-1.5">
                     {slip.status === 'PENDING' ? (
-                      <Button
-                        size="sm"
-                        onClick={() => setPayModal(slip)}
-                        disabled={payingId === slip.id}
-                        className="text-xs"
-                      >
-                        <CreditCard size={13} className="mr-1" />
-                        {payingId === slip.id ? 'Processing...' : 'Pay Now'}
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => setPayModal(slip)}
+                          disabled={payingId === slip.id}
+                          className="text-xs"
+                        >
+                          <CreditCard size={13} className="mr-1" />
+                          {payingId === slip.id ? 'Processing...' : 'Pay'}
+                        </Button>
+                        <button title="Delete slip" onClick={() => handleDeleteSlip(slip.id)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors">
+                          <Trash2 size={13} />
+                        </button>
+                      </>
                     ) : (
                       <div className="text-right">
                         <span className="text-xs text-muted-foreground block">
@@ -342,6 +384,7 @@ export default function Payroll() {
                         )}
                       </div>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}

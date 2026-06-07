@@ -1,23 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const payrollController = require('../controllers/payroll.controller');
+const pc = require('../controllers/payroll.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 
 router.use(requireAuth);
 
-// Admin routes — OWNER, SUPER_ADMIN, MANAGER (HR)
 const adminOnly = requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']);
+const allStaff  = requireRole(['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING', 'SUPER_ADMIN', 'OWNER']);
 
-router.get('/', adminOnly, payrollController.getAllSalaries);
-router.post('/generate', adminOnly, payrollController.generateMonthlyPayroll);
-router.post('/:id/pay', adminOnly, payrollController.markAsPaid);
-router.get('/pf/:employeeId', adminOnly, payrollController.getPFLedger);
-router.post('/pf/:employeeId/settle', adminOnly, payrollController.settlePF);
+// ── Employee self-service ─────────────────────────────────────────────────────
+router.get('/my',          allStaff,  pc.getMyPayroll);
+router.post('/:id/confirm', pc.confirmReceipt);
 
-// Employee self-service
-router.get('/my', requireRole(['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING', 'SUPER_ADMIN', 'OWNER']), payrollController.getMyPayroll);
-// Employee confirms receipt of their own salary
-router.post('/:id/confirm', payrollController.confirmReceipt);
+// ── Admin / HR ────────────────────────────────────────────────────────────────
+router.get('/',                        adminOnly, pc.getAllSalaries);
+router.post('/generate',               adminOnly, pc.generateMonthlyPayroll);
+router.post('/bulk-pay',               adminOnly, pc.bulkPay);              // ← NEW: bulk pay all pending
+router.delete('/month/:month',         adminOnly, pc.deleteMonthSlips);    // ← NEW: delete all pending for month
+
+router.post('/:id/pay',  adminOnly, pc.markAsPaid);
+router.put('/:id',       adminOnly, pc.updateSlip);    // ← NEW: edit slip
+router.delete('/:id',    adminOnly, pc.deleteSlip);    // ← NEW: delete single slip
+
+// PF Ledger
+router.get('/pf/:employeeId',          adminOnly, pc.getPFLedger);
+router.post('/pf/:employeeId/settle',  adminOnly, pc.settlePF);
 
 module.exports = router;

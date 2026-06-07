@@ -263,3 +263,97 @@ exports.settlePF = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * PUT /api/payroll/:id
+ * Edit a salary slip (adjust bonus, allowances, deductions, TDS, remarks)
+ * Can only edit PENDING slips (once PAID, it is locked)
+ */
+exports.updateSlip = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { bonus, allowances, deductions, tds, remarks } = req.body;
+
+    const slip = await prisma.salary.findUnique({ where: { id } });
+    if (!slip) return res.status(404).json({ success: false, message: 'Salary slip not found' });
+    if (slip.status === 'PAID') return res.status(400).json({ success: false, message: 'Cannot edit a PAID slip. Contact finance.' });
+
+    // Recalculate netPay
+    const b  = bonus      !== undefined ? parseFloat(bonus)      : (slip.bonus || 0);
+    const al = allowances !== undefined ? parseFloat(allowances) : (slip.allowances || 0);
+    const d  = deductions !== undefined ? parseFloat(deductions) : slip.deductions;
+    const t  = tds        !== undefined ? parseFloat(tds)        : (slip.tds || 0);
+    const pf = slip.pfContribution;
+    const netPay = slip.amount + b + al - d - t - pf;
+
+    const updated = await prisma.salary.update({
+      where: { id },
+      data: { bonus: b, allowances: al, deductions: d, tds: t, netPay: Math.max(0, netPay), ...(remarks !== undefined && { remarks }) }
+    });
+
+    res.json({ success: true, data: updated, message: 'Salary slip updated' });
+  } catch (error) { next(error); }
+};
+
+/**
+ * DELETE /api/payroll/:id
+ * Delete a single salary slip (PENDING only)
+ */
+exports.deleteSlip = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const slip = await prisma.salary.findUnique({ where: { id } });
+    if (!slip) return res.status(404).json({ success: false, message: 'Salary slip not found' });
+    if (slip.status === 'PAID') return res.status(400).json({ success: false, message: 'Cannot delete a PAID slip.' });
+
+    await prisma.salary.delete({ where: { id } });
+    res.json({ success: true, message: 'Salary slip deleted' });
+  } catch (error) { next(error); }
+};
+
+/**
+ * DELETE /api/payroll/month/:month
+ * Delete ALL PENDING slips for a given month
+ */
+exports.deleteMonthSlips = async (req, res, next) => {
+  try {
+    const { month } = req.params;
+    const result = await prisma.salary.deleteMany({
+      where: { month, status: 'PENDING' }
+    });
+    res.json({ success: true, message: `Deleted ${result.count} pending slip(s) for ${month}` });
+  } catch (error) { next(error); }
+};
+
+/**
+ * POST /api/payroll/bulk-pay
+ * Mark all PENDING slips for a month as PAID in one action
+ */
+exports.bulkPay = async (req, res, next) => {
+  try {
+    const { month, paymentMethod = 'DIGITAL_TRANSFER' } = req.body;
+    if (!month) return res.status(400).json({ success: false, message: 'Month is required' });
+
+    const slips = await prisma.salary.findMany({ where: { month, status: 'PENDING' } });
+    if (slips.length === 0) return res.status(400).json({ success: false, message: `No pending slips for ${month}` });
+
+    const now = new Date();
+    await prisma.$transaction(
+      slips.map(s =>
+        prisma.salary.update({
+          where: { id: s.id },
+          data: { status: 'PAID', paidAt: now, paymentMethod }
+        })
+      )
+    );
+
+    // Sync ledger
+    for (const s of slips) {
+      prisma.financeLedger.create({
+        data: { type: 'DEBIT', category: 'PAYROLL', amount: s.netPay, description: `Bulk payroll ${month}`, referenceId: s.id, date: now, isAutomatic: true }
+      }).catch(() => {});
+    }
+
+    res.json({ success: true, message: `Processed ${slips.length} payments for ${month}` });
+  } catch (error) { next(error); }
+};

@@ -1,28 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const hrController = require('../controllers/hr.controller');
+const hc = require('../controllers/hr.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 
-const hrAccess = requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR']);
+const hrAccess = requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']);
 
 router.use(requireAuth);
 
-router.get('/me', hrController.getMyPayroll);
+// Employee self-service (any authenticated user)
+router.get('/me', hc.getMyPayroll);
 
+// HR admin access required for everything below
 router.use(hrAccess);
 
-router.get('/', hrController.getEmployees);
-router.post('/', hrController.addEmployee);
-router.put('/:id', hrController.updateEmployee);
-router.delete('/:id', hrController.deleteEmployee);
+// Employee CRUD
+router.get('/',       hc.getEmployees);
+router.post('/',      hc.addEmployee);
+router.put('/:id',    hc.updateEmployee);
+router.delete('/:id', hc.deleteEmployee);
 
-router.post('/:id/salary', hrController.updateSalary);
-router.get('/:id/salary', hrController.getSalaries);
+// Salary & Payroll
+router.get('/:id/salary',         hc.getSalaries);
+router.post('/:id/salary',        hc.updateSalary);
+router.put('/:id/salary-config',  hc.updateSalaryConfig);   // ← NEW: set base salary / PF rate
 
-router.post('/:id/attendance', hrController.markAttendance);
-router.get('/:id/attendance', hrController.getAttendance);
+// Attendance
+router.post('/:id/attendance', hc.markAttendance);
+router.get('/:id/attendance',  hc.getAttendance);
 
-router.post('/:id/warning', hrController.sendWarning);
+// ── Disciplinary Actions ──────────────────────────────────────────────────────
+router.post('/:id/warnings',               hc.issueWarning);    // ← NEW: formal warning
+router.get('/:id/warnings',                hc.getWarnings);     // ← NEW: list warnings
+router.delete('/:id/warnings/:warnId',     hc.deleteWarning);   // ← NEW: delete warning
+
+router.post('/:id/terminate',  hc.terminateEmployee);   // ← NEW
+router.post('/:id/suspend',    hc.suspendEmployee);     // ← NEW
+router.post('/:id/reinstate',  hc.reinstateEmployee);   // ← NEW
+
+// Legacy warning notification (kept for backward compat)
+router.post('/:id/warning', hc.sendWarning);
 
 module.exports = router;
