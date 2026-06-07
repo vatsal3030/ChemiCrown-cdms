@@ -4,22 +4,30 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft, Package, MapPin, Truck, CheckCircle2,
-  Clock, XCircle, RefreshCw, Star
+  Clock, XCircle, RefreshCw, Star, ChevronRight, AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReviewModal from '@/components/ReviewModal';
 
 const STATUS_CONFIG = {
-  REQUESTED: { label: 'Requested', color: 'badge-info',    icon: Clock },
-  PENDING:   { label: 'Pending',   color: 'badge-warning', icon: Clock },
-  PROCESSING:{ label: 'Processing',color: 'badge-purple',  icon: RefreshCw },
-  PACKAGED:  { label: 'Packaged',  color: 'badge-orange',  icon: Package },
-  DISPATCHED:{ label: 'Dispatched',color: 'badge-info',    icon: Truck },
-  DELIVERED: { label: 'Delivered', color: 'badge-success', icon: CheckCircle2 },
-  CANCELLED: { label: 'Cancelled', color: 'badge-error',   icon: XCircle },
+  REQUESTED:  { label: 'Requested',  color: 'badge-info',        icon: Clock },
+  PENDING:    { label: 'Pending',    color: 'badge-warning',     icon: Clock },
+  PROCESSING: { label: 'Processing', color: 'badge-secondary',   icon: RefreshCw },
+  PACKAGED:   { label: 'Packaged',   color: 'badge-secondary',   icon: Package },
+  DISPATCHED: { label: 'Dispatched', color: 'badge-info',        icon: Truck },
+  DELIVERED:  { label: 'Delivered',  color: 'badge-success',     icon: CheckCircle2 },
+  CANCELLED:  { label: 'Cancelled',  color: 'badge-destructive', icon: XCircle },
 };
 
 const TIMELINE = ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'];
+
+const NEXT_ACTION = {
+  REQUESTED:  { label: 'Mark as Pending',     note: 'Payment/COD verification complete. Move to Pending.' },
+  PENDING:    { label: 'Start Processing',    note: 'Begin preparing the order.' },
+  PROCESSING: { label: 'Mark as Packaged',    note: 'Order packed and ready for dispatch.' },
+  PACKAGED:   { label: 'Dispatch Order',      note: 'Handing over to logistics.' },
+  DISPATCHED: { label: 'Mark as Delivered',   note: 'Customer has received the order.' },
+};
 
 export default function OrderDetails() {
   const { id } = useParams();
@@ -27,8 +35,12 @@ export default function OrderDetails() {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [advancing, setAdvancing] = useState(false);
+  const [advanceNote, setAdvanceNote] = useState('');
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
+
+  const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES'].includes(user?.role);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -39,14 +51,40 @@ export default function OrderDetails() {
         const json = await res.json();
         if (json.success) setOrder(json.data);
         else toast.error(json.error || 'Failed to load order');
-      } catch {
-        toast.error('Network error while loading order');
-      } finally {
-        setLoading(false);
-      }
+      } catch { toast.error('Network error while loading order'); }
+      finally { setLoading(false); }
     };
     fetchOrder();
   }, [id, token]);
+
+  const handleAdvance = async () => {
+    setAdvancing(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/advance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ note: advanceNote })
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(json.message);
+        setOrder(prev => ({ ...prev, status: json.data.status }));
+        setAdvanceNote('');
+      } else toast.error(json.error || 'Failed to advance');
+    } catch { toast.error('Network error'); }
+    finally { setAdvancing(false); }
+  };
+
+  const handleVerifyCod = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/verify-cod`, {
+        method: 'PUT', headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) { toast.success('COD order verified'); setOrder(data.order); }
+      else toast.error(data.error || 'Failed to verify');
+    } catch { toast.error('Network error'); }
+  };
 
   if (loading) return (
     <div className="space-y-6 max-w-4xl mx-auto animate-pulse">
@@ -57,6 +95,7 @@ export default function OrderDetails() {
       </div>
     </div>
   );
+
   if (!order) return (
     <div className="max-w-4xl mx-auto text-center py-16">
       <Package size={48} className="mx-auto mb-4 text-muted-foreground/40" />
@@ -71,87 +110,109 @@ export default function OrderDetails() {
   const StatusIcon = statusCfg.icon;
   const isCancelled = order.status === 'CANCELLED';
   const currentStep = TIMELINE.indexOf(order.status);
-
+  const canAdvance = isAdmin && order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && NEXT_ACTION[order.status];
   const subtotal = order.items?.reduce((acc, item) => acc + (item.quantity * item.price), 0) || 0;
-  const shipping = order.distanceCost || 0;
-  const tax = order.taxAmount || 0;
-  const total = order.total || subtotal;
+  const shipping  = order.distanceCost || 0;
+  const tax       = order.taxAmount || 0;
+  const total     = order.total || subtotal;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-xl hover:bg-muted transition-colors"
-        >
+      <div className="flex flex-wrap items-center gap-4">
+        <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-muted transition-colors">
           <ArrowLeft size={20} className="text-muted-foreground" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-foreground truncate">Order #{order.id.substring(0, 8)}…</h1>
+          <h1 className="text-xl font-bold text-foreground">
+            Order #{order.id.substring(0, 8).toUpperCase()}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Placed on {new Date(order.createdAt).toLocaleString('en-IN')}
+            Placed on {new Date(order.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
           </p>
         </div>
         <span className={`badge ${statusCfg.color}`}>
-          <StatusIcon size={12} />
-          {statusCfg.label}
+          <StatusIcon size={12} /> {statusCfg.label}
         </span>
-        
-        {/* Verify Pay on Delivery Button for Admins */}
-        {['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(user?.role) && 
-         order.status === 'REQUESTED' && 
-         order.payment?.paymentMethod === 'PAY_ON_DELIVERY' && (
-          <Button 
-            onClick={async () => {
-              try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${order.id}/verify-cod`, {
-                  method: 'PUT',
-                  headers: { Authorization: `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (res.ok) {
-                  toast.success('Order verified successfully');
-                  setOrder(data.order);
-                } else {
-                  toast.error(data.error || 'Failed to verify order');
-                }
-              } catch (err) {
-                toast.error('Network error');
-              }
-            }}
-            variant="default"
-            className="ml-auto bg-green-600 hover:bg-green-700 text-white"
-          >
-            <CheckCircle2 size={16} className="mr-2" />
-            Verify COD Order
-          </Button>
-        )}
       </div>
 
-      {/* Timeline (only if not cancelled) */}
+      {/* Admin Advance Panel */}
+      {isAdmin && canAdvance && (
+        <div className="bg-primary/5 border-2 border-primary/20 rounded-2xl p-5">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-bold text-foreground flex items-center gap-2">
+                <ChevronRight size={16} className="text-primary" />
+                Next Action: {NEXT_ACTION[order.status]?.label}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">{NEXT_ACTION[order.status]?.note}</p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={advanceNote}
+              onChange={e => setAdvanceNote(e.target.value)}
+              placeholder="Optional note for customer (e.g. courier tracking number)..."
+              className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <Button onClick={handleAdvance} disabled={advancing} className="whitespace-nowrap shrink-0">
+              {advancing ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  Advancing…
+                </span>
+              ) : (
+                <><ChevronRight size={16} className="mr-1" />{NEXT_ACTION[order.status]?.label}</>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* COD Verify for admins */}
+      {isAdmin && order.status === 'REQUESTED' && order.payment?.paymentMethod === 'PAY_ON_DELIVERY' && (
+        <div className="bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={18} className="text-amber-600 shrink-0" />
+            <div>
+              <p className="font-semibold text-amber-900 dark:text-amber-200">Pay on Delivery — Pending Verification</p>
+              <p className="text-sm text-amber-700 dark:text-amber-400">Manually verify the COD order to move it to Processing.</p>
+            </div>
+          </div>
+          <Button onClick={handleVerifyCod} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
+            <CheckCircle2 size={16} className="mr-2" /> Verify COD Order
+          </Button>
+        </div>
+      )}
+
+      {/* Timeline */}
       {!isCancelled && (
-        <div className="form-card">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Order Progress</p>
-          <div className="flex items-center gap-0">
+        <div className="form-card overflow-x-auto">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-5">Order Progress</p>
+          <div className="flex items-center min-w-[480px]">
             {TIMELINE.map((step, idx) => {
               const done = idx <= currentStep;
               const active = idx === currentStep;
               const Ic = STATUS_CONFIG[step]?.icon || Clock;
               return (
                 <div key={step} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                      done ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-muted text-muted-foreground'
-                    } ${active ? 'ring-4 ring-primary/20' : ''}`}>
-                      <Ic size={14} />
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                      done
+                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                        : 'bg-muted text-muted-foreground'
+                    } ${active ? 'ring-4 ring-primary/20 scale-110' : ''}`}>
+                      <Ic size={15} />
                     </div>
-                    <span className={`text-[10px] font-semibold text-center leading-tight ${done ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <span className={`text-[10px] font-semibold text-center leading-tight whitespace-nowrap ${
+                      done ? 'text-primary' : 'text-muted-foreground'
+                    }`}>
                       {STATUS_CONFIG[step]?.label}
                     </span>
                   </div>
                   {idx < TIMELINE.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-1 mb-4 rounded-full ${done ? 'bg-primary' : 'bg-muted'}`} />
+                    <div className={`flex-1 h-0.5 mx-1.5 mb-5 rounded-full transition-all duration-500 ${done ? 'bg-primary' : 'bg-muted'}`} />
                   )}
                 </div>
               );
@@ -177,6 +238,9 @@ export default function OrderDetails() {
                   <p className="text-sm text-muted-foreground">
                     {item.quantity} × ₹{Number(item.price).toFixed(2)} / {item.product?.unit}
                   </p>
+                  {item.product?.casNumber && (
+                    <p className="text-xs text-muted-foreground font-mono mt-0.5">CAS: {item.product.casNumber}</p>
+                  )}
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-bold text-foreground">₹{Number(item.quantity * item.price).toFixed(2)}</p>
@@ -194,7 +258,7 @@ export default function OrderDetails() {
           </div>
         </div>
 
-        {/* Summary + Shipping */}
+        {/* Sidebar */}
         <div className="space-y-4">
           <div className="form-card">
             <h2 className="font-bold text-foreground mb-4">Order Summary</h2>
@@ -211,13 +275,13 @@ export default function OrderDetails() {
               )}
               {tax > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax</span>
+                  <span className="text-muted-foreground">Tax (GST)</span>
                   <span className="font-medium">₹{tax.toFixed(2)}</span>
                 </div>
               )}
               <div className="border-t border-border pt-2.5 flex justify-between font-bold text-base">
                 <span>Total</span>
-                <span className="text-foreground">₹{Number(total).toFixed(2)}</span>
+                <span className="text-primary">₹{Number(total).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -232,8 +296,27 @@ export default function OrderDetails() {
               </p>
               <p className="text-muted-foreground">{order.shippingAddress || order.customer?.address || 'Address not provided'}</p>
               <p className="text-muted-foreground">Phone: {order.customer?.user?.phone || 'N/A'}</p>
+              <p className="text-muted-foreground">Email: {order.customer?.user?.email || 'N/A'}</p>
             </div>
           </div>
+
+          {order.payment && (
+            <div className="form-card">
+              <h2 className="font-bold text-foreground mb-3">Payment</h2>
+              <div className="text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Method</span>
+                  <span className="font-medium">{order.payment?.paymentMethod?.replace('_', ' ')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className={`font-medium ${order.payment?.status === 'SUCCESS' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {order.payment?.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {order.orderNotes && (
             <div className="form-card">

@@ -279,6 +279,7 @@ model AuditLog {
   action    String   // e.g., "UPDATED_INVENTORY"
   entity    String   // e.g., "Inventory"
   entityId  String
+  details   String?  // JSON string with extra context
   createdAt DateTime @default(now())
 }
 

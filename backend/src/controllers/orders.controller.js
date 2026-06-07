@@ -337,4 +337,76 @@ const verifyCodOrder = async (req, res, next) => {
   }
 };
 
-module.exports = { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder };
+// Status advancement pipeline — only admins
+const STATUS_PIPELINE = ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'];
+
+const advanceOrderStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { customer: { include: { user: true } }, payment: true }
+    });
+
+    if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
+    if (order.status === 'CANCELLED') {
+      return res.status(400).json({ success: false, error: 'Cannot advance a cancelled order' });
+    }
+    if (order.status === 'DELIVERED') {
+      return res.status(400).json({ success: false, error: 'Order is already delivered' });
+    }
+
+    const currentIdx = STATUS_PIPELINE.indexOf(order.status);
+    const nextStatus = STATUS_PIPELINE[currentIdx + 1];
+
+    if (!nextStatus) {
+      return res.status(400).json({ success: false, error: 'No next status available' });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      // Record history
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          oldStatus: order.status,
+          newStatus: nextStatus
+        }
+      });
+
+      // Notify customer
+      await tx.notification.create({
+        data: {
+          userId: order.customer.userId,
+          message: `Your order #${id.substring(0, 8).toUpperCase()} status updated: ${order.status} → ${nextStatus}${note ? '. Note: ' + note : ''}`
+        }
+      });
+
+      return tx.order.update({
+        where: { id },
+        data: {
+          status: nextStatus,
+          updatedBy: req.user.id
+        }
+      });
+    });
+
+    // Audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'ORDER_STATUS_ADVANCED',
+        entity: 'Order',
+        entityId: id,
+        details: JSON.stringify({ from: order.status, to: nextStatus, note })
+      }
+    }).catch(() => {}); // Non-blocking
+
+    res.json({ success: true, message: `Order advanced to ${nextStatus}`, data: updated });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder, advanceOrderStatus };

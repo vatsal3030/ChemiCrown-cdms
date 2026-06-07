@@ -7,6 +7,7 @@ const { requireAuth } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 
 router.get('/', inventoryController.getInventory);
+router.get('/categories', inventoryController.getCategories);
 router.get('/logs/all', requireAuth, requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER']), inventoryController.getAllTransactions);
 router.get('/units/unique', inventoryController.getUniqueUnits);
 router.get('/:id', inventoryController.getProductById);

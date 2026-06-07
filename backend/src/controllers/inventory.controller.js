@@ -5,17 +5,14 @@ const stream = require('stream');
 // Get all inventory with sorting, filtering, and searching
 exports.getInventory = async (req, res, next) => {
   try {
-    const { search, sortField = 'name', sortOrder = 'asc', categoryId, stockStatus, page = 1, limit = 10 } = req.query;
+    const {
+      search, sortField = 'name', sortOrder = 'asc',
+      categoryId, stockStatus,
+      grade, minPrice, maxPrice, inStockOnly, hazard,
+      page = 1, limit = 10
+    } = req.query;
 
-    const where = {
-      deletedAt: null // Soft delete check
-    };
-
-    let products;
-    let total;
-
-    const take = parseInt(limit);
-    const skip = (parseInt(page) - 1) * take;
+    const where = { deletedAt: null };
 
     if (search) {
       where.OR = [
@@ -26,25 +23,46 @@ exports.getInventory = async (req, res, next) => {
       ];
     }
 
-    if (categoryId && categoryId !== 'all') {
-      where.categoryId = categoryId;
+    if (categoryId && categoryId !== 'all') where.categoryId = categoryId;
+
+    // Grade filter — e.g. "AR", "LR", "Technical"
+    if (grade && grade !== 'all') {
+      where.grade = { equals: grade, mode: 'insensitive' };
     }
 
-    if (stockStatus && stockStatus !== 'all') {
-      if (stockStatus === 'out') {
-        where.inventory = { quantity: { lte: 0 } };
-      } else if (stockStatus === 'in') {
-        where.inventory = { quantity: { gt: 0 } };
-      } else if (stockStatus === 'low') {
-        const lowStockInventories = await prisma.inventory.findMany({ select: { productId: true, quantity: true, minThreshold: true } });
-        const lowStockIds = lowStockInventories
-          .filter(inv => inv.quantity <= inv.minThreshold && inv.quantity > 0)
-          .map(inv => inv.productId);
-        where.id = { in: lowStockIds };
-      }
+    // Price range filter
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) where.price.gte = parseFloat(minPrice);
+      if (maxPrice) where.price.lte = parseFloat(maxPrice);
     }
 
-    const dbResult = await prisma.$transaction([
+    // Hazard filter: products that have a UN number (are hazardous)
+    if (hazard === 'hazardous') {
+      where.unNumber = { not: null };
+    } else if (hazard === 'non-hazardous') {
+      where.unNumber = null;
+    }
+
+    // In stock filter
+    if (inStockOnly === 'true' || stockStatus === 'in') {
+      where.inventory = { quantity: { gt: 0 } };
+    } else if (stockStatus === 'out') {
+      where.inventory = { quantity: { lte: 0 } };
+    } else if (stockStatus === 'low') {
+      const lowStockInventories = await prisma.inventory.findMany({
+        select: { productId: true, quantity: true, minThreshold: true }
+      });
+      const lowStockIds = lowStockInventories
+        .filter(inv => inv.quantity <= inv.minThreshold && inv.quantity > 0)
+        .map(inv => inv.productId);
+      where.id = { in: lowStockIds };
+    }
+
+    const take = parseInt(limit);
+    const skip = (parseInt(page) - 1) * take;
+
+    const [products, total] = await prisma.$transaction([
       prisma.product.findMany({
         where,
         include: {
@@ -58,21 +76,30 @@ exports.getInventory = async (req, res, next) => {
       }),
       prisma.product.count({ where })
     ]);
-    products = dbResult[0];
-    total = dbResult[1];
 
-    const totalPages = Math.ceil(total / take);
-
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: products,
       pagination: {
         total,
         page: parseInt(page),
         limit: take,
-        totalPages
+        totalPages: Math.ceil(total / take)
       }
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get all product categories
+exports.getCategories = async (req, res, next) => {
+  try {
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { products: true } } }
+    });
+    res.json({ success: true, data: categories });
   } catch (error) {
     next(error);
   }
