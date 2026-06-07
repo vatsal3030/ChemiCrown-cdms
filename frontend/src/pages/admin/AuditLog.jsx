@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Shield, Search, Filter, Trash2, RefreshCw, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Shield, Search, Filter, Trash2, RefreshCw, ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const ACTION_COLORS = {
@@ -15,46 +16,72 @@ const ACTION_COLORS = {
 
 export default function AuditLog() {
   const { token } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
   const limit = 25;
 
-  // Filters
-  const [filters, setFilters] = useState({ action: '', entity: '', from: '', to: '' });
-  const [applied, setApplied] = useState({});
+  // All filters from URL
+  const page    = parseInt(searchParams.get('page')   || '1', 10);
+  const action  = searchParams.get('action') || '';
+  const entity  = searchParams.get('entity') || '';
+  const from    = searchParams.get('from')   || '';
+  const to      = searchParams.get('to')     || '';
 
-  const fetchLogs = async (currentPage = 1, currentFilters = {}) => {
+  // Temp filter state (applied on click)
+  const [temp, setTemp] = useState({ action, entity, from, to });
+
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      if (!value) prev.delete(key);
+      else prev.set(key, value);
+      if (key !== 'page') prev.set('page', '1');
+      return prev;
+    }, { replace: true });
+  };
+
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: currentPage, limit });
-      if (currentFilters.action) params.set('action', currentFilters.action);
-      if (currentFilters.entity) params.set('entity', currentFilters.entity);
-      if (currentFilters.from) params.set('from', currentFilters.from);
-      if (currentFilters.to) params.set('to', currentFilters.to);
-
+      const params = new URLSearchParams({ page, limit });
+      if (action) params.set('action', action);
+      if (entity) params.set('entity', entity);
+      if (from)   params.set('from', from);
+      if (to)     params.set('to', to);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/support/audit-logs?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
-      if (json.success) {
-        setLogs(json.data);
-        setTotal(json.total);
-      } else {
-        toast.error('Failed to load audit logs');
-      }
-    } catch {
-      toast.error('Network error');
-    } finally {
-      setLoading(false);
-    }
+      if (json.success) { setLogs(json.data); setTotal(json.total); }
+      else toast.error('Failed to load audit logs');
+    } catch { toast.error('Network error'); }
+    finally { setLoading(false); }
+  }, [page, action, entity, from, to, token]);
+
+  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  const applyFilters = () => {
+    setSearchParams(prev => {
+      Object.entries(temp).forEach(([k, v]) => {
+        if (!v) prev.delete(k); else prev.set(k, v);
+      });
+      prev.set('page', '1');
+      return prev;
+    }, { replace: true });
   };
 
-  useEffect(() => { fetchLogs(page, applied); }, [page, applied]);
+  const clearFilters = () => {
+    setTemp({ action: '', entity: '', from: '', to: '' });
+    setSearchParams(prev => {
+      ['action','entity','from','to'].forEach(k => prev.delete(k));
+      prev.set('page', '1');
+      return prev;
+    }, { replace: true });
+  };
 
-  const handleApplyFilters = () => { setPage(1); setApplied({ ...filters }); };
-  const handleClearFilters = () => { setFilters({ action: '', entity: '', from: '', to: '' }); setPage(1); setApplied({}); };
+  const hasActiveFilters = action || entity || from || to;
+
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this audit log entry? This action cannot be undone.')) return;
@@ -88,7 +115,7 @@ export default function AuditLog() {
           <h1 className="page-title">Audit Logs</h1>
           <p className="page-subtitle">Read-only record of all system actions. Logs are written automatically and cannot be created manually.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => fetchLogs(page, applied)} className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={fetchLogs} className="flex items-center gap-2">
           <RefreshCw size={14} /> Refresh
         </Button>
       </div>
@@ -109,8 +136,8 @@ export default function AuditLog() {
             <input
               type="text"
               placeholder="e.g. ROLE_CHANGED"
-              value={filters.action}
-              onChange={e => setFilters(f => ({ ...f, action: e.target.value }))}
+              value={temp.action}
+              onChange={e => setTemp(t => ({ ...t, action: e.target.value }))}
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -119,25 +146,33 @@ export default function AuditLog() {
             <input
               type="text"
               placeholder="e.g. User, Product"
-              value={filters.entity}
-              onChange={e => setFilters(f => ({ ...f, entity: e.target.value }))}
+              value={temp.entity}
+              onChange={e => setTemp(t => ({ ...t, entity: e.target.value }))}
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
             <label className="form-label text-xs">From Date</label>
-            <input type="date" value={filters.from} onChange={e => setFilters(f => ({ ...f, from: e.target.value }))}
+            <input type="date" value={temp.from} onChange={e => setTemp(t => ({ ...t, from: e.target.value }))}
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
             <label className="form-label text-xs">To Date</label>
-            <input type="date" value={filters.to} onChange={e => setFilters(f => ({ ...f, to: e.target.value }))}
+            <input type="date" value={temp.to} onChange={e => setTemp(t => ({ ...t, to: e.target.value }))}
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
         </div>
+        {hasActiveFilters && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {action  && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">Action: {action} <button onClick={() => setParam('action', '')}><X size={10}/></button></span>}
+            {entity  && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">Entity: {entity} <button onClick={() => setParam('entity', '')}><X size={10}/></button></span>}
+            {from    && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">From: {from} <button onClick={() => setParam('from', '')}><X size={10}/></button></span>}
+            {to      && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">To: {to} <button onClick={() => setParam('to', '')}><X size={10}/></button></span>}
+          </div>
+        )}
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" size="sm" onClick={handleClearFilters}>Clear</Button>
-          <Button size="sm" onClick={handleApplyFilters}><Search size={14} className="mr-1.5" /> Apply Filters</Button>
+          <Button variant="outline" size="sm" onClick={clearFilters}>Clear</Button>
+          <Button size="sm" onClick={applyFilters}><Search size={14} className="mr-1.5" /> Apply Filters</Button>
         </div>
       </div>
 
@@ -217,10 +252,10 @@ export default function AuditLog() {
               Page {page} of {totalPages} ({total} total entries)
             </p>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+              <Button variant="outline" size="sm" onClick={() => setParam('page', String(Math.max(1, page - 1)))} disabled={page === 1}>
                 <ChevronLeft size={14} />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+              <Button variant="outline" size="sm" onClick={() => setParam('page', String(Math.min(totalPages, page + 1)))} disabled={page === totalPages}>
                 <ChevronRight size={14} />
               </Button>
             </div>

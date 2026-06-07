@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Settings, Menu, Users,
   ClipboardCheck, LogOut, ChevronUp, UserPlus, Store,
@@ -188,9 +188,15 @@ export default function DashboardLayout() {
         } ${collapsed ? 'md:w-[72px]' : 'w-64'}`}
         style={{ background: 'var(--sidebar)', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {/* Logo */}
-        <div className={`h-16 flex items-center border-b shrink-0 ${collapsed ? 'justify-center px-4' : 'px-5 gap-3'}`}
-          style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        {/* Logo — click to go to public home page */}
+        <Link
+          to="/"
+          className={`h-16 flex items-center border-b shrink-0 hover:opacity-80 transition-opacity cursor-pointer ${
+            collapsed ? 'justify-center px-4' : 'px-5 gap-3'
+          }`}
+          style={{ borderColor: 'rgba(255,255,255,0.08)', textDecoration: 'none' }}
+          title="Go to ChemiCrown website"
+        >
           <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0 overflow-hidden">
             <img src="/chemicrown.png" alt="ChemiCrown" className="w-6 h-6 object-contain" />
           </div>
@@ -200,7 +206,7 @@ export default function DashboardLayout() {
               <p className="text-white/40 text-[10px] uppercase tracking-widest truncate">CDMS Platform</p>
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Nav — scrollbar hidden via CSS (aside selector in index.css) */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 space-y-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>

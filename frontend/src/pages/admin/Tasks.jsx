@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   CheckSquare, Plus, Trash2, GripVertical,
-  X, Calendar
+  X, Calendar, Search, Filter
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const COLUMNS = [
@@ -122,6 +123,20 @@ function TaskDetailModal({ task, onClose, onStatusChange }) {
 
 export default function Tasks() {
   const { user, token } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // URL-driven filters
+  const searchQ      = searchParams.get('q')        || '';
+  const assigneeFilter = searchParams.get('assignee') || 'all';
+
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      if (!value || value === 'all') prev.delete(key);
+      else prev.set(key, value);
+      return prev;
+    }, { replace: true });
+  };
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [employees, setEmployees] = useState([]);
@@ -229,10 +244,25 @@ export default function Tasks() {
     setDraggingId(null);
   };
 
+  // Filtered tasks based on URL params
+  const filteredTasks = tasks.filter(t => {
+    const title = (t.title || '').toLowerCase();
+    const assigneeName = `${t.assignedTo?.user?.firstName || ''} ${t.assignedTo?.user?.lastName || ''}`.toLowerCase();
+    const matchQ = !searchQ || title.includes(searchQ.toLowerCase()) || assigneeName.includes(searchQ.toLowerCase());
+    const matchAssignee = assigneeFilter === 'all' || t.assignedTo?.user?.id === assigneeFilter || t.assignedTo?.id === assigneeFilter;
+    return matchQ && matchAssignee;
+  });
+
+  // Unique assignees for filter dropdown
+  const uniqueAssignees = [...new Map(tasks.map(t => [
+    t.assignedTo?.user?.id,
+    { id: t.assignedTo?.user?.id || t.assignedTo?.id, name: `${t.assignedTo?.user?.firstName || ''} ${t.assignedTo?.user?.lastName || ''}`.trim() }
+  ]).filter(([id]) => !!id)).values()];
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="page-header mb-0">
           <div className="page-header-icon bg-primary/10 text-primary">
             <CheckSquare size={22} />
@@ -242,12 +272,52 @@ export default function Tasks() {
             <p className="page-subtitle">Drag cards between columns to update status.</p>
           </div>
         </div>
-        {canManage && (
-          <Button onClick={() => setIsModalOpen(true)}>
-            <Plus size={16} className="mr-2" /> Assign Task
-          </Button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-2.5 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks..."
+              value={searchQ}
+              onChange={e => setParam('q', e.target.value)}
+              className="pl-9 w-48 h-9 text-sm"
+            />
+          </div>
+          {/* Assignee filter */}
+          <select
+            value={assigneeFilter}
+            onChange={e => setParam('assignee', e.target.value)}
+            className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer h-9"
+          >
+            <option value="all">All Assignees</option>
+            {uniqueAssignees.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+          {(searchQ || assigneeFilter !== 'all') && (
+            <button
+              onClick={() => { setParam('q', ''); setParam('assignee', 'all'); }}
+              className="p-1.5 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+              title="Clear filters"
+            >
+              <X size={14} />
+            </button>
+          )}
+          {canManage && (
+            <Button onClick={() => setIsModalOpen(true)}>
+              <Plus size={16} className="mr-2" /> Assign Task
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Active filter indicator */}
+      {(searchQ || assigneeFilter !== 'all') && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Filter size={12} />
+          <span>Showing filtered results</span>
+          {searchQ && <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium">"{searchQ}"</span>}
+          {assigneeFilter !== 'all' && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full font-medium">{uniqueAssignees.find(a => a.id === assigneeFilter)?.name}</span>}
+        </div>
+      )}
 
       {/* Kanban Board */}
       {loading ? (
@@ -262,7 +332,8 @@ export default function Tasks() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {COLUMNS.map(col => {
-            const colTasks = tasks.filter(t => t.status === col.id);
+            const colTasks = filteredTasks.filter(t => t.status === col.id);
+            const totalColTasks = tasks.filter(t => t.status === col.id).length;
             return (
               <div
                 key={col.id}
@@ -276,7 +347,12 @@ export default function Tasks() {
                     <div className={`w-2.5 h-2.5 rounded-full ${col.color}`} />
                     <span className="font-bold text-sm text-foreground">{col.label}</span>
                   </div>
-                  <span className={`badge ${col.badge}`}>{colTasks.length}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`badge ${col.badge}`}>{colTasks.length}</span>
+                    {colTasks.length !== totalColTasks && (
+                      <span className="text-xs text-muted-foreground">of {totalColTasks}</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Tasks */}

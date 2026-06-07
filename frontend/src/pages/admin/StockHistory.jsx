@@ -1,18 +1,29 @@
-import { useState } from 'react';
 import useSWR from 'swr';
-import { History, ArrowUpRight, ArrowDownRight, User, Search, Filter } from 'lucide-react';
+import { History, ArrowUpRight, ArrowDownRight, User, Search, Filter, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'react-router-dom';
 import useDebounce from '@/hooks/useDebounce';
 
 export default function StockHistory() {
   const { token } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const searchTerm = searchParams.get('q')    || '';
+  const typeFilter = searchParams.get('type') || 'all';
+  const page       = parseInt(searchParams.get('page') || '1', 10);
   const limit = 20;
+
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      if (!value || value === 'all') prev.delete(key);
+      else prev.set(key, value);
+      if (key !== 'page') prev.set('page', '1');
+      return prev;
+    }, { replace: true });
+  };
 
   const debouncedSearch = useDebounce(searchTerm, 500);
 
@@ -31,6 +42,7 @@ export default function StockHistory() {
   const logs = data?.data || [];
   const pagination = data?.pagination;
   const loading = (!data && !error) || isValidating;
+  const hasFilters = searchTerm || typeFilter !== 'all';
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -49,7 +61,7 @@ export default function StockHistory() {
             className="w-full pl-10" 
             placeholder="Search by product, SKU, user, or remarks..." 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setParam('q', e.target.value)}
           />
         </div>
         <div className="relative w-full sm:w-auto shrink-0">
@@ -57,16 +69,21 @@ export default function StockHistory() {
           <select 
             className="w-full sm:w-48 pl-9 pr-8 py-2 bg-transparent border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
             value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => setParam('type', e.target.value)}
           >
             <option value="all">All Types</option>
             <option value="in">Stock In</option>
             <option value="out">Stock Out</option>
           </select>
         </div>
+        {hasFilters && (
+          <button
+            onClick={() => { setParam('q', ''); setParam('type', 'all'); }}
+            className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-destructive transition-colors text-sm shrink-0"
+          >
+            <X size={14} /> Clear
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -153,7 +170,7 @@ export default function StockHistory() {
                 variant="outline" 
                 size="sm" 
                 disabled={page === 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setParam('page', String(Math.max(1, page - 1)))}
               >
                 Previous
               </Button>
@@ -161,7 +178,7 @@ export default function StockHistory() {
                 variant="outline" 
                 size="sm" 
                 disabled={page >= (pagination.totalPages || 1)}
-                onClick={() => setPage(p => p + 1)}
+                onClick={() => setParam('page', String(page + 1))}
               >
                 Next
               </Button>

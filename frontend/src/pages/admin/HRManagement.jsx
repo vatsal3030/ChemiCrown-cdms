@@ -3,14 +3,14 @@ import {
   Search, Plus, Trash2, ArrowUpDown, DollarSign, MessageSquare,
   AlertCircle, Eye, Users, CalendarCheck, TrendingUp, CheckCircle2,
   XCircle, Clock, ShieldAlert, UserX, UserCheck, AlertTriangle,
-  ChevronDown, Filter, X, RefreshCw, Settings
+  ChevronDown, Filter, X, RefreshCw, Settings, SlidersHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import EmployeeModal from '@/components/admin/EmployeeModal';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 // ── Status Badge ──────────────────────────────────────────────────────────────
@@ -337,22 +337,36 @@ export default function HRManagement() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Derive active tab from URL hash (e.g. #attendance)
   const hash = location.hash.replace('#', '') || 'dashboard';
   const activeTab = TABS.includes(hash) ? hash : 'dashboard';
   const setActiveTab = (tab) => navigate(`${location.pathname}#${tab}`, { replace: true });
 
+  // All directory filters live in URL searchParams
+  const statusFilter = searchParams.get('status') || 'all';
+  const roleFilter   = searchParams.get('role')   || 'all';
+  const deptFilter   = searchParams.get('dept')   || 'all';
+  const searchTerm   = searchParams.get('q')      || '';
+  const sortField    = searchParams.get('sort')   || 'firstName';
+  const sortOrder    = searchParams.get('order')  || 'asc';
+
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      if (!value || value === 'all') prev.delete(key);
+      else prev.set(key, value);
+      return prev;
+    }, { replace: true });
+  };
+
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('firstName');
-  const [sortOrder, setSortOrder] = useState('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [leavesLoading, setLeavesLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [temp, setTemp] = useState({ status: statusFilter, role: roleFilter, dept: deptFilter });
 
   // Action modals
   const [warnTarget, setWarnTarget] = useState(null);
@@ -363,8 +377,11 @@ export default function HRManagement() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
+      const params = new URLSearchParams({ search: searchTerm, sortField, sortOrder });
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (deptFilter   !== 'all') params.set('department', deptFilter);
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/hr?search=${searchTerm}&sortField=${sortField}&sortOrder=${sortOrder}`,
+        `${import.meta.env.VITE_API_URL}/api/hr?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const json = await res.json();
@@ -373,7 +390,7 @@ export default function HRManagement() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchEmployees(); }, [searchTerm, sortField, sortOrder]);
+  useEffect(() => { fetchEmployees(); }, [searchTerm, sortField, sortOrder, statusFilter, deptFilter]);
 
   const fetchLeaves = async () => {
     setLeavesLoading(true);
@@ -417,22 +434,42 @@ export default function HRManagement() {
   };
 
   const toggleSort = (field) => {
-    if (sortField === field) setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
-    else { setSortField(field); setSortOrder('asc'); }
+    if (sortField === field) setParam('order', sortOrder === 'asc' ? 'desc' : 'asc');
+    else { setParam('sort', field); setParam('order', 'asc'); }
   };
 
-  // Filter employees
+  const applyFilters = () => {
+    setSearchParams(prev => {
+      Object.entries(temp).forEach(([k, v]) => {
+        if (!v || v === 'all') prev.delete(k);
+        else prev.set(k, v);
+      });
+      return prev;
+    }, { replace: true });
+    setShowFilters(false);
+  };
+
+  const clearFilters = () => {
+    setTemp({ status: 'all', role: 'all', dept: 'all' });
+    setSearchParams(prev => {
+      ['status','role','dept','q'].forEach(k => prev.delete(k));
+      return prev;
+    }, { replace: true });
+  };
+
+  // Client-side role filter (applied on top of server-side status/dept)
   const filteredEmployees = employees.filter(emp => {
-    const status = emp.employeeProfile?.status || 'ACTIVE';
-    if (statusFilter !== 'all' && status !== statusFilter) return false;
     if (roleFilter !== 'all' && emp.role !== roleFilter) return false;
     return true;
   });
 
   const uniqueRoles = [...new Set(employees.map(e => e.role))];
+  const uniqueDepts = [...new Set(employees.map(e => e.employeeProfile?.department).filter(Boolean))];
   const activeCount = employees.filter(e => (e.employeeProfile?.status || 'ACTIVE') === 'ACTIVE').length;
   const suspendedCount = employees.filter(e => e.employeeProfile?.status === 'SUSPENDED').length;
   const terminatedCount = employees.filter(e => e.employeeProfile?.status === 'TERMINATED').length;
+  const hasActiveFilters = statusFilter !== 'all' || roleFilter !== 'all' || deptFilter !== 'all';
+  const activeFilterCount = [statusFilter !== 'all', roleFilter !== 'all', deptFilter !== 'all'].filter(Boolean).length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -505,11 +542,11 @@ export default function HRManagement() {
             <div className="relative w-full sm:max-w-sm">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input placeholder="Search by name or email..." value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
+                onChange={e => setParam('q', e.target.value)} className="pl-9" />
             </div>
             <div className="flex gap-2 flex-wrap">
               {/* Status filter */}
-              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+              <select value={statusFilter} onChange={e => setParam('status', e.target.value)}
                 className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                 <option value="all">All Status</option>
                 <option value="ACTIVE">Active</option>
@@ -517,17 +554,97 @@ export default function HRManagement() {
                 <option value="TERMINATED">Terminated</option>
               </select>
               {/* Role filter */}
-              <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
+              <select value={roleFilter} onChange={e => setParam('role', e.target.value)}
                 className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                 <option value="all">All Roles</option>
-                {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                {uniqueRoles.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
               </select>
+              {/* Advanced filter toggle */}
+              <button
+                onClick={() => { setShowFilters(v => !v); setTemp({ status: statusFilter, role: roleFilter, dept: deptFilter }); }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm border transition-all ${
+                  hasActiveFilters
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-white dark:bg-slate-900 border-border hover:border-primary text-foreground'
+                }`}
+              >
+                <SlidersHorizontal size={14} />
+                Filters
+                {activeFilterCount > 0 && <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5">{activeFilterCount}</span>}
+              </button>
               <button onClick={fetchEmployees}
                 className="p-2 rounded-lg border border-input hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                 <RefreshCw size={14} />
               </button>
             </div>
           </div>
+
+          {/* Expanded filter panel */}
+          {showFilters && (
+            <div className="border-b border-border bg-muted/20 px-6 py-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-foreground flex items-center gap-2 text-sm"><Filter size={15} /> Advanced Filters</h3>
+                <div className="flex gap-3">
+                  {hasActiveFilters && <button onClick={clearFilters} className="text-xs text-destructive hover:underline"><X size={12} className="inline mr-0.5" />Clear all</button>}
+                  <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Employee Status</label>
+                  <select value={temp.status} onChange={e => setTemp(t => ({ ...t, status: e.target.value }))}
+                    className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="all">All</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="SUSPENDED">Suspended</option>
+                    <option value="TERMINATED">Terminated</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Role</label>
+                  <select value={temp.role} onChange={e => setTemp(t => ({ ...t, role: e.target.value }))}
+                    className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="all">All Roles</option>
+                    {uniqueRoles.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Department</label>
+                  <select value={temp.dept} onChange={e => setTemp(t => ({ ...t, dept: e.target.value }))}
+                    className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="all">All Departments</option>
+                    {uniqueDepts.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <button onClick={clearFilters} className="px-4 py-2 text-sm font-medium rounded-xl border border-border hover:bg-muted transition-colors">Reset</button>
+                <button onClick={applyFilters} className="px-4 py-2 text-sm font-semibold rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors">Apply</button>
+              </div>
+            </div>
+          )}
+
+          {/* Active filter chips */}
+          {hasActiveFilters && (
+            <div className="px-4 py-2 border-b border-border flex flex-wrap gap-2 items-center">
+              {statusFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                  {statusFilter} <button onClick={() => setParam('status', 'all')}><X size={10} /></button>
+                </span>
+              )}
+              {roleFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
+                  {roleFilter.replace(/_/g, ' ')} <button onClick={() => setParam('role', 'all')}><X size={10} /></button>
+                </span>
+              )}
+              {deptFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 text-xs font-semibold">
+                  Dept: {deptFilter} <button onClick={() => setParam('dept', 'all')}><X size={10} /></button>
+                </span>
+              )}
+              <button onClick={clearFilters} className="text-xs text-muted-foreground hover:text-destructive ml-auto">Clear all</button>
+            </div>
+          )}
 
           {/* Table */}
           <div className="overflow-x-auto">

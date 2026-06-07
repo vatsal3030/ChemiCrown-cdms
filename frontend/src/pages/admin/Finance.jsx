@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  DollarSign, TrendingUp, TrendingDown, Wallet, BarChart3,
-  RefreshCw, Plus, Trash2, Edit3, X, Filter, Download,
+  DollarSign, TrendingUp, Wallet,
+  RefreshCw, Plus, Trash2, Edit3, X, Filter,
   ShoppingCart, Users, Package, AlertTriangle, ChevronDown,
   Receipt, ArrowUpRight, ArrowDownRight, BookOpen
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell
@@ -144,19 +145,32 @@ const TABS = ['overview', 'ledger', 'expenses'];
 
 export default function Finance() {
   const { token } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Tab driven by URL hash
-  const getTab = () => {
-    const h = window.location.hash.replace('#', '');
-    return TABS.includes(h) ? h : 'overview';
-  };
-  const [activeTab, setActiveTab] = useState(getTab);
-  const setTab = (t) => { setActiveTab(t); window.history.replaceState(null, '', `#${t}`); };
-
-  // Date filter
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  // All filterable state lives in URL
+  const activeTab      = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
+  const dateFrom       = searchParams.get('from')     || '';
+  const dateTo         = searchParams.get('to')       || '';
+  const ledgerType     = searchParams.get('ltype')    || '';
+  const ledgerCat      = searchParams.get('lcat')     || '';
+  const ledgerPage     = parseInt(searchParams.get('lpage') || '1', 10);
+  const expenseCatFilter = searchParams.get('ecat')   || 'all';
+  const expensePage    = parseInt(searchParams.get('epage') || '1', 10);
   const [showDateFilter, setShowDateFilter] = useState(false);
+
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      if (!value || value === 'all') prev.delete(key);
+      else prev.set(key, value);
+      return prev;
+    }, { replace: true });
+  };
+
+  const setTab = (t) => setParam('tab', t);
+
+  // Date range (temporary state until applied)
+  const [tempFrom, setTempFrom] = useState(dateFrom);
+  const [tempTo, setTempTo]     = useState(dateTo);
 
   // Data states
   const [overview, setOverview] = useState(null);
@@ -167,14 +181,7 @@ export default function Finance() {
   const [loading, setLoading] = useState(true);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [expensesLoading, setExpensesLoading] = useState(false);
-  const [expenseModal, setExpenseModal] = useState(null); // null | {} | expense obj
-
-  // Ledger filters
-  const [ledgerType, setLedgerType] = useState('');
-  const [ledgerCat, setLedgerCat] = useState('');
-  const [ledgerPage, setLedgerPage] = useState(1);
-  const [expensePage, setExpensePage] = useState(1);
-  const [expenseCatFilter, setExpenseCatFilter] = useState('all');
+  const [expenseModal, setExpenseModal] = useState(null);
 
   const headers = { Authorization: `Bearer ${token}` };
   const dateQ = () => `${dateFrom ? `&from=${dateFrom}` : ''}${dateTo ? `&to=${dateTo}` : ''}`;
@@ -264,22 +271,33 @@ export default function Finance() {
               {dateFrom || dateTo ? `${dateFrom || 'Start'} → ${dateTo || 'Now'}` : 'All Time'}
               <ChevronDown size={14} />
             </button>
-            {showDateFilter && (
+          {showDateFilter && (
               <div className="absolute right-0 top-full mt-2 z-20 bg-card border border-border rounded-xl shadow-xl p-4 min-w-[280px]">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Date Range</p>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">From</label>
-                    <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-xs" />
+                    <Input type="date" value={tempFrom} onChange={e => setTempFrom(e.target.value)} className="text-xs" />
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">To</label>
-                    <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-xs" />
+                    <Input type="date" value={tempTo} onChange={e => setTempTo(e.target.value)} className="text-xs" />
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" className="flex-1" onClick={() => { setShowDateFilter(false); fetchOverview(); }}>Apply</Button>
-                  <Button size="sm" variant="outline" onClick={() => { setDateFrom(''); setDateTo(''); setShowDateFilter(false); }}>Clear</Button>
+                  <Button size="sm" className="flex-1" onClick={() => {
+                    setSearchParams(prev => {
+                      if (tempFrom) prev.set('from', tempFrom); else prev.delete('from');
+                      if (tempTo)   prev.set('to',   tempTo);   else prev.delete('to');
+                      return prev;
+                    }, { replace: true });
+                    setShowDateFilter(false);
+                  }}>Apply</Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    setTempFrom(''); setTempTo('');
+                    setSearchParams(prev => { prev.delete('from'); prev.delete('to'); return prev; }, { replace: true });
+                    setShowDateFilter(false);
+                  }}>Clear</Button>
                 </div>
               </div>
             )}
@@ -448,13 +466,13 @@ export default function Finance() {
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-2 flex-wrap">
-              <select value={ledgerType} onChange={e => setLedgerType(e.target.value)}
+              <select value={ledgerType} onChange={e => setParam('ltype', e.target.value)}
                 className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                 <option value="">All Types</option>
                 <option value="CREDIT">Credit (Income)</option>
                 <option value="DEBIT">Debit (Expense)</option>
               </select>
-              <Input placeholder="Filter by category..." value={ledgerCat} onChange={e => setLedgerCat(e.target.value)} className="w-40 h-9 text-sm" />
+              <Input placeholder="Filter by category..." value={ledgerCat} onChange={e => setParam('lcat', e.target.value)} className="w-40 h-9 text-sm" />
             </div>
             <div className="flex gap-2 items-center">
               <span className="text-xs text-muted-foreground">{ledgerPagination.total} entries</span>
@@ -510,8 +528,8 @@ export default function Finance() {
             <div className="p-4 border-t border-border flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Page {ledgerPagination.page} of {ledgerPagination.totalPages}</span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setLedgerPage(p => Math.max(1, p - 1))} disabled={ledgerPagination.page === 1}>Previous</Button>
-                <Button variant="outline" size="sm" onClick={() => setLedgerPage(p => Math.min(ledgerPagination.totalPages, p + 1))} disabled={ledgerPagination.page >= ledgerPagination.totalPages}>Next</Button>
+                <Button variant="outline" size="sm" onClick={() => setParam('lpage', String(Math.max(1, ledgerPage - 1)))} disabled={ledgerPagination.page === 1}>Previous</Button>
+                <Button variant="outline" size="sm" onClick={() => setParam('lpage', String(Math.min(ledgerPagination.totalPages, ledgerPage + 1)))} disabled={ledgerPagination.page >= ledgerPagination.totalPages}>Next</Button>
               </div>
             </div>
           )}
@@ -523,7 +541,7 @@ export default function Finance() {
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-2 flex-wrap">
-              <select value={expenseCatFilter} onChange={e => setExpenseCatFilter(e.target.value)}
+              <select value={expenseCatFilter} onChange={e => setParam('ecat', e.target.value)}
                 className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                 <option value="all">All Categories</option>
                 {EXPENSE_CATS.map(c => <option key={c} value={c}>{c}</option>)}
@@ -575,8 +593,8 @@ export default function Finance() {
             <div className="p-4 border-t border-border flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Page {expensePagination.page} of {expensePagination.totalPages}</span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setExpensePage(p => Math.max(1, p - 1))} disabled={expensePagination.page === 1}>Previous</Button>
-                <Button variant="outline" size="sm" onClick={() => setExpensePage(p => Math.min(expensePagination.totalPages, p + 1))} disabled={expensePagination.page >= expensePagination.totalPages}>Next</Button>
+                <Button variant="outline" size="sm" onClick={() => setParam('epage', String(Math.max(1, expensePage - 1)))} disabled={expensePagination.page === 1}>Previous</Button>
+                <Button variant="outline" size="sm" onClick={() => setParam('epage', String(Math.min(expensePagination.totalPages, expensePage + 1)))} disabled={expensePagination.page >= expensePagination.totalPages}>Next</Button>
               </div>
             </div>
           )}
