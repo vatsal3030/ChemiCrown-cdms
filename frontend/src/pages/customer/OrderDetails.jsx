@@ -23,7 +23,7 @@ const TIMELINE = ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED'
 
 export default function OrderDetails() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -97,6 +97,36 @@ export default function OrderDetails() {
           <StatusIcon size={12} />
           {statusCfg.label}
         </span>
+        
+        {/* Verify Pay on Delivery Button for Admins */}
+        {['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(user?.role) && 
+         order.status === 'REQUESTED' && 
+         order.payment?.paymentMethod === 'PAY_ON_DELIVERY' && (
+          <Button 
+            onClick={async () => {
+              try {
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${order.id}/verify-cod`, {
+                  method: 'PUT',
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                  toast.success('Order verified successfully');
+                  setOrder(data.order);
+                } else {
+                  toast.error(data.error || 'Failed to verify order');
+                }
+              } catch (err) {
+                toast.error('Network error');
+              }
+            }}
+            variant="default"
+            className="ml-auto bg-green-600 hover:bg-green-700 text-white"
+          >
+            <CheckCircle2 size={16} className="mr-2" />
+            Verify COD Order
+          </Button>
+        )}
       </div>
 
       {/* Timeline (only if not cancelled) */}

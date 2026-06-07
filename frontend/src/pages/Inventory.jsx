@@ -51,7 +51,7 @@ export default function Inventory() {
   const catParam = categoryFilter !== 'all' ? `&categoryId=${categoryFilter}` : '';
   const stockParam = stockFilter !== 'all' ? `&stockStatus=${stockFilter}` : '';
   
-  const { data, error, mutate, isValidating } = useSWR(
+  const { data, error, mutate } = useSWR(
     token ? `${import.meta.env.VITE_API_URL}/api/inventory?search=${debouncedSearch}&sortField=${sortField}&sortOrder=${sortOrder}&page=${page}&limit=${limit}${catParam}${stockParam}` : null,
     fetcher
   );
@@ -229,11 +229,6 @@ export default function Inventory() {
               ) : (
                 products.map((product) => {
                   const quantity = product.inventory?.quantity || 0;
-                  const inventoryStatus = (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${quantity > 50 ? 'bg-green-100 text-green-800' : quantity > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                      {quantity > 50 ? 'In Stock' : quantity > 0 ? 'Low Stock' : 'Out of Stock'}
-                    </span>
-                  );
                   return (
                   <tr key={product.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                     <td className="px-6 py-4">

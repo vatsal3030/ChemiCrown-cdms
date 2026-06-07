@@ -17,5 +17,7 @@ router.post('/pf/:employeeId/settle', adminOnly, payrollController.settlePF);
 
 // Employee self-service
 router.get('/my', requireRole(['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING', 'SUPER_ADMIN', 'OWNER']), payrollController.getMyPayroll);
+// Employee confirms receipt of their own salary
+router.post('/:id/confirm', payrollController.confirmReceipt);
 
 module.exports = router;

@@ -1,10 +1,9 @@
 import { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Beaker, Mail, Lock, User, Building, Phone, Briefcase, Camera, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Mail, Lock, User, Building, Phone, Briefcase, Camera, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Register() {
-  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   
   const [firstName, setFirstName] = useState('');
@@ -12,8 +11,8 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [gstNumber, setGstNumber] = useState('');
-  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('CUSTOMER');
   const [showPassword, setShowPassword] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -39,8 +38,8 @@ export default function Register() {
       formData.append('firstName', firstName);
       formData.append('lastName', lastName);
       formData.append('companyName', companyName);
-      formData.append('gstNumber', gstNumber);
-      formData.append('address', address);
+      formData.append('phone', phone);
+      formData.append('role', role);
       if (profileImage) formData.append('image', profileImage);
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
@@ -145,7 +144,7 @@ export default function Register() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Building className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <input type="text" className="block w-full pl-10 pr-3 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" placeholder="Acme Chemicals Ltd." required />
+                  <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} className="block w-full pl-10 pr-3 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" placeholder="Acme Chemicals Ltd." required />
                 </div>
               </div>
 
@@ -155,7 +154,7 @@ export default function Register() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Phone className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <input type="tel" className="block w-full pl-10 pr-3 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" placeholder="+91 98765 43210" required />
+                  <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="block w-full pl-10 pr-3 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" placeholder="+91 98765 43210" required />
                 </div>
               </div>
             </div>

@@ -56,6 +56,7 @@ model Employee {
   ctc         Float?   // Cost to Company
   pfRate      Float?   // e.g. 12.0
   pfLedger    PFLedger?
+  leaveRequests LeaveRequest[]
 }
 
 model Customer {
@@ -307,6 +308,9 @@ model Salary {
   netPay     Float    @default(0)
   absentDays Int      @default(0)
   status     SalaryStatus @default(PENDING)
+  paymentMethod String? // "CASH" or "DIGITAL_TRANSFER"
+  confirmedByEmployee Boolean @default(false)
+  confirmedAt DateTime?
   paidAt     DateTime?
 }
 
@@ -387,3 +391,64 @@ model Review {
   createdAt DateTime @default(now())
 }
 
+// Leave Request — Employee submits, HR approves/rejects
+model LeaveRequest {
+  id          String   @id @default(uuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  date        DateTime
+  type        LeaveType @default(FULL_DAY)
+  reason      String
+  status      LeaveStatus @default(PENDING)
+  reviewedBy  String?  // userId of the HR/Manager who reviewed
+  reviewNote  String?  // HR's note on decision
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum LeaveType {
+  FULL_DAY
+  HALF_DAY
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Support Tickets — Staff reports bugs or requests help
+model SupportTicket {
+  id          String   @id @default(uuid())
+  submittedBy String   // userId
+  type        TicketType @default(BUG)
+  priority    TicketPriority @default(MEDIUM)
+  title       String
+  description String
+  status      TicketStatus @default(OPEN)
+  resolution  String?
+  resolvedBy  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum TicketType {
+  BUG
+  FEATURE_REQUEST
+  DATA_ISSUE
+  OTHER
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}

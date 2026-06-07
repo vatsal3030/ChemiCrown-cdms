@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, ShoppingCart, Settings, Menu, Users,
-  ClipboardCheck, LogOut, ShieldCheck, ChevronUp, UserPlus, Store,
-  X, Trash2, CheckSquare, Heart, Bell, Search, TrendingUp,
-  DollarSign, Boxes, ClipboardList, ChevronDown, ChevronRight,
-  Building2, FileText, BarChart3, CreditCard, Wallet, Star,
-  UserCheck, Activity
+  LayoutDashboard, ShoppingCart, Settings, Menu, Users,
+  ClipboardCheck, LogOut, ChevronUp, UserPlus, Store,
+  Trash2, CheckSquare, Heart, TrendingUp,
+  Boxes, ClipboardList,
+  FileText, Wallet,
+  UserCheck, Activity, HelpCircle, Bug, Shield, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
@@ -76,11 +76,42 @@ const buildNavSections = (role) => {
   const sys = { label: 'System', items: [] };
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(role)) {
     sys.items.push({ name: 'Recycle Bin', path: '/dashboard/recycle-bin', icon: Trash2 });
+    sys.items.push({ name: 'Support Tickets', path: '/dashboard/tickets', icon: MessageSquare });
   }
+  if (['SUPER_ADMIN', 'OWNER'].includes(role)) {
+    sys.items.push({ name: 'Audit Logs', path: '/dashboard/audit-log', icon: Shield });
+  }
+  // Support & Report — all staff
+  sys.items.push({ name: 'Help & Support', path: '/dashboard/support', icon: HelpCircle });
+  sys.items.push({ name: 'Report Issue', path: '/dashboard/report-issue', icon: Bug });
   sys.items.push({ name: 'Settings', path: '/dashboard/settings', icon: Settings });
   sections.push(sys);
 
   return sections;
+};
+
+// Map of icon name → hover animation class
+const ICON_ANIMATIONS = {
+  Settings: 'group-hover:rotate-45',
+  Wallet: 'group-hover:scale-110 group-hover:-translate-y-0.5',
+  TrendingUp: 'group-hover:-translate-y-1',
+  Boxes: 'group-hover:scale-110 group-hover:-translate-y-0.5',
+  Activity: 'group-hover:scale-110',
+  Users: 'group-hover:scale-105',
+  CheckSquare: 'group-hover:-rotate-6',
+  UserCheck: 'group-hover:scale-110',
+  ClipboardCheck: 'group-hover:rotate-3',
+  FileText: 'group-hover:-translate-y-0.5 group-hover:scale-105',
+  Trash2: 'group-hover:rotate-6',
+  Store: 'group-hover:scale-110',
+  ClipboardList: 'group-hover:-translate-y-0.5',
+  Heart: 'group-hover:scale-125',
+  ShoppingCart: 'group-hover:scale-110 group-hover:-translate-y-0.5',
+  LayoutDashboard: 'group-hover:scale-105',
+  HelpCircle: 'group-hover:rotate-12',
+  Bug: 'group-hover:scale-110 group-hover:-rotate-6',
+  Shield: 'group-hover:scale-110',
+  MessageSquare: 'group-hover:scale-105 group-hover:-translate-y-0.5',
 };
 
 function NavItem({ item, collapsed, onClick }) {
@@ -89,15 +120,16 @@ function NavItem({ item, collapsed, onClick }) {
     ? location.pathname === item.path
     : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
   const Icon = item.icon;
+  const iconAnim = ICON_ANIMATIONS[item.icon?.displayName || item.icon?.name] || 'group-hover:scale-110';
 
   return (
     <Link
       to={item.path}
       onClick={onClick}
       title={collapsed ? item.name : undefined}
-      className={`sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-2' : ''}`}
+      className={`sidebar-item group ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-2' : ''}`}
     >
-      <Icon size={18} className="shrink-0" />
+      <Icon size={18} className={`shrink-0 transition-transform duration-300 ease-in-out ${iconAnim}`} />
       {!collapsed && <span className="truncate">{item.name}</span>}
     </Link>
   );
@@ -105,7 +137,6 @@ function NavItem({ item, collapsed, onClick }) {
 
 export default function DashboardLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { user, storedAccounts, logout, logoutAll, switchAccount } = useAuth();
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);

@@ -11,7 +11,7 @@ const processedRequests = new Map();
 
 const createOrder = async (req, res, next) => {
   try {
-    const { items, distanceKm, shippingAddress, orderNotes } = req.body; // array of { chemicalId, quantity }
+    const { items, distanceKm, shippingAddress, orderNotes, paymentMethod } = req.body; // array of { chemicalId, quantity }
     const userId = req.user.id;
 
     const idempotencyKey = `${userId}-${JSON.stringify(items)}`;
@@ -91,7 +91,7 @@ const createOrder = async (req, res, next) => {
       const dbOrder = await tx.order.create({
         data: {
           customerId: customer.id,
-          status: 'REQUESTED',
+          status: paymentMethod === 'PAY_ON_DELIVERY' ? 'REQUESTED' : 'PENDING',
           total: finalTotal,
           baseCost: calcTotal,
           distanceKm: distanceKm || 0,
@@ -109,24 +109,47 @@ const createOrder = async (req, res, next) => {
       return { order: dbOrder, totalAmount: finalTotal };
     });
 
-    // Create Order in Razorpay
-    const options = {
-      amount: Math.round(totalAmount * 100), // paise
-      currency: "INR",
-      receipt: `rcpt_${order.id.substring(0, 8)}`
-    };
+      // Create Payment Record (Pending)
+      await prisma.payment.create({
+        data: {
+          orderId: order.id,
+          paymentMethod: paymentMethod === 'PAY_ON_DELIVERY' ? 'PAY_ON_DELIVERY' : 'RAZORPAY',
+          amount: finalTotal,
+          status: 'PENDING'
+        }
+      });
 
-    const rzpOrder = await razorpay.orders.create(options);
+      if (paymentMethod === 'PAY_ON_DELIVERY') {
+        return res.status(201).json({
+          message: 'Order requested successfully. Awaiting manual verification.',
+          orderId: order.id
+        });
+      }
 
-    res.status(201).json({
-      message: 'Order created',
-      orderId: order.id,
-      razorpayOrder: rzpOrder
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+      // Create Order in Razorpay for online payments
+      const options = {
+        amount: Math.round(totalAmount * 100), // paise
+        currency: "INR",
+        receipt: `rcpt_${order.id.substring(0, 8)}`
+      };
+
+      const rzpOrder = await razorpay.orders.create(options);
+
+      // Update payment record with razorpay order ID
+      await prisma.payment.update({
+        where: { orderId: order.id },
+        data: { razorpayOrderId: rzpOrder.id }
+      });
+
+      res.status(201).json({
+        message: 'Order created, proceed to payment',
+        orderId: order.id,
+        razorpayOrder: rzpOrder
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 
 const verifyPayment = async (req, res, next) => {
   try {
@@ -141,22 +164,20 @@ const verifyPayment = async (req, res, next) => {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (isAuthentic) {
-      // 1. Create Payment Record
-      await prisma.payment.create({
+      // 1. Update Payment Record
+      await prisma.payment.update({
+        where: { orderId },
         data: {
-          orderId,
           razorpayPaymentId: razorpay_payment_id,
-          razorpayOrderId: razorpay_order_id,
           razorpaySignature: razorpay_signature,
-          amount: 0, // In real app, fetch from order total
           status: 'SUCCESS'
         }
       });
 
-      // 2. Update Order Status to DELIVERED after payment confirmation
+      // 2. Update Order Status to PROCESSING after payment confirmation
       await prisma.order.update({
         where: { id: orderId },
-        data: { status: 'DELIVERED' }
+        data: { status: 'PROCESSING' }
       });
 
       res.status(200).json({ message: 'Payment verified successfully' });
@@ -284,4 +305,36 @@ const cancelOrder = async (req, res, next) => {
   }
 };
 
-module.exports = { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder };
+const verifyCodOrder = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { payment: true }
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (order.status !== 'REQUESTED') {
+      return res.status(400).json({ error: `Order cannot be verified in ${order.status} status` });
+    }
+
+    if (order.payment?.paymentMethod !== 'PAY_ON_DELIVERY') {
+      return res.status(400).json({ error: 'Only Pay on Delivery orders can be manually verified' });
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: { status: 'PROCESSING' }
+    });
+
+    res.status(200).json({ message: 'Pay on Delivery order verified successfully', order: updatedOrder });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder };

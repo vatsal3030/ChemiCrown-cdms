@@ -29,7 +29,7 @@ export default function ProductFormPage() {
     try {
       const saved = sessionStorage.getItem(SESSION_KEY);
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch (err) { console.error('Session storage read error', err); }
     return {
       name: '',
       description: '',
@@ -57,7 +57,7 @@ export default function ProductFormPage() {
 
   useEffect(() => {
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(formData)); }
-    catch {}
+    catch (err) { console.error('Session storage write error', err); }
   }, [formData, SESSION_KEY]);
 
   const isDirty = !!(formData.name || formData.description || formData.price);
@@ -218,7 +218,7 @@ export default function ProductFormPage() {
       const json = await res.json();
       if (res.ok) {
         toast.success(isEditing ? 'Product updated successfully' : 'Product created successfully');
-        try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+        try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { console.error(err); }
         navigate('/dashboard/inventory');
       } else {
         toast.error(json.error || 'Failed to save product');

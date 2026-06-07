@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, ArrowUpDown, DollarSign, MessageSquare, AlertCircle, Eye, Users, CalendarCheck, TrendingUp } from 'lucide-react';
+import { Search, Plus, Trash2, ArrowUpDown, DollarSign, MessageSquare, AlertCircle, Eye, Users, CalendarCheck, TrendingUp, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +18,8 @@ export default function HRManagement() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [leavesLoading, setLeavesLoading] = useState(false);
 
   // State for sub-features
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -44,6 +46,37 @@ export default function HRManagement() {
   useEffect(() => {
     fetchEmployees();
   }, [searchTerm, sortField, sortOrder]);
+
+  const fetchLeaves = async () => {
+    setLeavesLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/leaves?status=PENDING`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) setLeaveRequests(json.data);
+    } catch { toast.error('Failed to load leaves'); }
+    finally { setLeavesLoading(false); }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'leaves') fetchLeaves();
+  }, [activeTab]);
+
+  const handleLeaveReview = async (id, status, note = '') => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/leaves/${id}/review`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status, reviewNote: note })
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Leave ${status.toLowerCase()}`);
+        setLeaveRequests(prev => prev.filter(l => l.id !== id));
+      } else toast.error(json.message || 'Failed');
+    } catch { toast.error('Network error'); }
+  };
 
   const toggleSort = (field) => {
     if (sortField === field) {
@@ -152,17 +185,17 @@ export default function HRManagement() {
         </Button>
       </div>
 
-      <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-8">
-        {['dashboard', 'directory', 'attendance', 'payroll', 'communications'].map(tab => (
+      <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-8 overflow-x-auto">
+        {['dashboard', 'directory', 'attendance', 'payroll', 'leaves', 'communications'].map(tab => (
           <button 
             key={tab} 
             onClick={() => {
               setActiveTab(tab);
               setSelectedEmployee(null);
             }}
-            className={`pb-3 text-sm font-medium transition-colors ${activeTab === tab ? 'border-b-2 border-primary text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`pb-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-primary text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === 'leaves' ? `Leave Requests${leaveRequests.length ? ` (${leaveRequests.length})` : ''}` : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -374,6 +407,81 @@ export default function HRManagement() {
           </table>
         </div>
       </div>
+      )}
+
+      {/* Leave Requests Tab */}
+      {activeTab === 'leaves' && (
+        <div className="data-table-wrapper">
+          <div className="data-table-header">
+            <h3 className="font-semibold text-foreground">Pending Leave Requests</h3>
+            <button onClick={fetchLeaves} className="text-sm text-primary hover:underline">Refresh</button>
+          </div>
+          <div className="overflow-x-auto">
+            {leavesLoading ? (
+              <div className="p-8 text-center text-muted-foreground">Loading...</div>
+            ) : leaveRequests.length === 0 ? (
+              <div className="p-12 text-center text-muted-foreground">
+                <CheckCircle2 size={36} className="mx-auto mb-3 opacity-30 text-emerald-500" />
+                <p className="font-medium">No pending leave requests</p>
+                <p className="text-xs mt-1">All requests have been reviewed.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-primary/5 border-b border-border text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="data-table-cell text-left">Employee</th>
+                    <th className="data-table-cell text-left">Date</th>
+                    <th className="data-table-cell text-left">Type</th>
+                    <th className="data-table-cell text-left">Reason</th>
+                    <th className="data-table-cell text-left">Submitted</th>
+                    <th className="data-table-cell text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {leaveRequests.map(lr => (
+                    <tr key={lr.id} className="data-table-row">
+                      <td className="data-table-cell">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
+                            {lr.employee?.user?.firstName?.[0] || '?'}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground text-xs">{lr.employee?.user?.firstName} {lr.employee?.user?.lastName}</p>
+                            <p className="text-xs text-muted-foreground">{lr.employee?.department || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="data-table-cell font-medium text-foreground">
+                        {new Date(lr.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="data-table-cell">
+                        <span className="badge badge-info">{lr.type.replace('_', ' ')}</span>
+                      </td>
+                      <td className="data-table-cell text-muted-foreground max-w-[180px] truncate">{lr.reason}</td>
+                      <td className="data-table-cell text-muted-foreground text-xs">{new Date(lr.createdAt).toLocaleDateString('en-IN')}</td>
+                      <td className="data-table-cell text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleLeaveReview(lr.id, 'APPROVED')}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-semibold transition-colors dark:bg-emerald-900/30 dark:text-emerald-400"
+                          >
+                            <CheckCircle2 size={12} /> Approve
+                          </button>
+                          <button
+                            onClick={() => handleLeaveReview(lr.id, 'REJECTED')}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold transition-colors dark:bg-red-900/30 dark:text-red-400"
+                          >
+                            <XCircle size={12} /> Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       )}
 
       <EmployeeModal 

@@ -188,6 +188,26 @@ exports.updateEmployee = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { firstName, lastName, phone, role, department, jobTitle, joiningDate, isActive, baseSalary, ctc, pfRate } = req.body;
+    const requestingUser = req.user;
+
+    // RBAC: Prevent role escalation — only SUPER_ADMIN/OWNER can assign privileged roles
+    const privilegedRoles = ['SUPER_ADMIN', 'OWNER', 'MANAGER'];
+    if (role && privilegedRoles.includes(role)) {
+      if (!['SUPER_ADMIN', 'OWNER'].includes(requestingUser.role)) {
+        return res.status(403).json({
+          success: false,
+          message: `Only Super Admin or Owner can assign the '${role}' role.`
+        });
+      }
+    }
+
+    // Prevent any user from changing their own role
+    if (id === requestingUser.id && role && role !== requestingUser.role) {
+      return res.status(403).json({
+        success: false,
+        message: 'You cannot change your own role.'
+      });
+    }
 
     const updatedUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.update({
@@ -218,6 +238,21 @@ exports.updateEmployee = async (req, res, next) => {
             pfRate: pfRate ? parseFloat(pfRate) : null
           }
         });
+      }
+
+      // Write audit log for role changes
+      if (role) {
+        const existingUser = await tx.user.findUnique({ where: { id }, select: { role: true } });
+        if (existingUser && existingUser.role !== role) {
+          await tx.auditLog.create({
+            data: {
+              userId: requestingUser.id,
+              action: 'ROLE_CHANGED',
+              entity: 'User',
+              entityId: id
+            }
+          });
+        }
       }
 
       return user;

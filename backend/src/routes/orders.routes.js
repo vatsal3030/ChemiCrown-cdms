@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder } = require('../controllers/orders.controller');
+const { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder } = require('../controllers/orders.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 const { validateRequest } = require('../middlewares/validate.middleware');
@@ -16,5 +16,6 @@ router.post('/verify', validateRequest(verifyPaymentSchema), verifyPayment);
 router.get('/', getOrders);
 router.get('/:id', getOrderById);
 router.post('/:id/cancel', cancelOrder);
+router.put('/:id/verify-cod', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), verifyCodOrder);
 
 module.exports = router;

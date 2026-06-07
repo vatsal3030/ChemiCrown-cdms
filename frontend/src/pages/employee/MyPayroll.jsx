@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import {
-  FileText, DollarSign, Clock, CheckCircle2, AlertCircle,
-  TrendingUp, Shield, Calendar, User, Briefcase
+import { 
+  DollarSign, FileText, CheckCircle2, Clock, Shield
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
@@ -73,7 +72,7 @@ export default function MyPayroll() {
   }, []);
 
   const totalEarned = data.salaries.filter(s => s.status === 'PAID').reduce((a, s) => a + s.netPay, 0);
-  const totalDeducted = data.salaries.reduce((a, s) => a + s.deductions, 0);
+
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
 
   return (
@@ -90,7 +89,7 @@ export default function MyPayroll() {
       </div>
 
       {/* Profile Banner */}
-      <div className="bg-gradient-to-br from-primary/90 to-primary rounded-2xl p-6 text-white flex items-center gap-5 shadow-lg">
+      <div className="bg-linear-to-br from-primary/90 to-primary rounded-2xl p-6 text-white flex items-center gap-5 shadow-lg">
         <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-bold shrink-0 overflow-hidden uppercase">
           {user?.profileImageUrl
             ? <img src={user.profileImageUrl} className="w-full h-full object-cover" alt="" />

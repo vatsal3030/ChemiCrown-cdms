@@ -32,6 +32,7 @@ export default function Checkout() {
   const { cartItems, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('RAZORPAY');
 
   const SESSION_KEY = `checkout_form_${user?.id || 'guest'}`;
 
@@ -40,7 +41,7 @@ export default function Checkout() {
     try {
       const saved = sessionStorage.getItem(`checkout_form_${user?.id || 'guest'}`);
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch (err) { console.error('Session storage read error', err); }
     return {
       companyName: '',
       gstNumber: '',
@@ -58,7 +59,7 @@ export default function Checkout() {
   // Persist form to sessionStorage on every change
   useEffect(() => {
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(formData)); }
-    catch {}
+    catch (err) { console.error('Session storage write error', err); }
   }, [formData, SESSION_KEY]);
 
   const isDirty = !!(formData.companyName || formData.gstNumber || formData.shippingAddress);
@@ -101,7 +102,7 @@ export default function Checkout() {
         price: item.product.price
       }));
 
-      // In real implementation, this would call /api/orders
+      // Call API to create order
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders`, {
         method: 'POST',
         headers: {
@@ -117,26 +118,111 @@ export default function Checkout() {
           shippingAddress: formData.shippingAddress,
           orderNotes: formData.notes,
           distanceKm,
-          paymentMethod: 'bank_transfer'
+          paymentMethod
         })
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        toast.success('Order placed successfully!');
-        clearCart();
-        try { sessionStorage.removeItem(SESSION_KEY); } catch {}
-        navigate('/dashboard/orders');
-      } else {
+      if (!res.ok) {
         toast.error(data.error || 'Failed to place order.');
+        setLoading(false);
+        isProcessing.current = false;
+        return;
       }
+
+      if (paymentMethod === 'PAY_ON_DELIVERY') {
+        toast.success(data.message || 'Order requested successfully!');
+        clearCart();
+        try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { console.error(err); }
+        navigate('/dashboard/orders');
+      } else if (paymentMethod === 'RAZORPAY' && data.razorpayOrder) {
+        // Load Razorpay Script
+        const resScript = await loadRazorpayScript();
+        if (!resScript) {
+          toast.error('Razorpay SDK failed to load. Are you online?');
+          setLoading(false);
+          isProcessing.current = false;
+          return;
+        }
+
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder', 
+          amount: data.razorpayOrder.amount,
+          currency: data.razorpayOrder.currency,
+          name: "ChemiCrown CDMS",
+          description: "Order Payment",
+          image: "/chemicrown.png",
+          order_id: data.razorpayOrder.id,
+          handler: async function (response) {
+            try {
+              const verifyRes = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/verify`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderId: data.orderId
+                })
+              });
+              
+              const verifyData = await verifyRes.json();
+              if (verifyRes.ok) {
+                toast.success('Payment successful and order verified!');
+                clearCart();
+                try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { console.error(err); }
+                navigate('/dashboard/orders');
+              } else {
+                toast.error(verifyData.error || 'Payment verification failed.');
+                navigate('/dashboard/orders'); // Navigate anyway, payment might need manual sync
+              }
+            } catch (err) {
+              console.error(err);
+              toast.error('Error verifying payment.');
+            }
+          },
+          prefill: {
+            name: formData.companyName,
+            email: formData.email,
+            contact: formData.phone
+          },
+          theme: {
+            color: "#1F2E54"
+          }
+        };
+
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.on('payment.failed', function (response) {
+          toast.error(response.error.description || 'Payment Failed');
+        });
+        paymentObject.open();
+      }
+      
     } catch (error) {
+      console.error(error);
       toast.error("Network error");
     } finally {
       setLoading(false);
       isProcessing.current = false;
     }
+  };
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
   };
 
   const gstAmount = Number((cartTotal * 0.18).toFixed(2));
@@ -303,16 +389,48 @@ export default function Checkout() {
               <CreditCard className="w-5 h-5 text-primary" /> Payment Method
             </h3>
             
-            <p className="text-sm text-muted-foreground mb-8">
-              You will be redirected to the secure Razorpay payment gateway to complete your purchase. We support Credit Cards, UPI, Netbanking, and Wallets.
-            </p>
+            <div className="space-y-4 mb-8">
+              <label 
+                className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'RAZORPAY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
+              >
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  value="RAZORPAY" 
+                  checked={paymentMethod === 'RAZORPAY'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-4 h-4 text-primary focus:ring-primary"
+                />
+                <div className="ml-4 flex-1">
+                  <span className="block font-semibold text-foreground">Online Payment (Razorpay)</span>
+                  <span className="block text-sm text-muted-foreground mt-1">Pay securely via Credit/Debit Cards, UPI, Netbanking, or Wallets.</span>
+                </div>
+              </label>
+
+              <label 
+                className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'PAY_ON_DELIVERY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
+              >
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  value="PAY_ON_DELIVERY" 
+                  checked={paymentMethod === 'PAY_ON_DELIVERY'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-4 h-4 text-primary focus:ring-primary"
+                />
+                <div className="ml-4 flex-1">
+                  <span className="block font-semibold text-foreground">Pay on Delivery</span>
+                  <span className="block text-sm text-muted-foreground mt-1">Requires manual admin verification before the order is processed.</span>
+                </div>
+              </label>
+            </div>
 
             <button 
               onClick={handlePayment}
               disabled={loading}
               className="w-full inline-flex items-center justify-center px-6 py-4 text-lg font-bold text-primary-foreground bg-primary rounded-xl shadow hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
             >
-              {loading ? 'Processing...' : `Pay ₹${finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`}
+              {loading ? 'Processing...' : paymentMethod === 'RAZORPAY' ? `Pay ₹${finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}` : 'Place Order'}
             </button>
 
             <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground bg-success/10 p-3 rounded-lg">

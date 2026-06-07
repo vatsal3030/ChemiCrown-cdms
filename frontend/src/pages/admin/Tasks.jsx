@@ -3,8 +3,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  CheckSquare, Plus, Trash2, Clock, User as UserIcon, GripVertical,
-  X, ChevronRight, AlertCircle, Tag, Eye, Calendar
+  CheckSquare, Plus, Trash2, GripVertical,
+  X, Calendar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -14,7 +14,7 @@ const COLUMNS = [
   { id: 'COMPLETED',   label: 'Completed',   color: 'bg-emerald-500',badge: 'badge-success' },
 ];
 
-function TaskCard({ task, user, onDelete, onStatusChange, onView, dragging, dragHandleProps }) {
+function TaskCard({ task, user, onDelete, onView, dragging, dragHandleProps }) {
   const assigneeName = task.assignedTo?.user
     ? `${task.assignedTo.user.firstName} ${task.assignedTo.user.lastName}`
     : 'Unassigned';
@@ -86,23 +86,23 @@ function TaskDetailModal({ task, onClose, onStatusChange }) {
         )}
 
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="form-card !p-3">
+          <div className="form-card p-3!">
             <p className="text-xs text-muted-foreground mb-1">Assigned To</p>
             <p className="text-sm font-semibold text-foreground">
               {task.assignedTo?.user ? `${task.assignedTo.user.firstName} ${task.assignedTo.user.lastName}` : 'Unassigned'}
             </p>
           </div>
-          <div className="form-card !p-3">
+          <div className="form-card p-3!">
             <p className="text-xs text-muted-foreground mb-1">Assigned By</p>
             <p className="text-sm font-semibold text-foreground">
               {task.assignedBy ? `${task.assignedBy.firstName} ${task.assignedBy.lastName}` : 'Unknown'}
             </p>
           </div>
-          <div className="form-card !p-3">
+          <div className="form-card p-3!">
             <p className="text-xs text-muted-foreground mb-1">Created</p>
             <p className="text-sm font-semibold text-foreground">{new Date(task.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
-          <div className="form-card !p-3">
+          <div className="form-card p-3!">
             <p className="text-xs text-muted-foreground mb-1">Status</p>
             <select
               className="text-sm font-semibold bg-transparent text-foreground border-0 p-0 focus:outline-none cursor-pointer"
@@ -144,7 +144,7 @@ export default function Tasks() {
       });
       const data = await res.json();
       if (data.success) setTasks(data.data);
-    } catch { toast.error('Failed to load tasks'); }
+    } catch (err) { console.error(err); toast.error('Failed to load tasks'); }
     finally { setLoading(false); }
   };
 
@@ -155,7 +155,7 @@ export default function Tasks() {
       });
       const data = await res.json();
       if (data.success) setEmployees(data.data);
-    } catch {}
+    } catch (err) { console.error('Fetch employees error', err); }
   };
 
   useEffect(() => {
@@ -180,7 +180,7 @@ export default function Tasks() {
         setFormData({ title: '', description: '', assignedToId: '' });
         fetchTasks();
       } else toast.error(data.error || 'Failed to create task');
-    } catch { toast.error('Network error'); }
+    } catch (err) { console.error(err); toast.error('Network error'); }
     finally { setSubmitting(false); }
   };
 
@@ -196,7 +196,7 @@ export default function Tasks() {
       });
       const data = await res.json();
       if (!data.success) { toast.error('Failed to update status'); fetchTasks(); }
-    } catch { toast.error('Network error'); fetchTasks(); }
+    } catch (err) { console.error(err); toast.error('Network error'); fetchTasks(); }
   };
 
   const handleDelete = async (id) => {
@@ -209,7 +209,7 @@ export default function Tasks() {
       const data = await res.json();
       if (data.success) toast.success('Task deleted');
       else { toast.error('Failed to delete'); fetchTasks(); }
-    } catch { toast.error('Network error'); fetchTasks(); }
+    } catch (err) { console.error(err); toast.error('Network error'); fetchTasks(); }
   };
 
   // Drag handlers

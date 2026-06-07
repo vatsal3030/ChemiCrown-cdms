@@ -52,13 +52,13 @@ export default function Orders() {
     if (!window.confirm('Cancel this order? This cannot be undone.')) return;
     setOrders(prev => prev.filter(o => o.id !== id));
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, {
-        method: 'DELETE',
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/cancel`, {
+        method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
-      if (json.success) toast.success('Order cancelled');
-      else { toast.error(json.error || 'Failed'); fetchOrders(); }
+      if (json.success) toast.success('Order cancelled successfully');
+      else { toast.error(json.error || 'Failed to cancel order'); fetchOrders(); }
     } catch {
       toast.error('Network error');
       fetchOrders();

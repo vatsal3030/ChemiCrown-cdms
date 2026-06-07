@@ -123,24 +123,78 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
 
 /**
  * POST /api/payroll/:id/pay
- * Mark a specific salary slip as PAID
+ * Mark a specific salary slip as PAID, with payment method
  */
 exports.markAsPaid = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const slip = await prisma.salary.findUnique({ where: { id } });
+    const { paymentMethod } = req.body; // 'CASH' or 'DIGITAL_TRANSFER'
+    
+    const slip = await prisma.salary.findUnique({
+      where: { id },
+      include: { employee: { include: { user: true } } }
+    });
     if (!slip) return res.status(404).json({ success: false, message: 'Salary slip not found' });
     if (slip.status === 'PAID') return res.status(409).json({ success: false, message: 'Salary already paid' });
 
     const updated = await prisma.salary.update({
       where: { id },
-      data: { status: 'PAID', paidAt: new Date() }
+      data: {
+        status: 'PAID',
+        paidAt: new Date(),
+        paymentMethod: paymentMethod || 'CASH'
+      }
     });
+
+    // Notify the employee
+    await prisma.notification.create({
+      data: {
+        userId: slip.employee.userId,
+        message: `Your salary of ₹${slip.netPay.toFixed(2)} for ${slip.month} has been paid via ${paymentMethod || 'Cash'}. Please confirm receipt on your payroll dashboard.`
+      }
+    });
+
     res.json({ success: true, data: updated });
   } catch (error) {
     next(error);
   }
 };
+
+/**
+ * POST /api/payroll/:id/confirm
+ * Employee confirms receipt of their salary
+ */
+exports.confirmReceipt = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const slip = await prisma.salary.findUnique({
+      where: { id },
+      include: { employee: true }
+    });
+    if (!slip) return res.status(404).json({ success: false, message: 'Salary slip not found' });
+    if (slip.status !== 'PAID') {
+      return res.status(400).json({ success: false, message: 'Salary has not been paid yet' });
+    }
+    // Verify the salary belongs to the requesting employee
+    if (slip.employee.userId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'You can only confirm your own salary receipts' });
+    }
+    if (slip.confirmedByEmployee) {
+      return res.status(409).json({ success: false, message: 'Receipt already confirmed' });
+    }
+
+    const updated = await prisma.salary.update({
+      where: { id },
+      data: { confirmedByEmployee: true, confirmedAt: new Date() }
+    });
+
+    res.json({ success: true, message: 'Salary receipt confirmed', data: updated });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 /**
  * GET /api/payroll/my

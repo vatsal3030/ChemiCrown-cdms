@@ -40,6 +40,10 @@ import Notifications from './pages/Notifications';
 import Payroll from './pages/admin/Payroll';
 import Finance from './pages/admin/Finance';
 import MyPayroll from './pages/employee/MyPayroll';
+import Support from './pages/Support';
+import ReportIssue from './pages/ReportIssue';
+import AuditLog from './pages/admin/AuditLog';
+import TicketDashboard from './pages/admin/TicketDashboard';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -161,6 +165,16 @@ function App() {
 
                   <Route path="settings" element={<Settings />} />
                   <Route path="notifications" element={<Notifications />} />
+                  {/* Support & Issue Reporting — all authenticated users */}
+                  <Route path="support" element={<Support />} />
+                  <Route path="report-issue" element={<ReportIssue />} />
+                  {/* Audit Logs & Ticket Dashboard — SUPER_ADMIN & OWNER only */}
+                  <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
+                    <Route path="tickets" element={<TicketDashboard />} />
+                  </Route>
+                  <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']} />}>
+                    <Route path="audit-log" element={<AuditLog />} />
+                  </Route>
                 </Route>
               </Route>
             </Routes>

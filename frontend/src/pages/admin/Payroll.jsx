@@ -1,17 +1,81 @@
 import { useState, useEffect } from 'react';
 import {
-  Wallet, Users, CheckCircle2, Clock, AlertCircle, Plus,
-  Download, ChevronLeft, ChevronRight, Search, Filter,
-  TrendingUp, DollarSign, Building2, CreditCard
+  Wallet, CheckCircle2, Clock, Plus, Search, Filter,
+  DollarSign, CreditCard, Banknote, Smartphone, X, ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 
-function SalaryStatusBadge({ status }) {
+function SalaryStatusBadge({ status, confirmed }) {
+  if (status === 'PAID' && confirmed) return <span className="badge badge-success"><ShieldCheck size={11} /> Paid & Confirmed</span>;
   if (status === 'PAID') return <span className="badge badge-success"><CheckCircle2 size={11} /> Paid</span>;
   return <span className="badge badge-warning"><Clock size={11} /> Pending</span>;
+}
+
+function PaymentModal({ slip, onClose, onConfirm, loading }) {
+  const [method, setMethod] = useState('CASH');
+  if (!slip) return null;
+  const emp = slip.employee?.user;
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <DollarSign size={20} className="text-primary" /> Process Salary Payment
+          </h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><X size={16} /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="bg-muted/50 rounded-xl p-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Paying To</p>
+            <p className="font-bold text-foreground">{emp?.firstName} {emp?.lastName}</p>
+            <p className="text-sm text-muted-foreground">{emp?.email}</p>
+            <p className="text-2xl font-extrabold text-primary mt-2">₹{slip.netPay?.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground">Net pay for {slip.month}</p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-2">Select Payment Method</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[{ key: 'CASH', label: 'Cash', icon: Banknote, desc: 'Physical cash payment' }, { key: 'DIGITAL_TRANSFER', label: 'Digital Transfer', icon: Smartphone, desc: 'Bank/UPI transfer' }].map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => setMethod(opt.key)}
+                  className={`p-3 rounded-xl border-2 text-left transition-all ${
+                    method === opt.key
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <opt.icon size={20} className={method === opt.key ? 'text-primary' : 'text-muted-foreground'} />
+                  <p className="font-semibold text-sm text-foreground mt-1">{opt.label}</p>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+          {method === 'CASH' && (
+            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400 rounded-xl p-3">
+              ⚠️ Cash payment requires manual handover. Employee will be notified to confirm receipt.
+            </div>
+          )}
+          {method === 'DIGITAL_TRANSFER' && (
+            <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400 rounded-xl p-3">
+              ℹ️ Mark after completing the bank/UPI transfer. Employee will confirm receipt.
+            </div>
+          )}
+        </div>
+        <div className="px-6 pb-6 flex justify-end gap-3">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => onConfirm(slip.id, method)} disabled={loading}>
+            <CheckCircle2 size={16} className="mr-1.5" />
+            {loading ? 'Processing...' : `Confirm ${method === 'CASH' ? 'Cash' : 'Digital'} Payment`}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function Payroll() {
@@ -20,6 +84,7 @@ export default function Payroll() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [payingId, setPayingId] = useState(null);
+  const [payModal, setPayModal] = useState(null); // slip to pay
   const [month, setMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -70,18 +135,19 @@ export default function Payroll() {
     }
   };
 
-  const handlePay = async (salaryId) => {
-    if (!window.confirm('Mark this salary as PAID? This action is irreversible.')) return;
+  const handlePay = async (salaryId, paymentMethod) => {
     try {
       setPayingId(salaryId);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/${salaryId}/pay`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ paymentMethod })
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Salary marked as paid!');
-        setSalaries(prev => prev.map(s => s.id === salaryId ? { ...s, status: 'PAID', paidAt: new Date() } : s));
+        toast.success(`Salary marked as paid via ${paymentMethod === 'CASH' ? 'Cash' : 'Digital Transfer'}!`);
+        setSalaries(prev => prev.map(s => s.id === salaryId ? { ...s, status: 'PAID', paidAt: new Date(), paymentMethod } : s));
+        setPayModal(null);
       } else {
         toast.error(json.message || 'Failed to mark as paid');
       }
@@ -103,6 +169,12 @@ export default function Payroll() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      <PaymentModal
+        slip={payModal}
+        onClose={() => setPayModal(null)}
+        onConfirm={handlePay}
+        loading={!!payingId}
+      />
       {/* Header */}
       <div className="page-header">
         <div className="page-header-icon bg-primary/10 text-primary">
@@ -245,12 +317,15 @@ export default function Payroll() {
                   <td className="data-table-cell text-rose-600 font-medium">-₹{slip.deductions.toFixed(2)}</td>
                   <td className="data-table-cell text-amber-600 font-medium">-₹{slip.pfContribution.toFixed(2)}</td>
                   <td className="data-table-cell font-bold text-foreground text-base">₹{slip.netPay.toFixed(2)}</td>
-                  <td className="data-table-cell"><SalaryStatusBadge status={slip.status} /></td>
+                  <td className="data-table-cell"><SalaryStatusBadge status={slip.status} confirmed={slip.confirmedByEmployee} /></td>
+                  <td className="data-table-cell">
+                    <div className="text-xs text-muted-foreground">{slip.paymentMethod?.replace('_', ' ') || '—'}</div>
+                  </td>
                   <td className="data-table-cell text-right">
                     {slip.status === 'PENDING' ? (
                       <Button
                         size="sm"
-                        onClick={() => handlePay(slip.id)}
+                        onClick={() => setPayModal(slip)}
                         disabled={payingId === slip.id}
                         className="text-xs"
                       >
@@ -258,9 +333,14 @@ export default function Payroll() {
                         {payingId === slip.id ? 'Processing...' : 'Pay Now'}
                       </Button>
                     ) : (
-                      <span className="text-xs text-muted-foreground">
-                        Paid {slip.paidAt ? new Date(slip.paidAt).toLocaleDateString('en-IN') : ''}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-xs text-muted-foreground block">
+                          {slip.paidAt ? new Date(slip.paidAt).toLocaleDateString('en-IN') : ''}
+                        </span>
+                        {!slip.confirmedByEmployee && (
+                          <span className="text-xs text-amber-600">Awaiting confirmation</span>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   User, Lock, Bell, Shield, Save, Eye, EyeOff, Camera,
-  Building, Phone, Mail, CheckCircle2, AlertTriangle, Globe,
+  Phone, Mail, CheckCircle2, AlertTriangle, Globe,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -66,7 +66,7 @@ export default function Settings() {
     try {
       const saved = sessionStorage.getItem(SESSION_KEY);
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch (err) { console.error('Session storage read error', err); }
     return {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
@@ -83,7 +83,7 @@ export default function Settings() {
 
   useEffect(() => {
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(formData)); }
-    catch {}
+    catch (err) { console.error('Session storage write error', err); }
   }, [formData, SESSION_KEY]);
 
   // Security
@@ -134,8 +134,7 @@ export default function Settings() {
       } else {
         toast.error(json.error || 'Failed to update profile');
       }
-    } catch {
-      toast.error('Network error');
+    } catch (err) { console.error(err); toast.error('Network error');
     } finally {
       setIsSaving(false);
     }
@@ -159,9 +158,8 @@ export default function Settings() {
       } else {
         toast.error(json.error || 'Failed to change password');
       }
-    } catch {
-      toast.error('Network error');
-    } finally {
+    } catch (err) { console.error(err); toast.error('Network error'); }
+    finally {
       setIsChangingPw(false);
     }
   };
@@ -185,7 +183,7 @@ export default function Settings() {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Sidebar Tabs */}
         <div className="w-full md:w-52 space-y-1 shrink-0">
-          <div className="form-card !p-4 mb-4">
+          <div className="form-card p-4! mb-4">
             <div className="flex flex-col items-center text-center gap-2">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 overflow-hidden flex items-center justify-center text-primary font-bold text-xl">
                 {previewUrl
@@ -347,7 +345,7 @@ export default function Settings() {
               </form>
 
               {/* Active Sessions (informational) */}
-              <div className="form-card">
+              <div className="form-card p-4!">
                 <h3 className="font-bold text-foreground mb-1">Active Session</h3>
                 <p className="text-sm text-muted-foreground mb-4">You are currently logged in on this device.</p>
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
