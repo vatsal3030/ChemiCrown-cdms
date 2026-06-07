@@ -85,6 +85,8 @@ const tasksRoutes = require('./src/routes/tasks.routes');
 const categoryRoutes = require('./src/routes/category.routes');
 const reviewRoutes = require('./src/routes/review.routes');
 const favoritesRoutes = require('./src/routes/favorites.routes');
+const payrollRoutes = require('./src/routes/payroll.routes');
+const financeRoutes = require('./src/routes/finance.routes');
 
 // API Routes will be mounted here
 app.use('/api/auth', authRoutes);
@@ -98,6 +100,8 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/payroll', payrollRoutes);
+app.use('/api/finance', financeRoutes);
 
 // Global Error Handlers
 app.use(notFoundHandler);

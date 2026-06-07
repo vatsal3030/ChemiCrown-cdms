@@ -55,6 +55,7 @@ model Employee {
   baseSalary  Float?   // HR Payroll
   ctc         Float?   // Cost to Company
   pfRate      Float?   // e.g. 12.0
+  pfLedger    PFLedger?
 }
 
 model Customer {
@@ -312,6 +313,17 @@ model Salary {
 enum SalaryStatus {
   PENDING
   PAID
+}
+
+model PFLedger {
+  id                String   @id @default(uuid())
+  employeeId        String   @unique
+  employee          Employee @relation(fields: [employeeId], references: [id])
+  balance           Float    @default(0)
+  lastUpdatedMonth  String?  // "YYYY-MM" of last contribution
+  settledAt         DateTime? // Set when employee leaves & PF is disbursed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Favorite {

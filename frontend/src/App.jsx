@@ -37,6 +37,9 @@ import Cart from './pages/customer/Cart';
 import ProductDetails from './pages/ProductDetails';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
+import Payroll from './pages/admin/Payroll';
+import Finance from './pages/admin/Finance';
+import MyPayroll from './pages/employee/MyPayroll';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -139,11 +142,18 @@ function App() {
                     <Route path="hr" element={<HRManagement />} />
                     <Route path="hr/:id" element={<EmployeeDetails />} />
                     <Route path="tasks" element={<Tasks />} />
+                    <Route path="payroll" element={<Payroll />} />
+                  </Route>
+
+                  {/* Finance — Owner & Super Admin Only */}
+                  <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']} />}>
+                    <Route path="finance" element={<Finance />} />
                   </Route>
                   
                   {/* Employees */}
                   <Route element={<ProtectedRoute allowedRoles={['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
                     <Route path="me" element={<MyAttendance />} />
+                    <Route path="my-payroll" element={<MyPayroll />} />
                   </Route>
 
                   <Route path="settings" element={<Settings />} />
