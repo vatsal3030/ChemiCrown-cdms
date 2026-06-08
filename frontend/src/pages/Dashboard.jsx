@@ -49,7 +49,7 @@ function QuickAction({ label, icon: Icon, to, color }) {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState({
@@ -64,7 +64,6 @@ export default function Dashboard() {
     try {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
-      const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/analytics/dashboard`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
