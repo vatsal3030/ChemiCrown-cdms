@@ -10,12 +10,34 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Area, AreaChart, Legend
 } from 'recharts';
+import { formatINR, formatINRFull, formatCompact } from '@/lib/utils';
 
 const COLORS = ['#10B981', '#EF4444', '#F59E0B', '#3B82F6'];
 
-function StatCard({ label, value, sub, icon: Icon, color, trend, trendValue }) {
+// ── Skeleton building blocks ──────────────────────────────────────────────────
+function Skeleton({ className = '' }) {
+  return <div className={`bg-muted animate-pulse rounded-xl ${className}`} />;
+}
+
+function StatCardSkeleton() {
   return (
-    <div className="kpi-card group">
+    <div className="kpi-card">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-8 w-32" />
+        </div>
+        <Skeleton className="w-11 h-11 rounded-2xl shrink-0" />
+      </div>
+      <Skeleton className="h-4 w-28 mt-3" />
+    </div>
+  );
+}
+
+// ── Live stat card ────────────────────────────────────────────────────────────
+function StatCard({ label, value, sub, icon: Icon, color, trend, trendValue, title }) {
+  return (
+    <div className="kpi-card group" title={title}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{label}</p>
@@ -52,13 +74,7 @@ export default function Dashboard() {
   const { user, token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [data, setData] = useState({
-    stats: { revenue: 0, orders: 0, pendingOrders: 0, customers: 0, newCustomers: 0, inventoryAlerts: 0, lowStockProducts: [], revenueTrend: null },
-    revenueData: [],
-    inventoryData: [],
-    attendanceData: [],
-    recentOrders: []
-  });
+  const [data, setData] = useState(null); // null = not yet loaded (distinguish from loaded-but-empty)
   const [showLowStock, setShowLowStock] = useState(false);
 
   const fetchData = async (isRefresh = false) => {
@@ -83,8 +99,6 @@ export default function Dashboard() {
   // Customer redirect — MUST come after all hooks
   if (user?.role === 'CUSTOMER') return <Navigate to="/dashboard/catalog" replace />;
 
-  const { stats, revenueData, inventoryData, attendanceData } = data;
-
   const OrderStatusBadge = ({ status }) => {
     const map = {
       REQUESTED: 'badge-info',
@@ -98,20 +112,48 @@ export default function Dashboard() {
     return <span className={`badge ${map[status] || 'badge-secondary'}`}>{status}</span>;
   };
 
+  // ── Full skeleton loading state (no zeros shown) ───────────────────────────
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 w-64 bg-muted rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => <div key={i} className="h-32 bg-muted rounded-2xl" />)}
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <Skeleton className="h-9 w-24" />
         </div>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {[...Array(4)].map((_, i) => <StatCardSkeleton key={i} />)}
+        </div>
+        {/* Quick Actions */}
+        <div>
+          <Skeleton className="h-4 w-28 mb-3" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-3">
+            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+          </div>
+        </div>
+        {/* Charts row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Skeleton className="lg:col-span-2 h-80" />
+          <Skeleton className="h-80" />
+        </div>
+        {/* Bottom row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-80 bg-muted rounded-2xl" />
-          <div className="h-80 bg-muted rounded-2xl" />
+          <Skeleton className="h-72" />
+          <Skeleton className="h-72" />
         </div>
       </div>
     );
   }
+
+  // Data loaded (may be null if fetch failed — show empty state)
+  const stats         = data?.stats         || { revenue: 0, orders: 0, pendingOrders: 0, customers: 0, newCustomers: 0, inventoryAlerts: 0, lowStockProducts: [], revenueTrend: null };
+  const revenueData   = data?.revenueData   || [];
+  const inventoryData = data?.inventoryData || [];
+  const attendanceData = data?.attendanceData || [];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -140,7 +182,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         <StatCard
           label="Total Revenue"
-          value={`₹${(stats.revenue || 0).toLocaleString('en-IN')}`}
+          value={formatINR(stats.revenue)}
+          title={`Full value: ${formatINRFull(stats.revenue)}`}
           trend={stats.revenueTrend !== null ? (parseFloat(stats.revenueTrend) >= 0 ? 'up' : 'down') : undefined}
           trendValue={stats.revenueTrend !== null ? `${parseFloat(stats.revenueTrend) >= 0 ? '+' : ''}${stats.revenueTrend}% vs last month` : undefined}
           icon={DollarSign}
@@ -219,25 +262,35 @@ export default function Dashboard() {
             </div>
             <span className="badge badge-success"><TrendingUp size={11} /> YTD</span>
           </div>
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1F2E54" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#1F2E54" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={8} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} width={55} />
-              <Tooltip
-                contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
-                formatter={v => [`₹${v.toLocaleString('en-IN')}`, 'Revenue']}
-                labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
-              />
-              <Area type="monotone" dataKey="value" stroke="#1F2E54" strokeWidth={3} fill="url(#revenueGradient)" dot={false} activeDot={{ r: 6, strokeWidth: 2, fill: '#1F2E54' }} />
-            </AreaChart>
-          </ResponsiveContainer>
+          {revenueData.length === 0 ? (
+            <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">No revenue data yet</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1F2E54" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#1F2E54" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={8} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94A3B8', fontSize: 12 }}
+                  tickFormatter={v => formatINR(v)}
+                  width={65}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
+                  formatter={v => [formatINRFull(v), 'Revenue']}
+                  labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
+                />
+                <Area type="monotone" dataKey="value" stroke="#1F2E54" strokeWidth={3} fill="url(#revenueGradient)" dot={false} activeDot={{ r: 6, strokeWidth: 2, fill: '#1F2E54' }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Attendance Pie */}
@@ -246,7 +299,7 @@ export default function Dashboard() {
             <h3 className="font-bold text-foreground">Today's Attendance</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Staff present vs absent</p>
           </div>
-          {attendanceData?.length > 0 ? (
+          {attendanceData?.some(d => d.value > 0) ? (
             <>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
@@ -291,18 +344,22 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground mt-0.5">Current inventory quantities</p>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={inventoryData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} dy={8} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} width={35} />
-              <Tooltip
-                contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--card)' }}
-                cursor={{ fill: 'var(--muted)', radius: 4 }}
-              />
-              <Bar dataKey="stock" fill="#E6513A" radius={[6, 6, 0, 0]} barSize={36} />
-            </BarChart>
-          </ResponsiveContainer>
+          {inventoryData.length === 0 ? (
+            <div className="h-56 flex items-center justify-center text-muted-foreground text-sm">No inventory data</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={inventoryData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} dy={8} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} width={35} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--card)' }}
+                  cursor={{ fill: 'var(--muted)', radius: 4 }}
+                />
+                <Bar dataKey="stock" fill="#E6513A" radius={[6, 6, 0, 0]} barSize={36} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Recent Orders */}
@@ -317,10 +374,10 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="space-y-2">
-            {!data.recentOrders?.length && (
+            {!data?.recentOrders?.length && (
               <div className="text-center py-8 text-sm text-muted-foreground">No recent orders.</div>
             )}
-            {data.recentOrders?.map((order) => (
+            {data?.recentOrders?.map((order) => (
               <div key={order.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition-colors group">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <ShoppingCart size={15} className="text-primary" />
@@ -333,7 +390,9 @@ export default function Dashboard() {
                 </div>
                 <div className="text-right shrink-0">
                   <OrderStatusBadge status={order.status} />
-                  <p className="text-xs font-bold text-foreground mt-1">₹{Number(order.total).toFixed(2)}</p>
+                  <p className="text-xs font-bold text-foreground mt-1" title={formatINRFull(order.total)}>
+                    {formatINR(order.total)}
+                  </p>
                 </div>
               </div>
             ))}

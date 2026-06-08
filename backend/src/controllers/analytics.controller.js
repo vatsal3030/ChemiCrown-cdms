@@ -7,24 +7,25 @@ exports.getDashboardStats = async (req, res, next) => {
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - 7);
 
-    // 1. Total Revenue — SUCCESS payments + COD orders that are DELIVERED
-    const payments = await prisma.payment.aggregate({
-      where: { status: 'SUCCESS' },
-      _sum: { amount: true }
-    });
-    
-    // COD revenue: DELIVERED orders with paymentMethod COD that have no separate payment record
-    const codRevenue = await prisma.order.aggregate({
-      where: {
-        status: 'DELIVERED',
-        paymentMethod: 'COD',
-        deletedAt: null,
-        payments: { none: {} }  // Only count if no payment record exists
-      },
-      _sum: { totalAmount: true }
-    }).catch(() => ({ _sum: { amount: null } })); // graceful fallback if relation not available
+    // 1. Total Revenue — SUCCESS payments + DELIVERED COD orders
+    const [onlineRevenue, codRevenue] = await Promise.all([
+      // Online payments (Razorpay / UPI) that succeeded
+      prisma.payment.aggregate({
+        where: { status: 'SUCCESS' },
+        _sum: { amount: true }
+      }),
+      // COD: DELIVERED orders where payment method is PAY_ON_DELIVERY
+      prisma.order.aggregate({
+        where: {
+          status: 'DELIVERED',
+          deletedAt: null,
+          payment: { paymentMethod: 'PAY_ON_DELIVERY' }
+        },
+        _sum: { total: true }
+      })
+    ]);
 
-    const totalRevenue = (payments._sum.amount || 0) + (codRevenue._sum?.totalAmount || 0);
+    const totalRevenue = (onlineRevenue._sum.amount || 0) + (codRevenue._sum.total || 0);
 
     // 2. Active Orders
     const activeOrdersCount = await prisma.order.count({

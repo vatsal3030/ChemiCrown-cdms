@@ -734,22 +734,34 @@ export default function HRManagement() {
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'Total Employees', value: employees.length, icon: Users, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
-              { label: 'Active', value: activeCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
-              { label: 'Suspended', value: suspendedCount, icon: Clock, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
-              { label: 'Terminated', value: terminatedCount, icon: UserX, color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
-            ].map(kpi => (
-              <div key={kpi.label} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm">
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${kpi.color}`}>
-                  <kpi.icon size={22} />
+            {loading ? (
+              [1,2,3,4].map(i => (
+                <div key={i} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm animate-pulse">
+                  <div className="w-11 h-11 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-20" />
+                    <div className="h-7 bg-slate-200 dark:bg-slate-700 rounded w-10" />
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500">{kpi.label}</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{kpi.value}</p>
+              ))
+            ) : (
+              [
+                { label: 'Total Employees', value: employees.length, icon: Users, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
+                { label: 'Active', value: activeCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
+                { label: 'Suspended', value: suspendedCount, icon: Clock, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
+                { label: 'Terminated', value: terminatedCount, icon: UserX, color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
+              ].map(kpi => (
+                <div key={kpi.label} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm">
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${kpi.color}`}>
+                    <kpi.icon size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500">{kpi.label}</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{kpi.value}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
           <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center">
             <Users size={40} className="mx-auto mb-3 text-primary/40" />

@@ -408,13 +408,16 @@ export default function Inventory() {
                       <td className="px-6 py-4 font-semibold text-foreground">₹{product.price}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="outline" size="icon" className="h-8 w-8 hidden md:flex" title="Stock History"
+                          {/* Stock History — visible on all sizes */}
+                          <Button variant="outline" size="icon" className="h-8 w-8" title="Stock History"
                             onClick={() => { setStockProduct(product); setIsLogsModalOpen(true); }}>
                             <History size={14} className="text-slate-500" />
                           </Button>
-                          <Button variant="outline" size="sm" className="hidden md:flex gap-1 h-8"
+                          {/* Add Stock — icon on mobile, icon+text on md+ */}
+                          <Button variant="outline" size="sm" className="gap-1 h-8 px-2 md:px-3"
                             onClick={() => { setStockProduct(product); setIsStockModalOpen(true); }}>
-                            <Plus size={14} /> Stock
+                            <Plus size={14} />
+                            <span className="hidden sm:inline">Stock</span>
                           </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10"
                             onClick={() => navigate(`/dashboard/inventory/product/${product.id}`)}>

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
+import { formatINR, formatINRFull } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
 
@@ -501,32 +502,47 @@ export default function Payroll() {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards — skeleton during loading, real data after */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="kpi-card">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Paid Out</p>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center"><CheckCircle2 size={18} /></div>
-          </div>
-          <p className="text-2xl font-bold text-foreground mt-2">₹{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-muted-foreground mt-1">{salaries.filter(s => s.status === 'PAID').length} employees paid</p>
-        </div>
-        <div className="kpi-card">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Disbursement</p>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center"><Clock size={18} /></div>
-          </div>
-          <p className="text-2xl font-bold text-foreground mt-2">₹{totalPending.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-muted-foreground mt-1">{pendingCount} slips pending</p>
-        </div>
-        <div className="kpi-card">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total PF Contributions</p>
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><DollarSign size={18} /></div>
-          </div>
-          <p className="text-2xl font-bold text-foreground mt-2">₹{totalPF.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-muted-foreground mt-1">Employer PF liability</p>
-        </div>
+        {loading ? (
+          [1,2,3].map(i => (
+            <div key={i} className="kpi-card animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="h-3 bg-muted rounded w-28" />
+                <div className="w-9 h-9 rounded-xl bg-muted" />
+              </div>
+              <div className="h-7 bg-muted rounded w-36 mt-3" />
+              <div className="h-3 bg-muted rounded w-24 mt-2" />
+            </div>
+          ))
+        ) : (
+          <>
+            <div className="kpi-card" title={formatINRFull(totalPaid)}>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Paid Out</p>
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center"><CheckCircle2 size={18} /></div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-2">{formatINR(totalPaid)}</p>
+              <p className="text-xs text-muted-foreground mt-1">{salaries.filter(s => s.status === 'PAID').length} employees paid</p>
+            </div>
+            <div className="kpi-card" title={formatINRFull(totalPending)}>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Disbursement</p>
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center"><Clock size={18} /></div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-2">{formatINR(totalPending)}</p>
+              <p className="text-xs text-muted-foreground mt-1">{pendingCount} slips pending</p>
+            </div>
+            <div className="kpi-card" title={formatINRFull(totalPF)}>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total PF Contributions</p>
+                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><DollarSign size={18} /></div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-2">{formatINR(totalPF)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Employer PF liability</p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Table */}
