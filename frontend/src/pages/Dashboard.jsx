@@ -53,12 +53,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState({
-    stats: { revenue: 0, orders: 0, pendingOrders: 0, customers: 0, newCustomers: 0, inventoryAlerts: 0 },
+    stats: { revenue: 0, orders: 0, pendingOrders: 0, customers: 0, newCustomers: 0, inventoryAlerts: 0, lowStockProducts: [], revenueTrend: null },
     revenueData: [],
     inventoryData: [],
     attendanceData: [],
     recentOrders: []
   });
+  const [showLowStock, setShowLowStock] = useState(false);
 
   const fetchData = async (isRefresh = false) => {
     try {
@@ -140,7 +141,8 @@ export default function Dashboard() {
         <StatCard
           label="Total Revenue"
           value={`₹${(stats.revenue || 0).toLocaleString('en-IN')}`}
-          trend="up" trendValue="+12.5% from last month"
+          trend={stats.revenueTrend !== null ? (parseFloat(stats.revenueTrend) >= 0 ? 'up' : 'down') : undefined}
+          trendValue={stats.revenueTrend !== null ? `${parseFloat(stats.revenueTrend) >= 0 ? '+' : ''}${stats.revenueTrend}% vs last month` : undefined}
           icon={DollarSign}
           color="bg-primary/10 text-primary"
         />
@@ -158,15 +160,39 @@ export default function Dashboard() {
           icon={Users}
           color="bg-emerald-500/10 text-emerald-500"
         />
-        <StatCard
-          label="Low Stock Alerts"
-          value={stats.inventoryAlerts}
-          sub={stats.inventoryAlerts > 0 ? 'Restock required' : 'All levels healthy'}
-          trend={stats.inventoryAlerts > 0 ? 'down' : undefined}
-          trendValue={stats.inventoryAlerts > 0 ? 'Critical' : undefined}
-          icon={AlertTriangle}
-          color="bg-rose-500/10 text-rose-500"
-        />
+        <div
+          className="kpi-card group cursor-pointer"
+          onClick={() => setShowLowStock(v => !v)}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Low Stock Alerts</p>
+              <h3 className="text-3xl font-bold text-foreground">{stats.inventoryAlerts}</h3>
+            </div>
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-rose-500/10 text-rose-500`}>
+              <AlertTriangle size={20} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            {stats.inventoryAlerts > 0
+              ? <span className="badge badge-error"><ArrowDownRight size={12} />Critical</span>
+              : <span className="text-xs text-muted-foreground">All levels healthy</span>
+            }
+          </div>
+          {/* Expanded low stock list */}
+          {showLowStock && stats.lowStockProducts?.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border space-y-2 animate-in slide-in-from-top-2 duration-200">
+              {stats.lowStockProducts.map(p => (
+                <div key={p.id} className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground truncate max-w-[60%]">{p.name}</span>
+                  <span className={`font-bold ${p.quantity === 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                    {p.quantity === 0 ? 'OUT OF STOCK' : `${p.quantity} left`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quick Actions */}

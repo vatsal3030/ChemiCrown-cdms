@@ -67,7 +67,7 @@ const buildNavSections = (role) => {
   if (['SUPER_ADMIN', 'OWNER'].includes(role)) {
     people.items.push({ name: 'Verify Customers', path: '/dashboard/verify', icon: UserCheck });
   }
-  if (['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {
+  if (['OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {
     people.items.push({ name: 'My Attendance', path: '/dashboard/me', icon: ClipboardCheck });
     people.items.push({ name: 'My Payslips', path: '/dashboard/my-payroll', icon: FileText });
   }

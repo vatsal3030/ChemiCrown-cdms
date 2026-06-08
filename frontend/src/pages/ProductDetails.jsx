@@ -298,12 +298,14 @@ export default function ProductDetails() {
           <div className="border border-border rounded-2xl p-6 sticky top-24 bg-card shadow-sm flex flex-col space-y-5">
             <div className="text-2xl font-bold">₹{product.price}</div>
             
-            <div className="space-y-1">
-              <div className="flex gap-2 text-sm text-muted-foreground">
-                <span className="text-green-600 font-bold">FREE Delivery</span>
-                <span>by Tomorrow</span>
+            {inStock && (
+              <div className="space-y-1">
+                <div className="flex gap-2 text-sm text-muted-foreground">
+                  <span className="text-green-600 font-bold">FREE Delivery</span>
+                  <span>by Tomorrow</span>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="text-xl">
               {inStock ? (
@@ -503,9 +505,9 @@ export default function ProductDetails() {
               >
                 <div className="aspect-square bg-slate-100 dark:bg-slate-900 rounded-xl mb-4 overflow-hidden flex items-center justify-center">
                   {rel.imageUrls?.length > 0 ? (
-                    <img src={rel.imageUrls[0]} alt={rel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img src={rel.imageUrls[0]} alt={rel.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   ) : rel.imageUrl ? (
-                    <img src={rel.imageUrl} alt={rel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img src={rel.imageUrl} alt={rel.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   ) : (
                     <Beaker className="text-slate-300 w-12 h-12" />
                   )}

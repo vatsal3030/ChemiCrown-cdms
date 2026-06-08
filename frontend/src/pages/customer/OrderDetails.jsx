@@ -41,6 +41,7 @@ export default function OrderDetails() {
   const [selectedProductId, setSelectedProductId] = useState(null);
 
   const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES'].includes(user?.role);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -84,6 +85,31 @@ export default function OrderDetails() {
       if (res.ok) { toast.success('COD order verified'); setOrder(data.order); }
       else toast.error(data.error || 'Failed to verify');
     } catch { toast.error('Network error'); }
+  };
+
+  const handleCancelOrder = async () => {
+    const reason = window.prompt('Reason for cancellation (optional):');
+    if (reason === null) return; // User clicked cancel on prompt
+    setCancelling(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setOrder(prev => ({ ...prev, status: 'CANCELLED' }));
+        if (json.refundAmount > 0) {
+          toast.success(`Order cancelled. Refund of ₹${json.refundAmount.toFixed(2)} will be processed in ${json.estimatedRefundDays}.`, { duration: 6000 });
+        } else {
+          toast.success('Order cancelled successfully.');
+        }
+      } else {
+        toast.error(json.error || 'Failed to cancel order');
+      }
+    } catch { toast.error('Network error'); }
+    finally { setCancelling(false); }
   };
 
   if (loading) return (
@@ -134,6 +160,19 @@ export default function OrderDetails() {
         <span className={`badge ${statusCfg.color}`}>
           <StatusIcon size={12} /> {statusCfg.label}
         </span>
+        {/* Cancel Order Button */}
+        {!isCancelled && order.status !== 'DELIVERED' && order.status !== 'DISPATCHED' && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={cancelling}
+            onClick={handleCancelOrder}
+            className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300"
+          >
+            <XCircle size={14} className="mr-1.5" />
+            {cancelling ? 'Cancelling...' : 'Cancel Order'}
+          </Button>
+        )}
       </div>
 
       {/* Admin Advance Panel */}

@@ -9,4 +9,7 @@ router.use(requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']));
 router.get('/', trashController.getDeletedItems);
 router.post('/restore', trashController.restoreItem);
 
+// Permanent delete — SUPER_ADMIN only
+router.delete('/permanent', requireRole(['SUPER_ADMIN']), trashController.permanentlyDeleteItem);
+
 module.exports = router;

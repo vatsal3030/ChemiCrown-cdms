@@ -137,17 +137,34 @@ export default function Orders() {
   };
 
   const handleCancel = async (id) => {
-    if (!window.confirm('Cancel this order? This cannot be undone.')) return;
-    setOrders(prev => prev.filter(o => o.id !== id));
+    const reason = window.prompt('Reason for cancellation (optional — leave blank to skip):');
+    if (reason === null) return; // User pressed Cancel on the prompt
+    if (!window.confirm(`Cancel order #${id.substring(0, 8).toUpperCase()}? This cannot be undone.`)) return;
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/cancel`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token}` }
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: reason.trim() || undefined })
       });
       const json = await res.json();
-      if (json.success) toast.success('Order cancelled successfully');
-      else { toast.error(json.error || 'Failed to cancel order'); fetchOrders(); }
-    } catch { toast.error('Network error'); fetchOrders(); }
+      if (json.success) {
+        // Update the row status locally — no flicker/disappear
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'CANCELLED' } : o));
+        if (json.refundAmount > 0) {
+          toast.success(
+            `Order cancelled. Refund of ₹${json.refundAmount.toFixed(2)} will be processed in ${json.estimatedRefundDays}.`,
+            { duration: 6000 }
+          );
+        } else {
+          toast.success('Order cancelled successfully.');
+        }
+      } else {
+        toast.error(json.error || 'Failed to cancel order');
+      }
+    } catch { toast.error('Network error'); }
   };
+
 
   const handleAdvance = async (id) => {
     setAdvancing(id);

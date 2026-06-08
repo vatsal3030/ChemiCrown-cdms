@@ -228,6 +228,25 @@ exports.markAsPaid = async (req, res, next) => {
     if (!slip) return res.status(404).json({ success: false, message: 'Salary slip not found' });
     if (slip.status === 'PAID') return res.status(409).json({ success: false, message: 'Salary already paid' });
 
+    // Prevent self-payment (no one should pay their own salary)
+    const payingUser = await prisma.employee.findUnique({ where: { userId: req.user.id } });
+    if (payingUser && payingUser.id === slip.employeeId) {
+      return res.status(403).json({ success: false, message: 'You cannot pay your own salary' });
+    }
+
+    // Prevent duplicate payment for same employee in the same month
+    const existingPaid = await prisma.salary.findFirst({
+      where: {
+        employeeId: slip.employeeId,
+        month: slip.month,
+        status: 'PAID',
+        id: { not: id }
+      }
+    });
+    if (existingPaid) {
+      return res.status(409).json({ success: false, message: `Salary for ${slip.month} has already been paid for this employee` });
+    }
+
     // Validate required refs per method
     if (paymentMethod === 'BANK_TRANSFER' && !transactionRef) {
       return res.status(400).json({ success: false, message: 'Transaction reference is required for Bank Transfer' });

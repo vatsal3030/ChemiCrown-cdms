@@ -1,12 +1,36 @@
 import { useState, useEffect } from 'react';
 import { 
-  DollarSign, FileText, CheckCircle2, Clock, Shield
+  DollarSign, FileText, CheckCircle2, Clock, Shield, ThumbsUp
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 
-function SalarySlipCard({ slip }) {
+function SalarySlipCard({ slip, token, onConfirmed }) {
   const isPaid = slip.status === 'PAID';
+  const [confirming, setConfirming] = useState(false);
+
+  const handleConfirm = async () => {
+    setConfirming(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/${slip.id}/confirm`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success('Salary receipt confirmed!');
+        onConfirmed();
+      } else {
+        toast.error(json.message || 'Failed to confirm');
+      }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
   return (
     <div className={`form-card hover:shadow-md transition-all ${isPaid ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-amber-200 dark:border-amber-900/40'}`}>
       <div className="flex items-center justify-between mb-4">
@@ -14,10 +38,15 @@ function SalarySlipCard({ slip }) {
           <p className="font-bold text-foreground text-base">{slip.month}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Salary Slip</p>
         </div>
-        <span className={`badge ${isPaid ? 'badge-success' : 'badge-warning'}`}>
-          {isPaid ? <CheckCircle2 size={11} /> : <Clock size={11} />}
-          {slip.status}
-        </span>
+        <div className="flex items-center gap-2">
+          {isPaid && slip.confirmedByEmployee && (
+            <span className="badge badge-success"><ThumbsUp size={11} /> Confirmed</span>
+          )}
+          <span className={`badge ${isPaid ? 'badge-success' : 'badge-warning'}`}>
+            {isPaid ? <CheckCircle2 size={11} /> : <Clock size={11} />}
+            {slip.status}
+          </span>
+        </div>
       </div>
 
       <div className="space-y-2.5 border-t border-border pt-4">
@@ -33,6 +62,18 @@ function SalarySlipCard({ slip }) {
           <span className="text-muted-foreground">PF Contribution (12%)</span>
           <span className="font-medium text-amber-600">-₹{slip.pfContribution.toFixed(2)}</span>
         </div>
+        {slip.overtime > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Overtime Pay</span>
+            <span className="font-medium text-emerald-600">+₹{slip.overtime.toFixed(2)}</span>
+          </div>
+        )}
+        {slip.incentive > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Incentive</span>
+            <span className="font-medium text-emerald-600">+₹{slip.incentive.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm font-bold border-t border-border pt-2.5 mt-2.5">
           <span className="text-foreground">Net Pay</span>
           <span className="text-emerald-600 text-lg">₹{slip.netPay.toFixed(2)}</span>
@@ -42,7 +83,24 @@ function SalarySlipCard({ slip }) {
       {isPaid && slip.paidAt && (
         <p className="text-xs text-muted-foreground mt-3">
           Paid on {new Date(slip.paidAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+          {slip.paymentMethod && <span className="ml-2 font-semibold">via {slip.paymentMethod.replace('_', ' ')}</span>}
         </p>
+      )}
+
+      {/* Confirm Receipt Button */}
+      {isPaid && !slip.confirmedByEmployee && (
+        <div className="mt-4 pt-4 border-t border-border">
+          <Button
+            onClick={handleConfirm}
+            disabled={confirming}
+            size="sm"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            <ThumbsUp size={14} className="mr-2" />
+            {confirming ? 'Confirming...' : 'Confirm Receipt'}
+          </Button>
+          <p className="text-xs text-muted-foreground text-center mt-1.5">Acknowledge you have received this salary payment</p>
+        </div>
       )}
     </div>
   );
@@ -157,7 +215,7 @@ export default function MyPayroll() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {data.salaries.map(slip => <SalarySlipCard key={slip.id} slip={slip} />)}
+            {data.salaries.map(slip => <SalarySlipCard key={slip.id} slip={slip} token={token} onConfirmed={fetchPayroll} />)}
           </div>
         )}
       </div>

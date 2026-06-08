@@ -383,7 +383,7 @@ export default function Catalog() {
                   {/* Image */}
                   <div className="relative aspect-square bg-slate-100 dark:bg-slate-900 overflow-hidden border-b border-border">
                     {product.imageUrls?.length > 0 ? (
-                      <img src={product.imageUrls[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img src={product.imageUrls[0]} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                         <BeakerIcon className="w-16 h-16 opacity-40 mb-2" />

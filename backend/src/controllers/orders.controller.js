@@ -277,39 +277,188 @@ const getOrderById = async (req, res, next) => {
 const cancelOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { reason } = req.body;
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    // Fetch order with payment — schema has singular `payment` relation only
     const order = await prisma.order.findUnique({ 
       where: { id },
-      include: { items: true }
+      include: { 
+        items: true, 
+        customer: { include: { user: { select: { id: true, firstName: true } } } },
+        payment: true,
+        refund: true     // check if refund already exists
+      }
     });
 
     if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (order.status === 'CANCELLED') return res.status(400).json({ error: 'Order is already cancelled' });
-    if (order.status === 'DELIVERED') return res.status(400).json({ error: 'Delivered orders cannot be cancelled' });
 
-    // Implement a 1% cancellation charge
-    const cancellationFee = order.total * 0.01;
-    const refundAmount = order.total - cancellationFee;
+    // RBAC: customers can only cancel their own orders
+    if (role === 'CUSTOMER') {
+      const customer = await prisma.customer.findUnique({ where: { userId } });
+      if (!customer || order.customerId !== customer.id) {
+        return res.status(403).json({ error: 'You can only cancel your own orders' });
+      }
+    }
 
+    // Status gate
+    const CUSTOMER_CANCELLABLE = ['PENDING', 'REQUESTED', 'PROCESSING'];
+    const ADMIN_CANCELLABLE    = ['PENDING', 'REQUESTED', 'PROCESSING', 'PACKAGED'];
+    const allowed = ['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(role) ? ADMIN_CANCELLABLE : CUSTOMER_CANCELLABLE;
+
+    if (order.status === 'CANCELLED') {
+      return res.status(400).json({ error: 'Order is already cancelled' });
+    }
+    if (order.status === 'DELIVERED') {
+      return res.status(400).json({ error: 'Delivered orders cannot be cancelled. Please contact support for a return.' });
+    }
+    if (!allowed.includes(order.status)) {
+      return res.status(400).json({ 
+        error: `Order cannot be cancelled at this stage (${order.status}).${role === 'CUSTOMER' ? ' Contact support for assistance.' : ''}` 
+      });
+    }
+
+    // Guard: don't create duplicate refund
+    if (order.refund) {
+      return res.status(409).json({ error: 'A refund is already associated with this order.' });
+    }
+
+    // ── Refund Calculation ────────────────────────────────────────────────
+    const paymentSucceeded = order.payment?.status === 'SUCCESS';
+    const paidAmount = paymentSucceeded ? (order.payment.amount || 0) : 0;
+
+    // 1% cancellation fee only for CUSTOMER cancelling after processing has begun
+    const isLateCancel = ['PROCESSING', 'PACKAGED'].includes(order.status);
+    const feeRate = (role === 'CUSTOMER' && isLateCancel) ? 0.01 : 0;
+    const cancellationFee = parseFloat((paidAmount * feeRate).toFixed(2));
+    const refundAmount    = parseFloat((paidAmount - cancellationFee).toFixed(2));
+
+    // Determine payment method for refund routing
+    const payMethod = order.payment?.paymentMethod || 'UNKNOWN';
+    const razorpayPaymentId = order.payment?.razorpayPaymentId || null;
+    
+    // Determine refund delivery method
+    let refundMethod = 'COD_NOT_PAID';
+    if (paymentSucceeded) {
+      if (razorpayPaymentId) refundMethod = 'RAZORPAY';
+      else if (payMethod === 'UPI_QR') refundMethod = 'MANUAL_UPI';
+      else if (payMethod === 'PAY_ON_DELIVERY') refundMethod = 'COD_NOT_PAID';
+      else refundMethod = 'MANUAL_BANK';
+    }
+
+    // ── DB Transaction ────────────────────────────────────────────────────
     await prisma.$transaction(async (tx) => {
-      // Restore inventory
+      // 1. Restore inventory stock for each cancelled item
       for (const item of order.items) {
-        await tx.inventory.update({
+        await tx.inventory.updateMany({
           where: { productId: item.productId },
           data: { quantity: { increment: item.quantity } }
         });
       }
 
+      // 2. Mark order as CANCELLED with tracking fields
       await tx.order.update({
         where: { id },
-        data: { status: 'CANCELLED' }
+        data: { 
+          status: 'CANCELLED',
+          cancellationReason: reason?.trim() || null,
+          cancelledAt:        new Date(),
+          cancelledBy:        role
+        }
+      });
+
+      // 3. Log status change in history
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId:   id,
+          oldStatus: order.status,
+          newStatus: 'CANCELLED'
+        }
+      });
+
+      // 4. Create Refund record
+      const refundStatus = !paymentSucceeded ? 'NOT_APPLICABLE'
+        : refundAmount <= 0              ? 'NOT_APPLICABLE'
+        : razorpayPaymentId              ? 'PROCESSING'     // will attempt Razorpay refund
+        : 'MANUAL_PENDING';                                 // admin must manually transfer
+
+      await tx.refund.create({
+        data: {
+          orderId:         id,
+          amount:          refundAmount,
+          cancellationFee: cancellationFee,
+          originalAmount:  paidAmount,
+          status:          refundStatus,
+          reason:          reason?.trim() || 'Customer cancellation',
+          paymentMethod:   refundMethod,
+          initiatedBy:     userId
+        }
+      });
+
+      // 5. Finance ledger: debit refund amount (reduces revenue)
+      if (refundAmount > 0) {
+        await tx.financeLedger.create({
+          data: {
+            type:        'DEBIT',
+            category:    'REFUND',
+            amount:      refundAmount,
+            description: `Refund for cancelled order #${id.substring(0, 8).toUpperCase()}${cancellationFee > 0 ? ` (₹${cancellationFee.toFixed(2)} fee withheld)` : ''}`,
+            referenceId: id,
+            date:        new Date(),
+            isAutomatic: true
+          }
+        });
+      }
+
+      // 6. Notify customer
+      const refundMsg = refundAmount > 0
+        ? ` A refund of ₹${refundAmount.toFixed(2)} will be processed within 5–7 business days via ${refundMethod === 'RAZORPAY' ? 'your original payment method' : 'bank/UPI transfer'}.`
+        : '';
+      await tx.notification.create({
+        data: {
+          userId:  order.customer.userId,
+          type:    'REFUND',
+          message: `Your order #${id.substring(0, 8).toUpperCase()} has been cancelled.${refundMsg}`
+        }
       });
     });
 
-    res.status(200).json({ 
+    // ── Razorpay Refund (best-effort, outside main transaction) ───────────
+    if (razorpayPaymentId && refundAmount > 0) {
+      try {
+        const rzRefund = await razorpay.payments.refund(razorpayPaymentId, {
+          amount: Math.round(refundAmount * 100), // Razorpay expects paise
+          notes: { orderId: id, reason: reason || 'Customer cancellation' }
+        });
+
+        // Update refund record with Razorpay refund ID and mark PROCESSED
+        await prisma.refund.update({
+          where: { orderId: id },
+          data: {
+            razorpayRefundId: rzRefund.id,
+            status:           'PROCESSED',
+            processedAt:      new Date()
+          }
+        });
+      } catch (rzErr) {
+        console.error('[Refund] Razorpay refund initiation failed:', rzErr.message);
+        // Mark as FAILED so admin dashboard can flag it for manual processing
+        await prisma.refund.update({
+          where: { orderId: id },
+          data: { status: 'FAILED', notes: `Auto-refund failed: ${rzErr.message}` }
+        }).catch(() => {}); // silent — don't break the cancel response
+      }
+    }
+
+    return res.status(200).json({ 
       success: true, 
-      message: 'Order cancelled successfully', 
+      message: 'Order cancelled successfully',
       cancellationFee,
-      refundAmount 
+      refundAmount,
+      refundStatus:       refundAmount > 0 ? 'REFUND_INITIATED' : 'NO_REFUND',
+      refundMethod,
+      estimatedRefundDays: refundAmount > 0 ? '5–7 business days' : null
     });
   } catch (error) {
     next(error);
@@ -389,7 +538,8 @@ const advanceOrderStatus = async (req, res, next) => {
       // Notify customer
       await tx.notification.create({
         data: {
-          userId: order.customer.userId,
+          userId:  order.customer.userId,
+          type:    'ORDER',
           message: `Your order #${id.substring(0, 8).toUpperCase()} status updated: ${order.status} → ${nextStatus}${note ? '. Note: ' + note : ''}`
         }
       });
@@ -526,7 +676,8 @@ const verifyUpiPayment = async (req, res, next) => {
         // Notify customer
         await tx.notification.create({
           data: {
-            userId: order.customer.userId,
+            userId:  order.customer.userId,
+            type:    'PAYMENT',
             message: `Your UPI payment for Order #${orderId.substring(0, 8).toUpperCase()} has been verified! Your order is now being processed.`
           }
         });
@@ -548,7 +699,8 @@ const verifyUpiPayment = async (req, res, next) => {
         // Notify customer
         await tx.notification.create({
           data: {
-            userId: order.customer.userId,
+            userId:  order.customer.userId,
+            type:    'PAYMENT',
             message: `Your UPI payment for Order #${orderId.substring(0, 8).toUpperCase()} could not be verified. Reason: ${reason || 'Payment not found'}. Please contact support or retry.`
           }
         });
@@ -599,4 +751,95 @@ const getPendingUpiOrders = async (req, res, next) => {
   }
 };
 
-module.exports = { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder, advanceOrderStatus, submitUpiPayment, verifyUpiPayment, getPendingUpiOrders };
+/**
+ * getRefunds - Admin: list all refunds with filtering by status
+ * GET /api/orders/refunds
+ */
+const getRefunds = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const where = status ? { status } : {};
+
+    const refunds = await prisma.refund.findMany({
+      where,
+      include: {
+        order: {
+          include: {
+            customer: {
+              include: {
+                user: { select: { firstName: true, lastName: true, email: true, phone: true } }
+              }
+            },
+            payment: {
+              select: { paymentMethod: true, razorpayPaymentId: true, amount: true, utrNumber: true, upiVpa: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({ success: true, data: refunds, count: refunds.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * updateRefundStatus - Admin: mark a refund as PROCESSED (for manual transfers)
+ * PUT /api/orders/refunds/:refundId
+ */
+const updateRefundStatus = async (req, res, next) => {
+  try {
+    const { refundId } = req.params;
+    const { status, notes } = req.body;
+    const adminId = req.user.id;
+
+    const ALLOWED_STATUSES = ['PROCESSED', 'FAILED', 'MANUAL_PENDING'];
+    if (!ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({ error: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(', ')}` });
+    }
+
+    const refund = await prisma.refund.findUnique({ where: { id: refundId } });
+    if (!refund) return res.status(404).json({ error: 'Refund not found' });
+
+    const updated = await prisma.refund.update({
+      where: { id: refundId },
+      data: {
+        status,
+        notes:       notes || refund.notes,
+        processedBy: adminId,
+        processedAt: status === 'PROCESSED' ? new Date() : refund.processedAt
+      }
+    });
+
+    // If marking as processed, notify customer
+    if (status === 'PROCESSED') {
+      const order = await prisma.order.findUnique({
+        where: { id: refund.orderId },
+        include: { customer: true }
+      });
+      if (order) {
+        await prisma.notification.create({
+          data: {
+            userId:  order.customer.userId,
+            type:    'REFUND',
+            message: `Your refund of ₹${refund.amount.toFixed(2)} for order #${refund.orderId.substring(0, 8).toUpperCase()} has been processed successfully.`
+          }
+        }).catch(() => {});
+      }
+    }
+
+    res.json({ success: true, data: updated, message: `Refund marked as ${status}` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { 
+  createOrder, verifyPayment, getOrders, getOrderById, 
+  cancelOrder, verifyCodOrder, advanceOrderStatus, 
+  submitUpiPayment, verifyUpiPayment, getPendingUpiOrders,
+  getRefunds, updateRefundStatus
+};
+

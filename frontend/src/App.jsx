@@ -1,5 +1,13 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { CartProvider } from './context/CartContext';
@@ -92,6 +100,7 @@ function App() {
         <SocketProvider>
           <BrowserRouter>
             <DynamicTitle />
+            <ScrollToTop />
             <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
             <Routes>
               {/* Zone A: Public Website */}
@@ -160,8 +169,8 @@ function App() {
                     <Route path="finance" element={<Finance />} />
                   </Route>
                   
-                  {/* Employees */}
-                  <Route element={<ProtectedRoute allowedRoles={['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
+                  {/* Employees + Owner self-service */}
+                  <Route element={<ProtectedRoute allowedRoles={['OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
                     <Route path="me" element={<MyAttendance />} />
                     <Route path="my-payroll" element={<MyPayroll />} />
                   </Route>

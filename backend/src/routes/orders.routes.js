@@ -1,5 +1,10 @@
 const express = require('express');
-const { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder, advanceOrderStatus, submitUpiPayment, verifyUpiPayment, getPendingUpiOrders } = require('../controllers/orders.controller');
+const { 
+  createOrder, verifyPayment, getOrders, getOrderById, 
+  cancelOrder, verifyCodOrder, advanceOrderStatus, 
+  submitUpiPayment, verifyUpiPayment, getPendingUpiOrders,
+  getRefunds, updateRefundStatus
+} = require('../controllers/orders.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 const { validateRequest } = require('../middlewares/validate.middleware');
@@ -14,16 +19,21 @@ router.use(requireRole(['CUSTOMER', 'SALES', 'SUPER_ADMIN', 'OWNER', 'MANAGER', 
 router.post('/', validateRequest(createOrderSchema), createOrder);
 router.post('/verify', validateRequest(verifyPaymentSchema), verifyPayment);
 router.get('/', getOrders);
+
+// UPI Direct Payment routes (works without Razorpay activation)
+router.get('/upi/pending', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), getPendingUpiOrders);
+router.post('/upi/submit', submitUpiPayment);
+router.post('/upi/verify', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), verifyUpiPayment);
+
+// Refund management routes (OWNER + SUPER_ADMIN only)
+router.get('/refunds',             requireRole(['SUPER_ADMIN', 'OWNER']), getRefunds);
+router.put('/refunds/:refundId',   requireRole(['SUPER_ADMIN', 'OWNER']), updateRefundStatus);
+
+// Per-order routes — must come AFTER static routes to avoid param collision
 router.get('/:id', getOrderById);
 router.post('/:id/cancel', cancelOrder);
 router.put('/:id/verify-cod', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), verifyCodOrder);
-
-// Admin-only: advance order through the status pipeline
 router.post('/:id/advance', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES']), advanceOrderStatus);
 
-// UPI Direct Payment routes (works without Razorpay activation)
-router.get('/upi/pending', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), getPendingUpiOrders); // Admin: list pending UPI verifications
-router.post('/upi/submit', submitUpiPayment);  // Customer submits UTR after paying
-router.post('/upi/verify', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), verifyUpiPayment);  // Admin approves/rejects
-
 module.exports = router;
+

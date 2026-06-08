@@ -41,11 +41,42 @@ exports.restoreItem = async (req, res, next) => {
         where: { id },
         data: { deletedAt: null }
       });
+      // Also restore related employee profile
+      await prisma.employee.updateMany({
+        where: { userId: id },
+        data: { deletedAt: null }
+      });
     } else {
       return res.status(400).json({ error: 'Invalid type' });
     }
 
     res.status(200).json({ success: true, message: `${type} restored successfully` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.permanentlyDeleteItem = async (req, res, next) => {
+  try {
+    const { id, type } = req.body;
+
+    if (!id || !type) {
+      return res.status(400).json({ error: 'ID and Type are required' });
+    }
+
+    if (type === 'PRODUCT') {
+      // Hard delete: cascade via Prisma relations defined in schema
+      // Inventory, reviews, favorites, orderItems are cascade-deleted by DB
+      await prisma.product.delete({ where: { id } });
+    } else if (type === 'EMPLOYEE') {
+      // Hard delete employee profile first (FK constraint), then user
+      await prisma.employee.deleteMany({ where: { userId: id } });
+      await prisma.user.delete({ where: { id } });
+    } else {
+      return res.status(400).json({ error: 'Invalid type' });
+    }
+
+    res.status(200).json({ success: true, message: `${type} permanently deleted` });
   } catch (error) {
     next(error);
   }

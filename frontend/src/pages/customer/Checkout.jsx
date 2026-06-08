@@ -35,6 +35,10 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY');
   const [createdOrderId, setCreatedOrderId] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  // Indian GST number regex: 2-digit state code + 10-char PAN + 1-char entity + Z + 1-char checksum
+  const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
   const SESSION_KEY = `checkout_form_${user?.id || 'guest'}`;
 
@@ -79,14 +83,26 @@ export default function Checkout() {
   }, []);
 
   const handlePayment = async () => {
-    if (!formData.companyName || !formData.gstNumber || !formData.shippingAddress || !formData.phone || !formData.email) {
-      toast.error("Please fill in all required text fields.");
+    const errors = {};
+    if (!formData.companyName.trim()) errors.companyName = 'Company name is required';
+    if (!formData.gstNumber.trim()) {
+      errors.gstNumber = 'GST number is required';
+    } else if (!GST_REGEX.test(formData.gstNumber.trim().toUpperCase())) {
+      errors.gstNumber = 'Invalid GST number format (e.g. 22AAAAA0000A1Z5)';
+    }
+    if (!formData.shippingAddress.trim()) errors.shippingAddress = 'Shipping address is required';
+    if (!formData.phone.trim()) errors.phone = 'Phone number is required';
+    if (!formData.email.trim()) errors.email = 'Email address is required';
+    if (!formData.lat || !formData.lng) errors.location = 'Please select a delivery location on the map';
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      // Scroll to first error
+      const firstErrorKey = Object.keys(errors)[0];
+      document.getElementById(`field-${firstErrorKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    if (!formData.lat || !formData.lng) {
-      toast.error("Please select a delivery location on the map.");
-      return;
-    }
+    setFieldErrors({});
 
     if (cartItems.length === 0) {
       toast.error("Your cart is empty.");
@@ -347,23 +363,35 @@ export default function Checkout() {
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Building size={20} /> Company Details (Required)</h2>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div id="field-companyName">
                   <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Company Name *</label>
                   <Input 
                     placeholder="Acme Chemicals Ltd."
                     value={formData.companyName}
-                    onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+                    onChange={(e) => {
+                      setFormData({...formData, companyName: e.target.value});
+                      if (fieldErrors.companyName) setFieldErrors(p => ({ ...p, companyName: undefined }));
+                    }}
+                    className={fieldErrors.companyName ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     required
                   />
+                  {fieldErrors.companyName && <p className="text-xs text-red-600 mt-1">{fieldErrors.companyName}</p>}
                 </div>
-                <div>
+                <div id="field-gstNumber">
                   <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">GST Number *</label>
                   <Input 
                     placeholder="22AAAAA0000A1Z5"
                     value={formData.gstNumber}
-                    onChange={(e) => setFormData({...formData, gstNumber: e.target.value})}
+                    onChange={(e) => {
+                      const v = e.target.value.toUpperCase();
+                      setFormData({...formData, gstNumber: v});
+                      if (fieldErrors.gstNumber) setFieldErrors(p => ({ ...p, gstNumber: undefined }));
+                    }}
+                    maxLength={15}
+                    className={fieldErrors.gstNumber ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     required
                   />
+                  {fieldErrors.gstNumber && <p className="text-xs text-red-600 mt-1 flex items-center gap-1">{fieldErrors.gstNumber}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
