@@ -225,7 +225,7 @@ export default function NotificationDropdown() {
         <div className="absolute right-0 mt-3 w-[420px] bg-card border border-border rounded-2xl shadow-2xl shadow-black/15 dark:shadow-black/40 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-200">
 
           {/* Header */}
-          <div className="px-5 pt-4 pb-3 border-b border-border bg-gradient-to-br from-primary/5 to-transparent">
+          <div className="px-5 pt-4 pb-3 border-b border-border bg-linear-to-br from-primary/5 to-transparent">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -306,7 +306,7 @@ export default function NotificationDropdown() {
                         isClickable ? 'cursor-pointer' : 'cursor-default'
                       } ${
                         !notif.isRead
-                          ? 'bg-primary/[0.04] dark:bg-primary/[0.08] hover:bg-primary/[0.08] dark:hover:bg-primary/[0.12]'
+                          ? 'bg-primary/4 dark:bg-primary/8 hover:bg-primary/8 dark:hover:bg-primary/12'
                           : 'hover:bg-muted/60'
                       }`}
                     >

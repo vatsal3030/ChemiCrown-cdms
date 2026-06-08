@@ -195,7 +195,7 @@ export default function UpiQrPayment({ amount, orderId, merchantUpi, merchantNam
             <button
               onClick={handleSubmit}
               disabled={submitting || !utrNumber.trim()}
-              className="flex-2 flex-grow py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+              className="flex-2 grow py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
             >
               {submitting ? 'Submitting...' : 'Confirm Payment ✓'}
             </button>

@@ -45,6 +45,7 @@ import ReportIssue from './pages/ReportIssue';
 import AuditLog from './pages/admin/AuditLog';
 import TicketDashboard from './pages/admin/TicketDashboard';
 import HolidayManagement from './pages/admin/HolidayManagement';
+import NotFound from './pages/NotFound';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -179,6 +180,9 @@ function App() {
                   </Route>
                 </Route>
               </Route>
+
+              {/* Catch-All 404 Route */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </SocketProvider>

@@ -126,6 +126,37 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ── API Root Splash Page ──────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>ChemiCrown API</title>
+      <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { text-align: center; background: white; padding: 3rem; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .icon { font-size: 4rem; margin-bottom: 1rem; }
+        h1 { margin: 0 0 0.5rem 0; color: #1e40af; }
+        p { color: #64748b; margin-bottom: 2rem; }
+        .pulse { display: inline-block; width: 10px; height: 10px; background-color: #22c55e; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 0 rgba(34, 197, 94, 0.4); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="icon">🧪</div>
+        <h1>ChemiCrown CDMS API</h1>
+        <p><span class="pulse"></span> All systems operational</p>
+        <p style="font-size: 0.875rem;">This is the backend server. Please visit the frontend application to use the platform.</p>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 const authRoutes       = require('./src/routes/auth.routes');
 const hrRoutes         = require('./src/routes/hr.routes');

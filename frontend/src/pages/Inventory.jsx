@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import useSWR from 'swr';

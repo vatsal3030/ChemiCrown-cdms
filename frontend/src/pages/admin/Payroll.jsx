@@ -107,7 +107,7 @@ function PaymentModal({ slip, onClose, onConfirm, loading }) {
 
         <div className="p-6 space-y-5">
           {/* Employee & Amount */}
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4">
+          <div className="bg-linear-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Paying Salary To</p>
             <p className="font-bold text-foreground text-base">{empUser?.firstName} {empUser?.lastName}</p>
             <p className="text-sm text-muted-foreground">{empUser?.email}</p>
