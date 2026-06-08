@@ -74,10 +74,11 @@ const createTestNotification = async (req, res, next) => {
       }
     });
     
-    // Optionally emit via socket
+    // Emit only to the specific user's socket room, not all clients
     if (req.io) {
-      req.io.emit('new_notification', { userId: req.user.id, notification });
+      req.io.to(req.user.id).emit('new_notification', { notification });
     }
+
 
     res.status(201).json({ success: true, notification });
   } catch (error) {

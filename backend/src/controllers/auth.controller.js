@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const cloudinary = require('../config/cloudinary');
 const stream = require('stream');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_development';
+const JWT_SECRET = process.env.JWT_SECRET; // Startup guard enforced in index.js
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 const syncUser = async (req, res, next) => {
@@ -40,9 +40,26 @@ const syncUser = async (req, res, next) => {
 
 const getMe = async (req, res, next) => {
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        profileImageUrl: true,
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     res.status(200).json({
       message: 'User profile fetched successfully',
-      user: req.user
+      user
     });
   } catch (error) {
     next(error);
@@ -164,7 +181,7 @@ const login = async (req, res, next) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: 'Login failed' });
+    next(error);
   }
 };
 
@@ -177,7 +194,6 @@ const updateProfile = async (req, res) => {
     if (lastName) updateData.lastName = lastName;
     if (phone) updateData.phone = phone;
 
-    console.log('Update Profile Request:', { body: req.body, file: req.file ? 'Present' : 'Missing' });
 
     if (req.file) {
       const uploadResult = await new Promise((resolve, reject) => {
