@@ -12,7 +12,8 @@ const createOrderSchema = z.object({
     email: z.string().email("Valid email is required"),
     shippingAddress: z.string().min(10, "Complete shipping address is required"),
     orderNotes: z.string().optional(),
-    paymentMethod: z.enum(['bank_transfer', 'RAZORPAY', 'PAY_ON_DELIVERY', 'razorpay']).optional(),
+    paymentMethod: z.enum(['bank_transfer', 'RAZORPAY', 'PAY_ON_DELIVERY', 'razorpay', 'UPI_QR', 'UPI']).optional(),
+
     distanceKm: z.number().nonnegative().optional(),
   }),
   query: z.any(),

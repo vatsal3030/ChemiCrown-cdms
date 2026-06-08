@@ -113,8 +113,8 @@ const createOrder = async (req, res, next) => {
       await prisma.payment.create({
         data: {
           orderId: order.id,
-          paymentMethod: paymentMethod === 'PAY_ON_DELIVERY' ? 'PAY_ON_DELIVERY' : 'RAZORPAY',
-          amount: finalTotal,
+          paymentMethod: paymentMethod === 'PAY_ON_DELIVERY' ? 'PAY_ON_DELIVERY' : paymentMethod === 'UPI_QR' ? 'UPI' : 'RAZORPAY',
+          amount: totalAmount,
           status: 'PENDING'
         }
       });
@@ -123,6 +123,17 @@ const createOrder = async (req, res, next) => {
         return res.status(201).json({
           message: 'Order requested successfully. Awaiting manual verification.',
           orderId: order.id
+        });
+      }
+
+      // UPI/QR payment — return the order ID so frontend can show QR scanner
+      if (paymentMethod === 'UPI_QR') {
+        return res.status(201).json({
+          message: 'Order created. Please complete UPI payment.',
+          orderId: order.id,
+          merchantUpi: process.env.MERCHANT_UPI_VPA || 'chemicrown@upi',
+          merchantName: process.env.MERCHANT_NAME || 'ChemiCrown CDMS',
+          amount: totalAmount
         });
       }
 
@@ -409,4 +420,183 @@ const advanceOrderStatus = async (req, res, next) => {
   }
 };
 
-module.exports = { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder, advanceOrderStatus };
+/**
+ * submitUpiPayment — Customer submits UTR after paying via UPI/QR
+ * This is a separate flow from Razorpay, works immediately regardless of account activation.
+ */
+const submitUpiPayment = async (req, res, next) => {
+  try {
+    const { orderId, utrNumber, upiVpa } = req.body;
+    const userId = req.user.id;
+
+    if (!orderId || !utrNumber || utrNumber.trim().length < 8) {
+      return res.status(400).json({ error: 'Valid orderId and UTR number are required' });
+    }
+
+    // Validate order belongs to this customer
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payment: true, customer: { include: { user: true } } }
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.customer.userId !== userId) return res.status(403).json({ error: 'Access denied' });
+    if (!order.payment) return res.status(400).json({ error: 'No payment record found for this order' });
+    if (order.payment.status === 'SUCCESS') return res.status(400).json({ error: 'Payment already verified' });
+
+    await prisma.payment.update({
+      where: { orderId },
+      data: {
+        utrNumber: utrNumber.trim(),
+        upiVpa: upiVpa?.trim() || null,
+        status: 'PENDING_VERIFICATION',
+        paymentMethod: 'UPI'
+      }
+    });
+
+    // Notify admin about pending UPI verification
+    // Get all admin users to notify
+    const admins = await prisma.user.findMany({
+      where: { role: { in: ['SUPER_ADMIN', 'OWNER', 'MANAGER'] } },
+      select: { id: true }
+    });
+
+    await prisma.notification.createMany({
+      data: admins.map(admin => ({
+        userId: admin.id,
+        message: `UPI payment submitted for Order #${orderId.substring(0, 8).toUpperCase()}. UTR: ${utrNumber.trim()}. Please verify and approve.`
+      }))
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'UPI payment details submitted successfully. Our team will verify within 30 minutes.' 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * verifyUpiPayment — Admin manually verifies a UPI payment after checking the UTR in the bank
+ */
+const verifyUpiPayment = async (req, res, next) => {
+  try {
+    const { orderId, action, reason } = req.body; // action: 'APPROVE' | 'REJECT'
+    const adminId = req.user.id;
+
+    if (!['APPROVE', 'REJECT'].includes(action)) {
+      return res.status(400).json({ error: 'action must be APPROVE or REJECT' });
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payment: true, customer: { include: { user: true } } }
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (!order.payment || order.payment.status !== 'PENDING_VERIFICATION') {
+      return res.status(400).json({ error: 'No pending UPI payment to verify' });
+    }
+
+    if (action === 'APPROVE') {
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { orderId },
+          data: {
+            status: 'SUCCESS',
+            verifiedAt: new Date(),
+            verifiedBy: adminId
+          }
+        });
+
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: 'PROCESSING' }
+        });
+
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId,
+            oldStatus: order.status,
+            newStatus: 'PROCESSING'
+          }
+        });
+
+        // Notify customer
+        await tx.notification.create({
+          data: {
+            userId: order.customer.userId,
+            message: `Your UPI payment for Order #${orderId.substring(0, 8).toUpperCase()} has been verified! Your order is now being processed.`
+          }
+        });
+      });
+
+      res.json({ success: true, message: 'UPI payment approved. Order moved to PROCESSING.' });
+    } else {
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { orderId },
+          data: {
+            status: 'REJECTED',
+            rejectionReason: reason || 'Payment could not be verified',
+            verifiedAt: new Date(),
+            verifiedBy: adminId
+          }
+        });
+
+        // Notify customer
+        await tx.notification.create({
+          data: {
+            userId: order.customer.userId,
+            message: `Your UPI payment for Order #${orderId.substring(0, 8).toUpperCase()} could not be verified. Reason: ${reason || 'Payment not found'}. Please contact support or retry.`
+          }
+        });
+      });
+
+      res.json({ success: true, message: 'UPI payment rejected. Customer has been notified.' });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * getPendingUpiOrders - Admin: get all orders with pending UPI verification
+ */
+const getPendingUpiOrders = async (req, res, next) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        payment: {
+          status: 'PENDING_VERIFICATION'
+        }
+      },
+      include: {
+        customer: {
+          include: {
+            user: { select: { firstName: true, lastName: true, email: true, phone: true } }
+          }
+        },
+        payment: {
+          select: {
+            id: true,
+            utrNumber: true,
+            upiVpa: true,
+            amount: true,
+            status: true,
+            createdAt: true,
+            paymentMethod: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'asc' } // Oldest first — FIFO processing
+    });
+
+    res.json({ success: true, data: orders, count: orders.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder, advanceOrderStatus, submitUpiPayment, verifyUpiPayment, getPendingUpiOrders };

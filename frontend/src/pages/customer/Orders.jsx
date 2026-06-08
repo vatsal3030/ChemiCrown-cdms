@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   ShoppingCart, Search, Filter, Trash2, ArrowUpDown, Eye,
   Package, ChevronRight, X, SlidersHorizontal, RefreshCw,
-  Calendar, IndianRupee
+  Calendar, IndianRupee, CheckCircle, XCircle, AlertTriangle,
+  QrCode, Clock, Banknote
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -90,6 +91,45 @@ export default function Orders() {
   }, [searchTerm, sortField, sortOrder, statusFilter, dateFrom, dateTo, minAmount, maxAmount, token]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  // UPI Pending Payment Verification (admin only)
+  const [pendingUpi, setPendingUpi] = useState([]);
+  const [verifyingId, setVerifyingId] = useState(null);
+  const [rejectModal, setRejectModal] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const fetchPendingUpi = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/upi/pending`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) setPendingUpi(json.data || []);
+    } catch {}
+  }, [isAdmin, token]);
+
+  useEffect(() => { fetchPendingUpi(); }, [fetchPendingUpi]);
+
+  const handleVerifyUpi = async (orderId, action, reason = '') => {
+    setVerifyingId(orderId);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/upi/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ orderId, action, rejectionReason: reason })
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(action === 'APPROVE' ? '✅ Payment verified! Order is now processing.' : '❌ Payment rejected. Customer notified.');
+        setPendingUpi(prev => prev.filter(o => o.id !== orderId));
+        if (action === 'APPROVE') fetchOrders();
+        setRejectModal(null);
+        setRejectReason('');
+      } else toast.error(json.error || json.message || 'Failed');
+    } catch { toast.error('Network error'); }
+    finally { setVerifyingId(null); }
+  };
 
   const toggleSort = (field) => {
     if (sortField === field) setParam('order', sortOrder === 'asc' ? 'desc' : 'asc');
@@ -199,6 +239,121 @@ export default function Orders() {
               <X size={11} /> Clear
             </button>
           )}
+        </div>
+      )}
+
+      {/* ── UPI Pending Payment Verification Banner (Admin Only) ── */}
+      {isAdmin && pendingUpi.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-3 border-b border-amber-200 dark:border-amber-700 bg-amber-100/50 dark:bg-amber-900/30">
+            <QrCode size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+            <div className="flex-1">
+              <p className="font-bold text-amber-800 dark:text-amber-300 text-sm">
+                {pendingUpi.length} UPI Payment{pendingUpi.length > 1 ? 's' : ''} Pending Verification
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                Customers have submitted UTR numbers — verify to advance their orders
+              </p>
+            </div>
+            <Clock size={15} className="text-amber-500 animate-pulse" />
+          </div>
+          <div className="divide-y divide-amber-200/60 dark:divide-amber-700/40">
+            {pendingUpi.map(order => {
+              const payment = order.payment;
+              const customer = order.customer?.user;
+              return (
+                <div key={order.id} className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded text-amber-800 dark:text-amber-300">
+                        #{order.id.slice(-8).toUpperCase()}
+                      </span>
+                      <span className="text-sm font-semibold text-foreground">
+                        {customer?.firstName} {customer?.lastName}
+                      </span>
+                      <span className="font-bold text-primary text-sm">₹{order.total?.toFixed(2)}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                      <span className="font-semibold">UTR:</span>
+                      <span className="font-mono ml-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-amber-200">
+                        {payment?.utrNumber || '—'}
+                      </span>
+                      {payment?.upiVpa && <span className="ml-2">UPI: {payment.upiVpa}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={() => handleVerifyUpi(order.id, 'APPROVE')}
+                      disabled={verifyingId === order.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <CheckCircle size={13} />
+                      {verifyingId === order.id ? 'Verifying...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => setRejectModal(order)}
+                      disabled={verifyingId === order.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 text-xs font-semibold rounded-lg border border-red-200 dark:border-red-800 transition-colors"
+                    >
+                      <XCircle size={13} />
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Reject UPI Payment Modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <XCircle size={18} className="text-destructive" /> Reject UPI Payment
+              </h2>
+              <button onClick={() => { setRejectModal(null); setRejectReason(''); }} className="p-1.5 rounded-lg hover:bg-muted">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 text-xs text-red-700 dark:text-red-400">
+                <p className="font-semibold mb-1">Order #{rejectModal.id?.slice(-8).toUpperCase()}</p>
+                <p>UTR: <span className="font-mono">{rejectModal.payment?.utrNumber || '—'}</span></p>
+                <p>Amount: ₹{rejectModal.total?.toFixed(2)}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  Reason for rejection <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  placeholder="e.g. UTR number not found in our account, Invalid payment amount..."
+                  rows={3}
+                  className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-destructive resize-none"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Customer will be notified with this reason and the order will remain on hold.</p>
+            </div>
+            <div className="px-6 pb-6 flex justify-end gap-3">
+              <button
+                onClick={() => { setRejectModal(null); setRejectReason(''); }}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleVerifyUpi(rejectModal.id, 'REJECT', rejectReason)}
+                disabled={!rejectReason.trim() || verifyingId === rejectModal.id}
+                className="px-4 py-2 text-sm bg-destructive hover:bg-destructive/90 text-white font-semibold rounded-xl disabled:opacity-50"
+              >
+                {verifyingId === rejectModal.id ? 'Rejecting...' : 'Reject Payment'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

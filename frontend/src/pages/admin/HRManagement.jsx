@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Search, Plus, Trash2, ArrowUpDown, DollarSign, MessageSquare,
   AlertCircle, Eye, Users, CalendarCheck, TrendingUp, CheckCircle2,
   XCircle, Clock, ShieldAlert, UserX, UserCheck, AlertTriangle,
-  ChevronDown, Filter, X, RefreshCw, Settings, SlidersHorizontal
+  ChevronDown, Filter, X, RefreshCw, Settings, SlidersHorizontal,
+  Building2, CreditCard, Smartphone, Target, Award, Timer, IndianRupee
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -268,70 +269,201 @@ function SuspendModal({ employee, token, onClose, onSuccess }) {
   );
 }
 
-// ── Salary Config Modal ───────────────────────────────────────────────────────
-function SalaryConfigModal({ employee, token, onClose, onSuccess }) {
+// ── Configure Modal (Salary + Payment Details tabs) ──────────────────────────
+function ConfigureModal({ employee, token, onClose, onSuccess }) {
   const emp = employee.employeeProfile;
+  const [tab, setTab] = useState('salary');
+
+  // Salary tab state
   const [baseSalary, setBaseSalary] = useState(emp?.baseSalary || '');
   const [ctc, setCtc] = useState(emp?.ctc || '');
   const [pfRate, setPfRate] = useState(emp?.pfRate || 12);
+  const [salesTarget, setSalesTarget] = useState(emp?.salesTarget || '');
+
+  // Payment Details tab state
+  const [bankName, setBankName] = useState(emp?.bankName || '');
+  const [bankAccountName, setBankAccountName] = useState(emp?.bankAccountName || employee.firstName + ' ' + employee.lastName);
+  const [bankAccountNumber, setBankAccountNumber] = useState(emp?.bankAccountNumber || '');
+  const [bankIFSC, setBankIFSC] = useState(emp?.bankIFSC || '');
+  const [upiId, setUpiId] = useState(emp?.upiId || '');
+  const [paymentPreference, setPaymentPreference] = useState(emp?.paymentPreference || 'CASH');
+
   const [loading, setLoading] = useState(false);
 
-  const submit = async () => {
+  const saveSalary = async () => {
     if (!baseSalary || parseFloat(baseSalary) <= 0) return toast.error('Enter a valid base salary');
     setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${emp?.id}/salary-config`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ baseSalary, ctc, pfRate })
+        body: JSON.stringify({ baseSalary, ctc, pfRate, salesTarget })
       });
       const json = await res.json();
-      if (json.success) { toast.success('Salary configuration updated'); onSuccess(); }
+      if (json.success) { toast.success('Salary configuration saved'); onSuccess(); }
       else toast.error(json.message || 'Failed');
     } catch { toast.error('Network error'); }
     setLoading(false);
   };
 
+  const savePaymentDetails = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${emp?.id}/bank-details`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bankName, bankAccountName, bankAccountNumber, bankIFSC, upiId, paymentPreference })
+      });
+      const json = await res.json();
+      if (json.success) { toast.success('Payment details saved'); onSuccess(); }
+      else toast.error(json.message || 'Failed');
+    } catch { toast.error('Network error'); }
+    setLoading(false);
+  };
+
+  const PREF_OPTIONS = [
+    { key: 'CASH', label: 'Cash', icon: '💵' },
+    { key: 'BANK_TRANSFER', label: 'Bank Transfer', icon: '🏦' },
+    { key: 'UPI', label: 'UPI', icon: '📱' },
+    { key: 'CHEQUE', label: 'Cheque', icon: '📝' },
+  ];
+
+  const isSalesRole = ['SALES', 'MARKETING', 'DIGITAL_MARKETING'].includes(employee.role);
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md my-4 animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-bold flex items-center gap-2 text-primary">
-            <Settings size={20} /> Salary Configuration
-          </h2>
+          <div>
+            <h2 className="text-lg font-bold flex items-center gap-2 text-foreground">
+              <Settings size={20} className="text-primary" /> Configure Employee
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{employee.firstName} {employee.lastName}</p>
+          </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X size={16} /></button>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="bg-muted/50 rounded-xl p-3 text-sm text-muted-foreground">
-            Configuring salary for <strong className="text-foreground">{employee.firstName} {employee.lastName}</strong>
-          </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Monthly Base Salary (₹) *</label>
-            <Input type="number" value={baseSalary} onChange={e => setBaseSalary(e.target.value)} placeholder="e.g. 45000" />
-          </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Annual CTC (₹)</label>
-            <Input type="number" value={ctc} onChange={e => setCtc(e.target.value)} placeholder="e.g. 540000" />
-          </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">PF Rate (%)</label>
-            <Input type="number" value={pfRate} onChange={e => setPfRate(e.target.value)} min="0" max="100" placeholder="12" />
-            <p className="text-xs text-muted-foreground mt-1">Standard PF rate is 12% of basic salary</p>
-          </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-border">
+          {[
+            { key: 'salary', label: 'Salary Config', icon: IndianRupee },
+            { key: 'payment', label: 'Payment Details', icon: Building2 },
+          ].map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-semibold border-b-2 transition-colors ${
+                tab === t.key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <t.icon size={14} />
+              {t.label}
+            </button>
+          ))}
         </div>
-        <div className="px-6 pb-6 flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Configuration'}
-          </Button>
-        </div>
+
+        {/* Salary Config Tab */}
+        {tab === 'salary' && (
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Monthly Base Salary (₹) *</label>
+              <Input type="number" value={baseSalary} onChange={e => setBaseSalary(e.target.value)} placeholder="e.g. 45000" />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Annual CTC (₹)</label>
+              <Input type="number" value={ctc} onChange={e => setCtc(e.target.value)} placeholder="e.g. 540000" />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">PF Rate (%)</label>
+              <Input type="number" value={pfRate} onChange={e => setPfRate(e.target.value)} min="0" max="100" placeholder="12" />
+              <p className="text-xs text-muted-foreground mt-1">Standard PF rate is 12% of basic salary</p>
+            </div>
+            {isSalesRole && (
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                  <Target size={11} className="inline mr-1" />Monthly Sales Target (₹)
+                </label>
+                <Input type="number" value={salesTarget} onChange={e => setSalesTarget(e.target.value)} placeholder="e.g. 500000" />
+                <p className="text-xs text-muted-foreground mt-1">Commission is calculated on amount above target</p>
+              </div>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={onClose}>Cancel</Button>
+              <Button onClick={saveSalary} disabled={loading}>
+                {loading ? 'Saving...' : 'Save Salary Config'}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Details Tab */}
+        {tab === 'payment' && (
+          <div className="p-6 space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-400">
+              ℹ️ These details are used to auto-fill the salary payment modal and speed up payroll processing.
+            </div>
+
+            {/* Payment Preference */}
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Preferred Payment Method</label>
+              <div className="grid grid-cols-2 gap-2">
+                {PREF_OPTIONS.map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setPaymentPreference(opt.key)}
+                    className={`p-2.5 rounded-xl border-2 text-left text-sm transition-all ${
+                      paymentPreference === opt.key ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <span className="mr-1">{opt.icon}</span>
+                    <span className={`font-semibold text-xs ${paymentPreference === opt.key ? 'text-primary' : 'text-foreground'}`}>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bank Details */}
+            <div className="space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><Building2 size={11} /> Bank Details</p>
+              <Input placeholder="Bank Name (e.g. HDFC Bank)" value={bankName} onChange={e => setBankName(e.target.value)} />
+              <Input placeholder="Account Holder Name" value={bankAccountName} onChange={e => setBankAccountName(e.target.value)} />
+              <Input placeholder="Account Number" value={bankAccountNumber} onChange={e => setBankAccountNumber(e.target.value)} className="font-mono" />
+              <Input
+                placeholder="IFSC Code (e.g. HDFC0001234)"
+                value={bankIFSC}
+                onChange={e => setBankIFSC(e.target.value.toUpperCase())}
+                className="font-mono"
+                maxLength={11}
+              />
+            </div>
+
+            {/* UPI */}
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">📱 UPI ID</p>
+              <Input
+                placeholder="e.g. john@gpay or 9876543210@paytm"
+                value={upiId}
+                onChange={e => setUpiId(e.target.value)}
+                className="font-mono"
+              />
+              <p className="text-xs text-muted-foreground">Used to auto-generate QR code in salary payment</p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={onClose}>Cancel</Button>
+              <Button onClick={savePaymentDetails} disabled={loading}>
+                {loading ? 'Saving...' : 'Save Payment Details'}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
-const TABS = ['dashboard', 'directory', 'attendance', 'payroll', 'leaves', 'warnings'];
+const TABS = ['dashboard', 'directory', 'attendance', 'payroll', 'leaves', 'warnings', 'overtime', 'incentives'];
 
 export default function HRManagement() {
   const { user, token } = useAuth();
@@ -373,6 +505,97 @@ export default function HRManagement() {
   const [terminateTarget, setTerminateTarget] = useState(null);
   const [suspendTarget, setSuspendTarget] = useState(null);
   const [salaryTarget, setSalaryTarget] = useState(null);
+
+  // Overtime & Incentive state
+  const [overtimes, setOvertimes] = useState([]);
+  const [incentives, setIncentives] = useState([]);
+  const [otLoading, setOtLoading] = useState(false);
+  const [incLoading, setIncLoading] = useState(false);
+  const [otForm, setOtForm] = useState({ employeeId: '', date: '', hours: '', reason: '' });
+  const [incForm, setIncForm] = useState({ employeeId: '', month: '', incentiveAmount: '', notes: '' });
+  const [otFormOpen, setOtFormOpen] = useState(false);
+  const [incFormOpen, setIncFormOpen] = useState(false);
+
+  const fetchOvertimes = useCallback(async () => {
+    setOtLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/overtime`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) setOvertimes(json.data);
+    } catch {} finally { setOtLoading(false); }
+  }, [token]);
+
+  const fetchIncentives = useCallback(async () => {
+    setIncLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/incentives`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) setIncentives(json.data);
+    } catch {} finally { setIncLoading(false); }
+  }, [token]);
+
+  useEffect(() => {
+    if (activeTab === 'overtime') fetchOvertimes();
+    if (activeTab === 'incentives') fetchIncentives();
+  }, [activeTab, fetchOvertimes, fetchIncentives]);
+
+  const handleOtApprove = async (id, action) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/overtime/${id}/approve`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action })
+      });
+      const json = await res.json();
+      if (json.success) { toast.success(json.message); fetchOvertimes(); }
+      else toast.error(json.message);
+    } catch { toast.error('Network error'); }
+  };
+
+  const handleIncApprove = async (id, action) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/incentives/${id}/approve`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action })
+      });
+      const json = await res.json();
+      if (json.success) { toast.success(json.message); fetchIncentives(); }
+      else toast.error(json.message);
+    } catch { toast.error('Network error'); }
+  };
+
+  const logOvertime = async () => {
+    if (!otForm.employeeId || !otForm.date || !otForm.hours) return toast.error('Employee, date and hours are required');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/overtime`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(otForm)
+      });
+      const json = await res.json();
+      if (json.success) { toast.success(json.message); setOtFormOpen(false); setOtForm({ employeeId: '', date: '', hours: '', reason: '' }); fetchOvertimes(); }
+      else toast.error(json.message);
+    } catch { toast.error('Network error'); }
+  };
+
+  const logIncentive = async () => {
+    if (!incForm.employeeId || !incForm.month || !incForm.incentiveAmount) return toast.error('All fields are required');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/incentives`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(incForm)
+      });
+      const json = await res.json();
+      if (json.success) { toast.success('Incentive logged'); setIncFormOpen(false); setIncForm({ employeeId: '', month: '', incentiveAmount: '', notes: '' }); fetchIncentives(); }
+      else toast.error(json.message);
+    } catch { toast.error('Network error'); }
+  };
 
   const fetchEmployees = async () => {
     try {
@@ -498,6 +721,10 @@ export default function HRManagement() {
           >
             {tab === 'leaves'
               ? `Leave Requests${leaveRequests.length ? ` (${leaveRequests.length})` : ''}`
+              : tab === 'overtime'
+              ? `Overtime${overtimes.filter(o => o.status === 'PENDING').length ? ` (${overtimes.filter(o => o.status === 'PENDING').length})` : ''}`
+              : tab === 'incentives'
+              ? `Incentives${incentives.filter(i => i.status === 'PENDING').length ? ` (${incentives.filter(i => i.status === 'PENDING').length})` : ''}`
               : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
@@ -883,6 +1110,265 @@ export default function HRManagement() {
         </div>
       )}
 
+      {/* ── Overtime Tab ── */}
+      {activeTab === 'overtime' && (
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Timer size={20} className="text-primary" /> Overtime Management
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Track and approve overtime. 1.5× weekdays, 2× Sundays/holidays</p>
+            </div>
+            <Button onClick={() => setOtFormOpen(v => !v)} size="sm">
+              <Plus size={15} className="mr-1.5" /> Log Overtime
+            </Button>
+          </div>
+
+          {/* Log Overtime Form */}
+          {otFormOpen && (
+            <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+              <h3 className="font-semibold text-foreground">Log New Overtime</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Employee *</label>
+                  <select
+                    value={otForm.employeeId}
+                    onChange={e => setOtForm(f => ({ ...f, employeeId: e.target.value }))}
+                    className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select employee...</option>
+                    {employees.filter(e => e.employeeProfile).map(e => (
+                      <option key={e.employeeProfile.id} value={e.employeeProfile.id}>
+                        {e.firstName} {e.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Date *</label>
+                  <Input type="date" value={otForm.date} onChange={e => setOtForm(f => ({ ...f, date: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Hours *</label>
+                  <Input type="number" min="0.5" max="12" step="0.5" placeholder="e.g. 2.5" value={otForm.hours} onChange={e => setOtForm(f => ({ ...f, hours: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Reason</label>
+                  <Input placeholder="Optional reason" value={otForm.reason} onChange={e => setOtForm(f => ({ ...f, reason: e.target.value }))} />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setOtFormOpen(false)}>Cancel</Button>
+                <Button onClick={logOvertime}><CheckCircle2 size={15} className="mr-1.5" /> Submit Overtime</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Overtime Records Table */}
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            {otLoading ? (
+              <div className="p-8 text-center text-muted-foreground">Loading overtime records...</div>
+            ) : overtimes.length === 0 ? (
+              <div className="p-8 text-center">
+                <Timer size={32} className="mx-auto mb-3 text-muted-foreground/40" />
+                <p className="text-muted-foreground">No overtime records found.</p>
+                <p className="text-xs text-muted-foreground mt-1">Click "Log Overtime" to add the first entry.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Employee</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Hours</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Rate</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Amount</th>
+                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {overtimes.map(ot => (
+                    <tr key={ot.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-foreground">{ot.employee?.user?.firstName} {ot.employee?.user?.lastName}</p>
+                        <p className="text-xs text-muted-foreground">{ot.reason || '—'}</p>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{new Date(ot.date).toLocaleDateString('en-IN')}</td>
+                      <td className="px-4 py-3 text-right font-medium">{ot.hours}h</td>
+                      <td className="px-4 py-3 text-right text-xs text-muted-foreground">{ot.multiplier}×</td>
+                      <td className="px-4 py-3 text-right font-bold text-emerald-600">₹{ot.amount?.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          ot.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                          ot.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                          ot.status === 'PAID' ? 'bg-blue-100 text-blue-700' :
+                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        }`}>
+                          {ot.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {ot.status === 'PENDING' && (
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => handleOtApprove(ot.id, 'APPROVE')}
+                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 rounded-lg transition-colors"
+                              title="Approve"
+                            >
+                              <CheckCircle2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleOtApprove(ot.id, 'REJECT')}
+                              className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg transition-colors"
+                              title="Reject"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Incentives Tab ── */}
+      {activeTab === 'incentives' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Award size={20} className="text-primary" /> Sales & Performance Incentives
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Manage commissions, bonuses, and performance incentives</p>
+            </div>
+            <Button onClick={() => setIncFormOpen(v => !v)} size="sm">
+              <Plus size={15} className="mr-1.5" /> Add Incentive
+            </Button>
+          </div>
+
+          {incFormOpen && (
+            <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+              <h3 className="font-semibold text-foreground">Log New Incentive</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Employee *</label>
+                  <select
+                    value={incForm.employeeId}
+                    onChange={e => setIncForm(f => ({ ...f, employeeId: e.target.value }))}
+                    className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select employee...</option>
+                    {employees.filter(e => e.employeeProfile).map(e => (
+                      <option key={e.employeeProfile.id} value={e.employeeProfile.id}>
+                        {e.firstName} {e.lastName} ({e.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Month *</label>
+                  <Input
+                    type="month"
+                    value={incForm.month}
+                    onChange={e => setIncForm(f => ({ ...f, month: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Amount (₹) *</label>
+                  <Input type="number" placeholder="e.g. 5000" value={incForm.incentiveAmount} onChange={e => setIncForm(f => ({ ...f, incentiveAmount: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Notes</label>
+                  <Input placeholder="Reason for incentive" value={incForm.notes} onChange={e => setIncForm(f => ({ ...f, notes: e.target.value }))} />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setIncFormOpen(false)}>Cancel</Button>
+                <Button onClick={logIncentive}><CheckCircle2 size={15} className="mr-1.5" /> Add Incentive</Button>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            {incLoading ? (
+              <div className="p-8 text-center text-muted-foreground">Loading incentives...</div>
+            ) : incentives.length === 0 ? (
+              <div className="p-8 text-center">
+                <Award size={32} className="mx-auto mb-3 text-muted-foreground/40" />
+                <p className="text-muted-foreground">No incentives recorded yet.</p>
+                <p className="text-xs text-muted-foreground mt-1">Click "Add Incentive" to log the first one.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Employee</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Month</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Achieved</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Incentive</th>
+                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {incentives.map(inc => (
+                    <tr key={inc.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-foreground">{inc.employee?.user?.firstName} {inc.employee?.user?.lastName}</p>
+                        <p className="text-xs text-muted-foreground">{inc.notes || '—'}</p>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{inc.month}</td>
+                      <td className="px-4 py-3 text-right text-muted-foreground">
+                        {inc.achievedAmount ? `₹${inc.achievedAmount?.toFixed(0)}` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-violet-600">₹{inc.incentiveAmount?.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          inc.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                          inc.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                          inc.status === 'PAID' ? 'bg-blue-100 text-blue-700' :
+                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        }`}>
+                          {inc.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {inc.status === 'PENDING' && (
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => handleIncApprove(inc.id, 'APPROVE')}
+                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 rounded-lg transition-colors"
+                              title="Approve"
+                            >
+                              <CheckCircle2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleIncApprove(inc.id, 'REJECT')}
+                              className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg transition-colors"
+                              title="Reject"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Modals ── */}
       {warnTarget && (
         <IssueWarningModal employee={warnTarget} token={token}
@@ -900,7 +1386,7 @@ export default function HRManagement() {
           onSuccess={() => { setSuspendTarget(null); fetchEmployees(); }} />
       )}
       {salaryTarget && (
-        <SalaryConfigModal employee={salaryTarget} token={token}
+        <ConfigureModal employee={salaryTarget} token={token}
           onClose={() => setSalaryTarget(null)}
           onSuccess={() => { setSalaryTarget(null); fetchEmployees(); }} />
       )}

@@ -41,4 +41,10 @@ router.post('/:id/reinstate',  hc.reinstateEmployee);   // ← NEW
 // Legacy warning notification (kept for backward compat)
 router.post('/:id/warning', hc.sendWarning);
 
+// Bank & UPI details for salary transfers
+router.put('/:id/bank-details', hc.updateBankDetails);
+
+// Assign sales representative to a customer
+router.put('/customers/:customerId/assign-sales', hc.assignSalesRep);
+
 module.exports = router;

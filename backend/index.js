@@ -109,6 +109,14 @@ app.use('/api/payroll', payrollRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/leaves', leavesRoutes);
 app.use('/api/support', supportRoutes);
+// New HR extended routes
+const holidayRoutes = require('./src/routes/holiday.routes');
+const overtimeRoutes = require('./src/routes/overtime.routes');
+const incentiveRoutes = require('./src/routes/incentive.routes');
+app.use('/api/holidays', holidayRoutes);
+app.use('/api/overtime', overtimeRoutes);
+app.use('/api/incentives', incentiveRoutes);
+
 
 // Global Error Handlers
 app.use(notFoundHandler);

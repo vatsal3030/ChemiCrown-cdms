@@ -31,8 +31,22 @@ exports.getAllSalaries = async (req, res, next) => {
 };
 
 /**
+ * Helper: count Sundays in a month
+ */
+function countSundaysInMonth(year, monthNum) {
+  let count = 0;
+  const daysInMonth = new Date(year, monthNum, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (new Date(year, monthNum - 1, d).getDay() === 0) count++;
+  }
+  return count;
+}
+
+/**
  * POST /api/payroll/generate
  * Auto-generate payroll for all active employees for a given month.
+ * - Accounts for holidays (govt + festival) and Sundays in working day calculation
+ * - Includes approved overtime and approved sales incentives
  * Idempotent: skips employees who already have a slip for the month.
  */
 exports.generateMonthlyPayroll = async (req, res, next) => {
@@ -45,6 +59,24 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
     const [year, monthNum] = month.split('-').map(Number);
     const monthStart = new Date(year, monthNum - 1, 1);
     const monthEnd = new Date(year, monthNum, 1);
+    const daysInMonth = new Date(year, monthNum, 0).getDate();
+
+    // Count Sundays in this month
+    const sundaysCount = countSundaysInMonth(year, monthNum);
+
+    // Count approved holidays (govt + festival) in this month from HolidayCalendar
+    const holidays = await prisma.holidayCalendar.findMany({
+      where: {
+        date: { gte: monthStart, lt: monthEnd },
+        type: { in: ['NATIONAL', 'FESTIVAL'] }
+      }
+    });
+    // Only count holidays that don't fall on Sundays (Sundays already excluded)
+    const holidayDates = holidays.filter(h => new Date(h.date).getDay() !== 0);
+    const holidayDays = holidayDates.length;
+
+    // Total working days = all days − Sundays − holidays
+    const totalWorkingDays = Math.max(1, daysInMonth - sundaysCount - holidayDays);
 
     const employees = await prisma.employee.findMany({
       where: { isActive: true, deletedAt: null },
@@ -53,12 +85,19 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
         attendances: {
           where: { date: { gte: monthStart, lt: monthEnd } }
         },
-        salaries: { where: { month } }
+        salaries: { where: { month } },
+        overtimes: { where: { 
+          status: 'APPROVED',
+          date: { gte: monthStart, lt: monthEnd }
+        }},
+        salesIncentives: { where: {
+          month,
+          status: 'APPROVED'
+        }}
       }
     });
 
     const results = [];
-    const workingDays = 26; // Standard working days per month
 
     await prisma.$transaction(async (tx) => {
       for (const emp of employees) {
@@ -75,31 +114,72 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
         }
 
         const pfRate = emp.pfRate || 12;
-        const perDaySalary = baseSalary / workingDays;
+        const perDaySalary = baseSalary / totalWorkingDays;
 
-        // Count absent days and half days
+        // Count absent days and half days (only on actual working days)
         let absentDays = 0;
         emp.attendances.forEach(a => {
-          if (a.status === 'ABSENT') absentDays += 1;
-          else if (a.status === 'HALF_DAY') absentDays += 0.5;
+          const dayOfWeek = new Date(a.date).getDay();
+          const isSunday = dayOfWeek === 0;
+          const isHoliday = holidayDates.some(h => 
+            new Date(h.date).toDateString() === new Date(a.date).toDateString()
+          );
+          // Don't count absences on Sundays or holidays
+          if (!isSunday && !isHoliday) {
+            if (a.status === 'ABSENT') absentDays += 1;
+            else if (a.status === 'HALF_DAY') absentDays += 0.5;
+          }
         });
 
-        const deductions = Number((perDaySalary * absentDays).toFixed(2));
+        // Overtime payout (sum of all approved overtime for the month)
+        const overtimePayout = emp.overtimes.reduce((sum, ot) => sum + (ot.amount || 0), 0);
+
+        // Incentive payout (sales/marketing commission)
+        const incentivePayout = emp.salesIncentives.reduce((sum, si) => sum + (si.incentiveAmount || 0), 0);
+
+        const absentDeduction = Number((perDaySalary * absentDays).toFixed(2));
         const pfContribution = Number(((baseSalary * pfRate) / 100).toFixed(2));
-        const netPay = Number(Math.max(0, baseSalary - deductions - pfContribution).toFixed(2));
+        const netPay = Number(Math.max(0,
+          baseSalary
+          + overtimePayout
+          + incentivePayout
+          - absentDeduction
+          - pfContribution
+        ).toFixed(2));
 
         const slip = await tx.salary.create({
           data: {
             employeeId: emp.id,
             month,
             amount: baseSalary,
-            deductions,
+            overtime: Number(overtimePayout.toFixed(2)),
+            incentive: Number(incentivePayout.toFixed(2)),
+            absentDeduction,
+            deductions: absentDeduction, // for compatibility
             pfContribution,
             netPay,
             absentDays,
+            workingDays: totalWorkingDays,
+            holidayDays,
             status: 'PENDING'
           }
         });
+
+        // Mark overtime as PAID and link to salary
+        if (emp.overtimes.length > 0) {
+          await tx.overtime.updateMany({
+            where: { id: { in: emp.overtimes.map(o => o.id) } },
+            data: { status: 'PAID', salaryId: slip.id }
+          });
+        }
+
+        // Mark incentives as PAID and link to salary
+        if (emp.salesIncentives.length > 0) {
+          await tx.salesIncentive.updateMany({
+            where: { id: { in: emp.salesIncentives.map(si => si.id) } },
+            data: { status: 'PAID', salaryId: slip.id }
+          });
+        }
 
         // Upsert PF ledger
         await tx.pFLedger.upsert({
@@ -111,11 +191,11 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
           }
         });
 
-        results.push({ employeeId: emp.id, salaryId: slip.id, netPay, pfContribution, absentDays });
+        results.push({ employeeId: emp.id, salaryId: slip.id, netPay, pfContribution, absentDays, overtimePayout, incentivePayout });
       }
     });
 
-    res.json({ success: true, message: `Payroll generated for ${month}`, data: results });
+    res.json({ success: true, message: `Payroll generated for ${month}. Working days: ${totalWorkingDays} (Sundays: ${sundaysCount}, Holidays: ${holidayDays})`, data: results });
   } catch (error) {
     next(error);
   }
@@ -123,12 +203,23 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
 
 /**
  * POST /api/payroll/:id/pay
- * Mark a specific salary slip as PAID, with payment method
+ * Mark a specific salary slip as PAID with full payment details (4 modes)
  */
 exports.markAsPaid = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { paymentMethod } = req.body; // 'CASH' or 'DIGITAL_TRANSFER'
+    const { 
+      paymentMethod,   // CASH | BANK_TRANSFER | UPI | CHEQUE
+      transactionRef,  // UTR / NEFT ref / Cheque no.
+      bankUsed,        // Bank account used
+      chequeDate,      // Date on cheque
+      chequeBank,      // Issuing bank
+      remarks          // Admin notes
+    } = req.body;
+
+    if (!['CASH', 'BANK_TRANSFER', 'UPI', 'CHEQUE'].includes(paymentMethod)) {
+      return res.status(400).json({ success: false, message: 'paymentMethod must be CASH, BANK_TRANSFER, UPI, or CHEQUE' });
+    }
     
     const slip = await prisma.salary.findUnique({
       where: { id },
@@ -137,24 +228,78 @@ exports.markAsPaid = async (req, res, next) => {
     if (!slip) return res.status(404).json({ success: false, message: 'Salary slip not found' });
     if (slip.status === 'PAID') return res.status(409).json({ success: false, message: 'Salary already paid' });
 
+    // Validate required refs per method
+    if (paymentMethod === 'BANK_TRANSFER' && !transactionRef) {
+      return res.status(400).json({ success: false, message: 'Transaction reference is required for Bank Transfer' });
+    }
+    if (paymentMethod === 'UPI' && !transactionRef) {
+      return res.status(400).json({ success: false, message: 'UTR number is required for UPI payment' });
+    }
+    if (paymentMethod === 'CHEQUE' && !transactionRef) {
+      return res.status(400).json({ success: false, message: 'Cheque number is required' });
+    }
+
     const updated = await prisma.salary.update({
       where: { id },
       data: {
         status: 'PAID',
         paidAt: new Date(),
-        paymentMethod: paymentMethod || 'CASH'
+        paidById: req.user.id,
+        paymentMethod,
+        transactionRef: transactionRef || null,
+        bankUsed: bankUsed || null,
+        chequeDate: chequeDate ? new Date(chequeDate) : null,
+        chequeBank: chequeBank || null,
+        remarks: remarks || slip.remarks
       }
     });
 
-    // Notify the employee
+    // Build human-readable payment summary for notification
+    const methodLabels = { CASH: 'Cash', BANK_TRANSFER: 'Bank Transfer (NEFT/IMPS)', UPI: 'UPI Transfer', CHEQUE: 'Cheque' };
+    let paymentDetail = methodLabels[paymentMethod];
+    if (transactionRef) paymentDetail += ` | Ref: ${transactionRef}`;
+    if (chequeBank) paymentDetail += ` | Bank: ${chequeBank}`;
+
+    // Notify the employee with full payment details
     await prisma.notification.create({
       data: {
         userId: slip.employee.userId,
-        message: `Your salary of ₹${slip.netPay.toFixed(2)} for ${slip.month} has been paid via ${paymentMethod || 'Cash'}. Please confirm receipt on your payroll dashboard.`
+        message: `💰 Salary of ₹${slip.netPay.toFixed(2)} for ${slip.month} has been paid via ${paymentDetail}. Please confirm receipt in your Payroll section.`
       }
     });
 
-    res.json({ success: true, data: updated });
+    // Audit log for compliance
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'SALARY_PAID',
+        entity: 'Salary',
+        entityId: id,
+        details: JSON.stringify({
+          employeeId: slip.employeeId,
+          month: slip.month,
+          amount: slip.netPay,
+          method: paymentMethod,
+          ref: transactionRef,
+          bank: bankUsed
+        })
+      }
+    }).catch(() => {}); // non-blocking
+
+    // Finance ledger entry
+    await prisma.financeLedger.create({
+      data: {
+        type: 'DEBIT',
+        category: 'PAYROLL',
+        amount: slip.netPay,
+        description: `Salary ${slip.month} - ${slip.employee.user.firstName} ${slip.employee.user.lastName} via ${paymentMethod}`,
+        referenceId: id,
+        date: new Date(),
+        isAutomatic: true
+      }
+    }).catch(() => {}); // non-blocking
+
+    res.json({ success: true, data: updated, message: `Salary marked as paid via ${methodLabels[paymentMethod]}` });
   } catch (error) {
     next(error);
   }

@@ -490,21 +490,86 @@ exports.reinstateEmployee = async (req, res, next) => {
 exports.updateSalaryConfig = async (req, res, next) => {
   try {
     const { id } = req.params; // employee.id
-    const { baseSalary, ctc, pfRate } = req.body;
+    const { baseSalary, ctc, pfRate, salesTarget } = req.body;
 
     const updated = await prisma.employee.update({
       where: { id },
       data: {
         ...(baseSalary !== undefined && { baseSalary: parseFloat(baseSalary) }),
         ...(ctc !== undefined && { ctc: parseFloat(ctc) }),
-        ...(pfRate !== undefined && { pfRate: parseFloat(pfRate) })
+        ...(pfRate !== undefined && { pfRate: parseFloat(pfRate) }),
+        ...(salesTarget !== undefined && { salesTarget: parseFloat(salesTarget) })
       }
     });
 
     prisma.auditLog.create({
-      data: { userId: req.user.id, action: 'UPDATED_SALARY_CONFIG', entity: 'Employee', entityId: id, details: JSON.stringify({ baseSalary, ctc, pfRate }) }
+      data: { userId: req.user.id, action: 'UPDATED_SALARY_CONFIG', entity: 'Employee', entityId: id, details: JSON.stringify({ baseSalary, ctc, pfRate, salesTarget }) }
     }).catch(() => {});
 
     res.json({ success: true, data: updated, message: 'Salary configuration updated' });
+  } catch (error) { next(error); }
+};
+
+/**
+ * PUT /api/hr/:id/bank-details
+ * Update employee bank account & UPI details for salary transfers
+ */
+exports.updateBankDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params; // employee.id
+    const { bankAccountNumber, bankIFSC, bankName, bankAccountName, upiId, paymentPreference } = req.body;
+
+    const employee = await prisma.employee.findUnique({ where: { id } });
+    if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: {
+        ...(bankAccountNumber !== undefined && { bankAccountNumber }),
+        ...(bankIFSC !== undefined && { bankIFSC: bankIFSC?.toUpperCase() }),
+        ...(bankName !== undefined && { bankName }),
+        ...(bankAccountName !== undefined && { bankAccountName }),
+        ...(upiId !== undefined && { upiId }),
+        ...(paymentPreference !== undefined && { paymentPreference })
+      }
+    });
+
+    prisma.auditLog.create({
+      data: { userId: req.user.id, action: 'UPDATED_BANK_DETAILS', entity: 'Employee', entityId: id, details: JSON.stringify({ bankName, upiId, paymentPreference }) }
+    }).catch(() => {});
+
+    res.json({ success: true, data: updated, message: 'Bank details updated successfully' });
+  } catch (error) { next(error); }
+};
+
+/**
+ * PUT /api/hr/customers/:customerId/assign-sales
+ * Assign a sales employee as account manager for a customer
+ */
+exports.assignSalesRep = async (req, res, next) => {
+  try {
+    const { customerId } = req.params;
+    const { employeeId } = req.body; // null to unassign
+
+    const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+    if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
+
+    if (employeeId) {
+      const employee = await prisma.employee.findUnique({
+        where: { id: employeeId },
+        include: { user: true }
+      });
+      if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+      if (!['SALES', 'MANAGER', 'OWNER', 'SUPER_ADMIN'].includes(employee.user.role)) {
+        return res.status(400).json({ success: false, message: 'Only SALES or Manager employees can be assigned as account managers' });
+      }
+    }
+
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { assignedSalesId: employeeId || null }
+    });
+
+    res.json({ success: true, message: employeeId ? 'Sales representative assigned' : 'Sales representative unassigned' });
   } catch (error) { next(error); }
 };

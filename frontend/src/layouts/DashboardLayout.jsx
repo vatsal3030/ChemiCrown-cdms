@@ -5,7 +5,7 @@ import {
   ClipboardCheck, LogOut, ChevronUp, UserPlus, Store,
   Trash2, CheckSquare, Heart, TrendingUp,
   Boxes, ClipboardList,
-  FileText, Wallet,
+  FileText, Wallet, CalendarDays,
   UserCheck, Activity, HelpCircle, Bug, Shield, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -58,6 +58,7 @@ const buildNavSections = (role) => {
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(role)) {
     people.items.push({ name: 'HR Management', path: '/dashboard/hr', icon: Users });
     people.items.push({ name: 'Payroll', path: '/dashboard/payroll', icon: Wallet });
+    people.items.push({ name: 'Holiday Calendar', path: '/dashboard/holidays', icon: CalendarDays });
   }
   // Tasks visible to all staff
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {

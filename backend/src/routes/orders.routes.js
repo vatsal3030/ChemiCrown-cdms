@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder, advanceOrderStatus } = require('../controllers/orders.controller');
+const { createOrder, verifyPayment, getOrders, getOrderById, cancelOrder, verifyCodOrder, advanceOrderStatus, submitUpiPayment, verifyUpiPayment, getPendingUpiOrders } = require('../controllers/orders.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 const { validateRequest } = require('../middlewares/validate.middleware');
@@ -20,5 +20,10 @@ router.put('/:id/verify-cod', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), 
 
 // Admin-only: advance order through the status pipeline
 router.post('/:id/advance', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES']), advanceOrderStatus);
+
+// UPI Direct Payment routes (works without Razorpay activation)
+router.get('/upi/pending', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), getPendingUpiOrders); // Admin: list pending UPI verifications
+router.post('/upi/submit', submitUpiPayment);  // Customer submits UTR after paying
+router.post('/upi/verify', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), verifyUpiPayment);  // Admin approves/rejects
 
 module.exports = router;

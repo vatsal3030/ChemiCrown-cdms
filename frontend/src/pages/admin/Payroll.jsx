@@ -2,13 +2,54 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Wallet, CheckCircle2, Clock, Plus, Search, Filter,
   DollarSign, CreditCard, Banknote, Smartphone, X, ShieldCheck,
-  Trash2, Users, SlidersHorizontal, RefreshCw, IndianRupee, Calendar
+  Trash2, Users, SlidersHorizontal, RefreshCw, IndianRupee, Calendar,
+  Building2, QrCode, FileText, AlertCircle, Copy, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import QRCode from 'qrcode';
+
+const PAYMENT_METHODS = [
+  {
+    key: 'CASH',
+    label: 'Cash',
+    icon: Banknote,
+    desc: 'Physical cash handover',
+    color: 'text-amber-600',
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    border: 'border-amber-200 dark:border-amber-800'
+  },
+  {
+    key: 'BANK_TRANSFER',
+    label: 'Bank Transfer',
+    icon: Building2,
+    desc: 'NEFT / IMPS / RTGS',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    border: 'border-blue-200 dark:border-blue-800'
+  },
+  {
+    key: 'UPI',
+    label: 'UPI Transfer',
+    icon: QrCode,
+    desc: 'GPay / PhonePe / Paytm',
+    color: 'text-violet-600',
+    bg: 'bg-violet-50 dark:bg-violet-900/20',
+    border: 'border-violet-200 dark:border-violet-800'
+  },
+  {
+    key: 'CHEQUE',
+    label: 'Cheque',
+    icon: FileText,
+    desc: 'Physical cheque payment',
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    border: 'border-emerald-200 dark:border-emerald-800'
+  }
+];
 
 function SalaryStatusBadge({ status, confirmed }) {
   if (status === 'PAID' && confirmed) return <span className="badge badge-success"><ShieldCheck size={11} /> Paid &amp; Confirmed</span>;
@@ -17,38 +58,84 @@ function SalaryStatusBadge({ status, confirmed }) {
 }
 
 function PaymentModal({ slip, onClose, onConfirm, loading }) {
-  const [method, setMethod] = useState('CASH');
+  const [method, setMethod] = useState(() => {
+    // Pre-select based on employee's payment preference
+    const pref = slip?.employee?.paymentPreference;
+    if (pref && ['CASH','BANK_TRANSFER','UPI','CHEQUE'].includes(pref)) return pref;
+    return 'CASH';
+  });
+  const [transactionRef, setTransactionRef] = useState('');
+  const [bankUsed, setBankUsed] = useState('');
+  const [chequeDate, setChequeDate] = useState('');
+  const [chequeBank, setChequeBank] = useState('');
+  const [remarks, setRemarks] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState('');
+
+  const emp = slip?.employee;
+  const empUser = emp?.user;
+
+  // Generate QR for UPI payment
+  useEffect(() => {
+    if (method === 'UPI' && emp?.upiId && slip?.netPay) {
+      const upiString = `upi://pay?pa=${emp.upiId}&pn=${encodeURIComponent(empUser?.firstName + ' ' + empUser?.lastName)}&am=${slip.netPay.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Salary ' + slip.month)}`;
+      QRCode.toDataURL(upiString, { width: 200, margin: 2 })
+        .then(url => setQrDataUrl(url))
+        .catch(() => setQrDataUrl(''));
+    } else {
+      setQrDataUrl('');
+    }
+  }, [method, emp?.upiId, slip?.netPay, slip?.month, empUser?.firstName, empUser?.lastName]);
+
   if (!slip) return null;
-  const emp = slip.employee?.user;
+
+  const handleConfirm = () => {
+    onConfirm(slip.id, { paymentMethod: method, transactionRef, bankUsed, chequeDate, chequeBank, remarks });
+  };
+
+  const selectedMethod = PAYMENT_METHODS.find(m => m.key === method);
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg my-4 animate-in zoom-in-95 duration-200">
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <DollarSign size={20} className="text-primary" /> Process Salary Payment
+            <IndianRupee size={20} className="text-primary" /> Process Salary Payment
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><X size={16} /></button>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="bg-muted/50 rounded-xl p-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Paying To</p>
-            <p className="font-bold text-foreground">{emp?.firstName} {emp?.lastName}</p>
-            <p className="text-sm text-muted-foreground">{emp?.email}</p>
-            <p className="text-2xl font-extrabold text-primary mt-2">₹{slip.netPay?.toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground">Net pay for {slip.month}</p>
+
+        <div className="p-6 space-y-5">
+          {/* Employee & Amount */}
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Paying Salary To</p>
+            <p className="font-bold text-foreground text-base">{empUser?.firstName} {empUser?.lastName}</p>
+            <p className="text-sm text-muted-foreground">{empUser?.email}</p>
+            <div className="flex items-end justify-between mt-2">
+              <div>
+                <p className="text-3xl font-extrabold text-primary">₹{slip.netPay?.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Net pay for {slip.month}</p>
+              </div>
+              {slip.overtime > 0 && <div className="text-right text-xs text-muted-foreground">
+                <p>Base: ₹{slip.amount?.toFixed(0)}</p>
+                <p className="text-emerald-600">+OT: ₹{slip.overtime?.toFixed(0)}</p>
+                {slip.incentive > 0 && <p className="text-violet-600">+Incentive: ₹{slip.incentive?.toFixed(0)}</p>}
+              </div>}
+            </div>
           </div>
+
+          {/* Payment Method Selection */}
           <div>
-            <p className="text-sm font-semibold text-foreground mb-2">Select Payment Method</p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { key: 'CASH', label: 'Cash', icon: Banknote, desc: 'Physical cash payment' },
-                { key: 'DIGITAL_TRANSFER', label: 'Digital Transfer', icon: Smartphone, desc: 'Bank/UPI transfer' }
-              ].map(opt => (
+            <p className="text-sm font-semibold text-foreground mb-3">Select Payment Method</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {PAYMENT_METHODS.map(opt => (
                 <button
                   key={opt.key}
                   onClick={() => setMethod(opt.key)}
-                  className={`p-3 rounded-xl border-2 text-left transition-all ${
-                    method === opt.key ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'
+                  className={`p-3 rounded-xl border-2 text-left transition-all duration-200 ${
+                    method === opt.key
+                      ? `border-primary bg-primary/10`
+                      : 'border-border hover:border-primary/40 hover:bg-muted/50'
                   }`}
                 >
                   <opt.icon size={20} className={method === opt.key ? 'text-primary' : 'text-muted-foreground'} />
@@ -58,28 +145,190 @@ function PaymentModal({ slip, onClose, onConfirm, loading }) {
               ))}
             </div>
           </div>
+
+          {/* Method-specific fields */}
           {method === 'CASH' && (
-            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400 rounded-xl p-3">
-              ⚠️ Cash payment requires manual handover. Employee will be notified to confirm receipt.
+            <div className={`rounded-xl p-4 space-y-2 ${selectedMethod.bg} border ${selectedMethod.border}`}>
+              <p className="text-sm font-semibold flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                <AlertCircle size={15} /> Cash Payment Instructions
+              </p>
+              <ul className="text-xs text-amber-700 dark:text-amber-400 space-y-1 list-disc pl-4">
+                <li>Hand over cash directly to {empUser?.firstName}</li>
+                <li>Ask them to count and confirm the amount</li>
+                <li>Employee will be notified to confirm receipt in the app</li>
+                <li>This payment will be logged in the audit trail</li>
+              </ul>
+              <Input
+                placeholder="Optional: Remarks or notes"
+                value={remarks}
+                onChange={e => setRemarks(e.target.value)}
+                className="mt-2 text-sm"
+              />
             </div>
           )}
-          {method === 'DIGITAL_TRANSFER' && (
-            <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400 rounded-xl p-3">
-              ℹ️ Mark after completing the bank/UPI transfer. Employee will confirm receipt.
+
+          {method === 'BANK_TRANSFER' && (
+            <div className="space-y-3">
+              {/* Employee's saved bank details */}
+              {emp?.bankAccountNumber ? (
+                <div className={`rounded-xl p-4 ${selectedMethod.bg} border ${selectedMethod.border}`}>
+                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-2 uppercase tracking-wider">Employee Bank Details</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-foreground">
+                    <p className="text-muted-foreground">Bank</p><p className="font-medium">{emp.bankName || '—'}</p>
+                    <p className="text-muted-foreground">Account</p>
+                    <p className="font-mono font-medium flex items-center gap-1">
+                      {emp.bankAccountNumber}
+                      <button onClick={() => { navigator.clipboard.writeText(emp.bankAccountNumber); toast.success('Copied!'); }}>
+                        <Copy size={11} className="text-muted-foreground hover:text-primary" />
+                      </button>
+                    </p>
+                    <p className="text-muted-foreground">IFSC</p>
+                    <p className="font-mono font-medium flex items-center gap-1">
+                      {emp.bankIFSC}
+                      <button onClick={() => { navigator.clipboard.writeText(emp.bankIFSC); toast.success('Copied!'); }}>
+                        <Copy size={11} className="text-muted-foreground hover:text-primary" />
+                      </button>
+                    </p>
+                    <p className="text-muted-foreground">Name</p><p className="font-medium">{emp.bankAccountName || empUser?.firstName + ' ' + empUser?.lastName}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl p-3 bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-400">
+                  ⚠️ No bank details saved for this employee. Please add them in HR → Configure → Payment Details first.
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Transaction Reference Number <span className="text-destructive">*</span></p>
+                <Input
+                  placeholder="NEFT/IMPS/RTGS reference number"
+                  value={transactionRef}
+                  onChange={e => setTransactionRef(e.target.value)}
+                  className="font-mono"
+                />
+              </div>
+              <Input
+                placeholder="Bank used for transfer (e.g. SBI NetBanking)"
+                value={bankUsed}
+                onChange={e => setBankUsed(e.target.value)}
+              />
+              <Input
+                placeholder="Remarks (optional)"
+                value={remarks}
+                onChange={e => setRemarks(e.target.value)}
+              />
+            </div>
+          )}
+
+          {method === 'UPI' && (
+            <div className="space-y-3">
+              {emp?.upiId ? (
+                <>
+                  {/* UPI ID display */}
+                  <div className={`rounded-xl p-4 ${selectedMethod.bg} border ${selectedMethod.border}`}>
+                    <p className="text-xs font-semibold text-violet-700 dark:text-violet-400 mb-2 uppercase tracking-wider">Employee UPI Details</p>
+                    <p className="font-mono text-sm font-bold text-foreground flex items-center gap-2">
+                      {emp.upiId}
+                      <button onClick={() => { navigator.clipboard.writeText(emp.upiId); toast.success('UPI ID copied!'); }}>
+                        <Copy size={14} className="text-muted-foreground hover:text-primary" />
+                      </button>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Name: {empUser?.firstName} {empUser?.lastName}</p>
+                    <p className="text-xs text-muted-foreground">Amount: <strong className="text-foreground">₹{slip.netPay?.toFixed(2)}</strong></p>
+                  </div>
+                  {/* QR Code */}
+                  {qrDataUrl ? (
+                    <div className="flex flex-col items-center gap-2 p-4 border border-border rounded-xl bg-white">
+                      <p className="text-xs font-semibold text-muted-foreground">Scan QR with GPay / PhonePe / Paytm</p>
+                      <img src={qrDataUrl} alt="UPI QR Code" className="w-40 h-40" />
+                      <p className="text-xs text-center text-muted-foreground">QR auto-fills ₹{slip.netPay?.toFixed(2)} to {empUser?.firstName}</p>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-center text-muted-foreground p-4 border border-dashed border-border rounded-xl">
+                      Generating QR code...
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-xl p-3 bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-400">
+                  ⚠️ No UPI ID saved for this employee. Please add it in HR → Configure → Payment Details.
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">UTR Number (from payment app) <span className="text-destructive">*</span></p>
+                <Input
+                  placeholder="e.g. 512345678901 (12-digit UTR from GPay/PhonePe)"
+                  value={transactionRef}
+                  onChange={e => setTransactionRef(e.target.value)}
+                  className="font-mono"
+                />
+              </div>
+              <Input
+                placeholder="Remarks (optional)"
+                value={remarks}
+                onChange={e => setRemarks(e.target.value)}
+              />
+            </div>
+          )}
+
+          {method === 'CHEQUE' && (
+            <div className="space-y-3">
+              <div className={`rounded-xl p-3 ${selectedMethod.bg} border ${selectedMethod.border} text-xs text-emerald-700 dark:text-emerald-400`}>
+                📝 Record the cheque details below. The employee will be notified to collect the cheque.
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Cheque Number <span className="text-destructive">*</span></p>
+                <Input
+                  placeholder="e.g. 001234"
+                  value={transactionRef}
+                  onChange={e => setTransactionRef(e.target.value)}
+                  className="font-mono"
+                />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Cheque Date <span className="text-destructive">*</span></p>
+                <Input
+                  type="date"
+                  value={chequeDate}
+                  onChange={e => setChequeDate(e.target.value)}
+                />
+              </div>
+              <Input
+                placeholder="Issuing bank (e.g. HDFC Bank, Andheri Branch)"
+                value={chequeBank}
+                onChange={e => setChequeBank(e.target.value)}
+              />
+              <Input
+                placeholder="Remarks (optional)"
+                value={remarks}
+                onChange={e => setRemarks(e.target.value)}
+              />
             </div>
           )}
         </div>
-        <div className="px-6 pb-6 flex justify-end gap-3">
+
+        {/* Footer */}
+        <div className="px-6 pb-6 flex justify-end gap-3 border-t border-border pt-4">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onConfirm(slip.id, method)} disabled={loading}>
-            <CheckCircle2 size={16} className="mr-1.5" />
-            {loading ? 'Processing...' : `Confirm ${method === 'CASH' ? 'Cash' : 'Digital'} Payment`}
+          <Button
+            onClick={handleConfirm}
+            disabled={loading}
+            className="min-w-[160px]"
+          >
+            {loading ? (
+              'Processing...'
+            ) : (
+              <>
+                <CheckCircle2 size={16} className="mr-1.5" />
+                Confirm {selectedMethod?.label} Payment
+              </>
+            )}
           </Button>
         </div>
       </div>
     </div>
   );
 }
+
 
 export default function Payroll() {
   const { token } = useAuth();
@@ -143,18 +392,18 @@ export default function Payroll() {
     finally { setGenerating(false); }
   };
 
-  const handlePay = async (salaryId, paymentMethod) => {
+  const handlePay = async (salaryId, paymentDetails) => {
     try {
       setPayingId(salaryId);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/${salaryId}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ paymentMethod })
+        body: JSON.stringify(paymentDetails)
       });
       const json = await res.json();
       if (json.success) {
-        toast.success(`Salary paid via ${paymentMethod === 'CASH' ? 'Cash' : 'Digital Transfer'}!`);
-        setSalaries(prev => prev.map(s => s.id === salaryId ? { ...s, status: 'PAID', paidAt: new Date(), paymentMethod } : s));
+        toast.success(json.message || `Salary paid via ${paymentDetails.paymentMethod}!`);
+        setSalaries(prev => prev.map(s => s.id === salaryId ? { ...s, status: 'PAID', paidAt: new Date(), ...paymentDetails } : s));
         setPayModal(null);
       } else toast.error(json.message || 'Failed');
     } catch { toast.error('Network error'); }
@@ -164,12 +413,12 @@ export default function Payroll() {
   const handleBulkPay = async () => {
     const pending = salaries.filter(s => s.status === 'PENDING');
     if (pending.length === 0) return toast.error('No pending slips');
-    if (!window.confirm(`Mark ALL ${pending.length} pending slips for ${month} as PAID?`)) return;
+    if (!window.confirm(`Mark ALL ${pending.length} pending slips for ${month} as PAID via Bank Transfer?`)) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/bulk-pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ month, paymentMethod: 'DIGITAL_TRANSFER' })
+        body: JSON.stringify({ month, paymentMethod: 'BANK_TRANSFER' })
       });
       const json = await res.json();
       if (json.success) { toast.success(json.message); fetchSalaries(); }

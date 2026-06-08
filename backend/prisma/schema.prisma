@@ -63,6 +63,17 @@ model Employee {
   pfLedger      PFLedger?
   leaveRequests LeaveRequest[]
   warnings      EmployeeWarning[]
+  // Bank & payment details for salary transfers
+  bankAccountNumber  String?    // e.g. 1234567890123
+  bankIFSC           String?    // e.g. SBIN0001234
+  bankName           String?    // e.g. State Bank of India
+  bankAccountName    String?    // Account holder name
+  upiId              String?    // e.g. 9876543210@ybl
+  paymentPreference  String?    // CASH | BANK_TRANSFER | UPI | CHEQUE
+  // Role-specific
+  salesTarget        Float?     // Monthly sales target (SALES role)
+  overtimes          Overtime[]
+  salesIncentives    SalesIncentive[]
 }
 
 enum EmployeeStatus {
@@ -72,19 +83,21 @@ enum EmployeeStatus {
 }
 
 model Customer {
-  id          String @id @default(uuid())
-  userId      String @unique
-  user        User   @relation(fields: [userId], references: [id])
-  companyName String
-  gstNumber   String?
-  address     String?
-  isVerified  Boolean @default(false) // Admin must verify before ordering
-  isActive    Boolean @default(true) // Deprecated: use deletedAt
-  deletedAt   DateTime?
-  orders      Order[]
-  inquiries   Inquiry[]
-  reviews     Review[]
-  
+  id               String @id @default(uuid())
+  userId           String @unique
+  user             User   @relation(fields: [userId], references: [id])
+  companyName      String
+  gstNumber        String?
+  address          String?
+  isVerified       Boolean @default(false) // Admin must verify before ordering
+  isActive         Boolean @default(true) // Deprecated: use deletedAt
+  deletedAt        DateTime?
+  orders           Order[]
+  inquiries        Inquiry[]
+  reviews          Review[]
+  // Assigned account manager (sales person) for commission tracking
+  assignedSalesId  String?  // Employee.id of the SALES person managing this account
+
   @@index([isVerified, isActive])
 }
 
@@ -317,14 +330,25 @@ model Salary {
   month               String       // e.g., "YYYY-MM"
   amount              Float        // Base amount processed
   bonus               Float        @default(0)
+  overtime            Float        @default(0)  // Overtime payout for the month
+  incentive           Float        @default(0)  // Sales/Marketing commission
   allowances          Float        @default(0)  // HRA, travel, etc.
   deductions          Float        @default(0)
+  absentDeduction     Float        @default(0)  // Calculated from absent days
   tds                 Float        @default(0)  // Tax Deducted at Source
   pfContribution      Float        @default(0)
   netPay              Float        @default(0)
   absentDays          Int          @default(0)
+  workingDays         Int          @default(26) // Total working days in month
+  holidayDays         Int          @default(0)  // Govt/festival holidays in month
   status              SalaryStatus @default(PENDING)
-  paymentMethod       String?      // "CASH" or "DIGITAL_TRANSFER"
+  // Payment details — enhanced
+  paymentMethod       String?      // CASH | BANK_TRANSFER | UPI | CHEQUE
+  transactionRef      String?      // UTR / NEFT ref / Cheque no.
+  bankUsed            String?      // Which bank account was used for transfer
+  chequeDate          DateTime?    // Date on cheque if paid by cheque
+  chequeBank          String?      // Issuing bank of cheque
+  paidById            String?      // userId of admin who marked as paid
   confirmedByEmployee Boolean      @default(false)
   confirmedAt         DateTime?
   paidAt              DateTime?
@@ -362,19 +386,27 @@ model Payment {
   id                 String   @id @default(uuid())
   orderId            String   @unique
   order              Order    @relation(fields: [orderId], references: [id])
-  paymentMethod      String   // e.g., "razorpay", "bank_transfer"
+  paymentMethod      String   // e.g., "RAZORPAY", "PAY_ON_DELIVERY", "UPI"
   razorpayOrderId    String?
   razorpayPaymentId  String?
   razorpaySignature  String?
+  utrNumber          String?  // UTR / UPI transaction reference for direct UPI payments
+  upiTransactionId   String?  // UPI Transaction ID from the payment app
+  upiVpa             String?  // Customer's UPI VPA that was used
   amount             Float
   status             PaymentStatus @default(PENDING)
+  verifiedAt         DateTime?
+  verifiedBy         String?  // Admin user ID who verified
+  rejectionReason    String?  // If payment was rejected
   createdAt          DateTime @default(now())
 }
 
 enum PaymentStatus {
   PENDING
+  PENDING_VERIFICATION  // UPI payment submitted, awaiting admin verification
   SUCCESS
   FAILED
+  REJECTED
 }
 
 model Task {
@@ -518,4 +550,71 @@ model Expense {
   createdBy   String    // userId
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+// ── Holiday Calendar ────────────────────────────────────────────────────────
+model HolidayCalendar {
+  id          String      @id @default(uuid())
+  name        String      // e.g. "Diwali", "Republic Day"
+  date        DateTime
+  year        Int         // e.g. 2025 — for quick filtering
+  type        HolidayType @default(FESTIVAL)
+  description String?     // Optional notes
+  isReadOnly  Boolean     @default(false) // National holidays are read-only
+  createdAt   DateTime    @default(now())
+}
+
+enum HolidayType {
+  NATIONAL   // Republic Day, Independence Day, Gandhi Jayanti
+  FESTIVAL   // Diwali, Holi, Eid, Christmas, etc.
+  COMPANY    // Custom company holiday
+}
+
+// ── Sales Incentive / Commission ────────────────────────────────────────────
+model SalesIncentive {
+  id              String           @id @default(uuid())
+  employeeId      String
+  employee        Employee         @relation(fields: [employeeId], references: [id])
+  month           String           // YYYY-MM
+  targetAmount    Float            @default(0)  // Monthly sales target
+  achievedAmount  Float            @default(0)  // Actual sales value from orders
+  commissionRate  Float            @default(2.5) // Percentage e.g. 2.5%
+  incentiveAmount Float            @default(0)  // Calculated payout
+  notes           String?          // Manager notes
+  status          IncentiveStatus  @default(PENDING)
+  salaryId        String?          // Linked when added to salary
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+enum IncentiveStatus {
+  PENDING   // Calculated, waiting for payroll
+  APPROVED  // Manager approved, will be in next payroll
+  PAID      // Added to salary and paid
+  REJECTED  // Not approved
+}
+
+// ── Overtime Tracking ───────────────────────────────────────────────────────
+model Overtime {
+  id           String         @id @default(uuid())
+  employeeId   String
+  employee     Employee       @relation(fields: [employeeId], references: [id])
+  date         DateTime       // Date overtime was worked
+  hours        Float          // Extra hours worked (e.g. 2.5)
+  hourlyRate   Float          // Auto-calculated: baseSalary / 26 / 8
+  multiplier   Float          @default(1.5) // 1.5x weekday, 2.0x Sunday/holiday
+  amount       Float          // hours * hourlyRate * multiplier
+  reason       String?        // What was worked on
+  approvedById String?        // userId of manager who approved
+  status       OvertimeStatus @default(PENDING)
+  salaryId     String?        // Linked when added to salary
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+enum OvertimeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
 }

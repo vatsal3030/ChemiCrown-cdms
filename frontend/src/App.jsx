@@ -44,6 +44,7 @@ import Support from './pages/Support';
 import ReportIssue from './pages/ReportIssue';
 import AuditLog from './pages/admin/AuditLog';
 import TicketDashboard from './pages/admin/TicketDashboard';
+import HolidayManagement from './pages/admin/HolidayManagement';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -150,6 +151,7 @@ function App() {
                     <Route path="hr" element={<HRManagement />} />
                     <Route path="hr/:id" element={<EmployeeDetails />} />
                     <Route path="payroll" element={<Payroll />} />
+                    <Route path="holidays" element={<HolidayManagement />} />
                   </Route>
 
                   {/* Finance — Owner & Super Admin Only */}

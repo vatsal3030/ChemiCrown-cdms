@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { CreditCard, ShieldCheck, Building, ShoppingCart, Trash2 } from 'lucide-react';
+import { CreditCard, ShieldCheck, Building, ShoppingCart, Trash2, Smartphone } from 'lucide-react';
+import UpiQrPayment from '../../components/UpiQrPayment';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../context/AuthContext';
@@ -33,6 +34,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY');
+  const [createdOrderId, setCreatedOrderId] = useState(null);
 
   const SESSION_KEY = `checkout_form_${user?.id || 'guest'}`;
 
@@ -136,6 +138,15 @@ export default function Checkout() {
         clearCart();
         try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { console.error(err); }
         navigate('/dashboard/orders');
+      } else if (paymentMethod === 'UPI_QR') {
+        // Store order ID and show UPI QR payment inline
+        setCreatedOrderId(data.orderId);
+        setLoading(false);
+        isProcessing.current = false;
+        toast.success('Order created! Please complete UPI payment below.');
+        // Scroll to payment section
+        setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 200);
+        return;
       } else if (paymentMethod === 'RAZORPAY' && data.razorpayOrder) {
         // Load Razorpay Script
         const resScript = await loadRazorpayScript();
@@ -154,6 +165,26 @@ export default function Checkout() {
           description: "Order Payment",
           image: "/chemicrown.png",
           order_id: data.razorpayOrder.id,
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: "Pay via UPI",
+                  instruments: [{ method: "upi" }]
+                },
+                qr: {
+                  name: "Scan QR Code",
+                  instruments: [{ method: "upi", flows: ["qr"] }]
+                },
+                other: {
+                  name: "Other Methods",
+                  instruments: [{ method: "card" }, { method: "netbanking" }, { method: "wallet" }]
+                }
+              },
+              sequence: ["block.upi", "block.qr", "block.other"],
+              preferences: { show_default_blocks: true }
+            }
+          },
           handler: async function (response) {
             try {
               const verifyRes = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/verify`, {
@@ -389,24 +420,61 @@ export default function Checkout() {
               <CreditCard className="w-5 h-5 text-primary" /> Payment Method
             </h3>
             
-            <div className="space-y-4 mb-8">
+            <div className="space-y-3 mb-6">
+              {/* Razorpay */}
               <label 
-                className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'RAZORPAY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
+                className={`flex items-start p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'RAZORPAY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
               >
                 <input 
                   type="radio" 
                   name="paymentMethod" 
                   value="RAZORPAY" 
                   checked={paymentMethod === 'RAZORPAY'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-4 h-4 text-primary focus:ring-primary"
+                  onChange={(e) => { setPaymentMethod(e.target.value); setCreatedOrderId(null); }}
+                  className="w-4 h-4 text-primary focus:ring-primary mt-1"
                 />
                 <div className="ml-4 flex-1">
-                  <span className="block font-semibold text-foreground">Online Payment (Razorpay)</span>
-                  <span className="block text-sm text-muted-foreground mt-1">Pay securely via Credit/Debit Cards, UPI, Netbanking, or Wallets.</span>
+                  <span className="block font-semibold text-foreground">Cards / Netbanking / Wallets</span>
+                  <span className="block text-sm text-muted-foreground mt-1">Pay via Razorpay secure checkout</span>
+                  {paymentMethod === 'RAZORPAY' && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {['VISA', 'MasterCard', 'Netbanking', 'Wallets'].map(b => (
+                        <span key={b} className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs border border-border">{b}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </label>
 
+              {/* UPI / QR — works independently of Razorpay activation */}
+              <label 
+                className={`flex items-start p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'UPI_QR' ? 'border-green-500 bg-green-50 dark:bg-green-950/30 ring-2 ring-green-500/20' : 'border-border hover:bg-muted'}`}
+              >
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  value="UPI_QR" 
+                  checked={paymentMethod === 'UPI_QR'}
+                  onChange={(e) => { setPaymentMethod(e.target.value); setCreatedOrderId(null); }}
+                  className="w-4 h-4 text-green-600 focus:ring-green-500 mt-1"
+                />
+                <div className="ml-4 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="block font-semibold text-foreground">UPI / QR Code Payment</span>
+                    <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full text-xs font-bold">Instant</span>
+                  </div>
+                  <span className="block text-sm text-muted-foreground mt-1">Scan QR or pay via GPay, PhonePe, Paytm, BHIM, any UPI app</span>
+                  {paymentMethod === 'UPI_QR' && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {['GPay', 'PhonePe', 'Paytm', 'BHIM', 'Amazon Pay', 'Any UPI'].map(b => (
+                        <span key={b} className="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded text-xs border border-green-200 dark:border-green-800 font-medium">{b}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </label>
+
+              {/* Pay on Delivery */}
               <label 
                 className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'PAY_ON_DELIVERY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
               >
@@ -415,7 +483,7 @@ export default function Checkout() {
                   name="paymentMethod" 
                   value="PAY_ON_DELIVERY" 
                   checked={paymentMethod === 'PAY_ON_DELIVERY'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  onChange={(e) => { setPaymentMethod(e.target.value); setCreatedOrderId(null); }}
                   className="w-4 h-4 text-primary focus:ring-primary"
                 />
                 <div className="ml-4 flex-1">
@@ -425,15 +493,50 @@ export default function Checkout() {
               </label>
             </div>
 
-            <button 
-              onClick={handlePayment}
-              disabled={loading}
-              className="w-full inline-flex items-center justify-center px-6 py-4 text-lg font-bold text-primary-foreground bg-primary rounded-xl shadow hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-            >
-              {loading ? 'Processing...' : paymentMethod === 'RAZORPAY' ? `Pay ₹${finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}` : 'Place Order'}
-            </button>
+            {/* UPI QR Inline Payment UI */}
+            {paymentMethod === 'UPI_QR' && createdOrderId && (
+              <div className="mb-6 border border-green-200 dark:border-green-800 rounded-xl overflow-hidden">
+                <div className="bg-green-50 dark:bg-green-950/50 px-4 py-3 border-b border-green-200 dark:border-green-800 flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-semibold text-green-700 dark:text-green-300">Complete UPI Payment</span>
+                </div>
+                <div className="p-4">
+                  <UpiQrPayment
+                    amount={finalTotal}
+                    orderId={createdOrderId}
+                    merchantUpi={import.meta.env.VITE_MERCHANT_UPI || 'chemicrown@upi'}
+                    merchantName="ChemiCrown CDMS"
+                    onSuccess={async ({ utrNumber, upiVpa }) => {
+                      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/upi/submit`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ orderId: createdOrderId, utrNumber, upiVpa })
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.error || 'Failed to submit payment');
+                      toast.success('Payment details submitted! Order placed successfully.');
+                      clearCart();
+                      try { sessionStorage.removeItem(SESSION_KEY); } catch (err) { console.error(err); }
+                      navigate('/dashboard/orders');
+                    }}
+                    onCancel={() => { setPaymentMethod('RAZORPAY'); setCreatedOrderId(null); }}
+                  />
+                </div>
+              </div>
+            )}
 
-            <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground bg-success/10 p-3 rounded-lg">
+            {/* Pay / Place Order button — hidden when UPI QR flow is active */}
+            {!(paymentMethod === 'UPI_QR' && createdOrderId) && (
+              <button 
+                onClick={handlePayment}
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center px-6 py-4 text-lg font-bold text-primary-foreground bg-primary rounded-xl shadow hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {loading ? 'Processing...' : paymentMethod === 'RAZORPAY' ? `Pay ₹${finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}` : paymentMethod === 'UPI_QR' ? `Proceed to UPI Payment ₹${finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}` : 'Place Order'}
+              </button>
+            )}
+
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground bg-success/10 p-3 rounded-lg">
               <ShieldCheck className="w-4 h-4 text-success" /> <span className="text-success font-medium">100% Encrypted Payment</span>
             </div>
           </div>
