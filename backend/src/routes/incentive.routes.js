@@ -9,16 +9,16 @@ router.use(requireAuth);
 // View incentives (filtered by role)
 router.get('/', getIncentives);
 
-// Auto-calculate from orders (Sales role)
-router.post('/calculate', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), calculateIncentive);
+// Auto-calculate from orders — SUPER_ADMIN only
+router.post('/calculate', requireRole(['SUPER_ADMIN']), calculateIncentive);
 
-// Manual incentive entry (Marketing/other)
-router.post('/', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), createIncentive);
+// Manual incentive entry — SUPER_ADMIN only
+router.post('/', requireRole(['SUPER_ADMIN']), createIncentive);
 
-// Approve / Reject
-router.put('/:id/approve', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), approveIncentive);
+// Approve / Reject — SUPER_ADMIN only
+router.put('/:id/approve', requireRole(['SUPER_ADMIN']), approveIncentive);
 
-// Delete
-router.delete('/:id', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), deleteIncentive);
+// Delete — SUPER_ADMIN only
+router.delete('/:id', requireRole(['SUPER_ADMIN']), deleteIncentive);
 
 module.exports = router;

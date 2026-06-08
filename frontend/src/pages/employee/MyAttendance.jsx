@@ -11,7 +11,12 @@ const ATTENDANCE_STYLES = {
   ABSENT:   'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   HALF_DAY: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   LEAVE:    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  DEFAULT:  'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
+
+const getAttendanceStyle = (status) =>
+  ATTENDANCE_STYLES[status?.toUpperCase?.()] ?? ATTENDANCE_STYLES.DEFAULT;
+
 
 export default function MyAttendance() {
   const { token, user } = useAuth();
@@ -261,8 +266,8 @@ export default function MyAttendance() {
                         {new Date(rec.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
                       </td>
                       <td className="data-table-cell">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${ATTENDANCE_STYLES[rec.status] || ''}`}>
-                          {rec.status.replace('_', ' ')}
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getAttendanceStyle(rec.status)}`}>
+                          {(rec.status || '—').replace(/_/g, ' ')}
                         </span>
                       </td>
                     </tr>

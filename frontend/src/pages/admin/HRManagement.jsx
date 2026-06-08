@@ -467,6 +467,7 @@ const TABS = ['dashboard', 'directory', 'attendance', 'payroll', 'leaves', 'warn
 
 export default function HRManagement() {
   const { user, token } = useAuth();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';  // gate for sensitive write actions
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1035,10 +1036,12 @@ export default function HRManagement() {
                             <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/hr/${emp.id}`)}>
                               <Eye size={13} className="mr-1.5" /> View
                             </Button>
-                            <Button variant="outline" size="sm" className="text-amber-600 border-amber-200 hover:bg-amber-50"
-                              onClick={() => setWarnTarget(emp)}>
-                              <ShieldAlert size={13} />
-                            </Button>
+                            {isSuperAdmin && (
+                              <Button variant="outline" size="sm" className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                                onClick={() => setWarnTarget(emp)}>
+                                <ShieldAlert size={13} />
+                              </Button>
+                            )}
                             {empStatus !== 'TERMINATED' && (
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                 onClick={() => setTerminateTarget(emp)} title="Terminate">
@@ -1133,9 +1136,11 @@ export default function HRManagement() {
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">Track and approve overtime. 1.5× weekdays, 2× Sundays/holidays</p>
             </div>
-            <Button onClick={() => setOtFormOpen(v => !v)} size="sm">
-              <Plus size={15} className="mr-1.5" /> Log Overtime
-            </Button>
+            {isSuperAdmin && (
+              <Button onClick={() => setOtFormOpen(v => !v)} size="sm">
+                <Plus size={15} className="mr-1.5" /> Log Overtime
+              </Button>
+            )}
           </div>
 
           {/* Log Overtime Form */}
@@ -1223,7 +1228,7 @@ export default function HRManagement() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {ot.status === 'PENDING' && (
+                        {ot.status === 'PENDING' && isSuperAdmin && (
                           <div className="flex gap-1.5 justify-end">
                             <button
                               onClick={() => handleOtApprove(ot.id, 'APPROVE')}
@@ -1261,9 +1266,11 @@ export default function HRManagement() {
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">Manage commissions, bonuses, and performance incentives</p>
             </div>
-            <Button onClick={() => setIncFormOpen(v => !v)} size="sm">
-              <Plus size={15} className="mr-1.5" /> Add Incentive
-            </Button>
+            {isSuperAdmin && (
+              <Button onClick={() => setIncFormOpen(v => !v)} size="sm">
+                <Plus size={15} className="mr-1.5" /> Add Incentive
+              </Button>
+            )}
           </div>
 
           {incFormOpen && (
@@ -1353,7 +1360,7 @@ export default function HRManagement() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {inc.status === 'PENDING' && (
+                        {inc.status === 'PENDING' && isSuperAdmin && (
                           <div className="flex gap-1.5 justify-end">
                             <button
                               onClick={() => handleIncApprove(inc.id, 'APPROVE')}

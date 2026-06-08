@@ -9,13 +9,13 @@ router.use(requireAuth);
 // All employees and admins can view (filtered by role in controller)
 router.get('/', getOvertime);
 
-// Manager/Owner/Admin logs overtime for an employee
-router.post('/', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), createOvertime);
+// Manager/Owner/Admin logs overtime for an employee — SUPER_ADMIN only
+router.post('/', requireRole(['SUPER_ADMIN']), createOvertime);
 
-// Manager approves / rejects
-router.put('/:id/approve', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), approveOvertime);
+// Only SUPER_ADMIN can approve / reject overtime
+router.put('/:id/approve', requireRole(['SUPER_ADMIN']), approveOvertime);
 
-// Delete PENDING record
-router.delete('/:id', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), deleteOvertime);
+// Delete PENDING record — SUPER_ADMIN only
+router.delete('/:id', requireRole(['SUPER_ADMIN']), deleteOvertime);
 
 module.exports = router;

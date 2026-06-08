@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   DollarSign, FileText, CheckCircle2, Clock, Shield, ThumbsUp
 } from 'lucide-react';
@@ -31,6 +31,10 @@ function SalarySlipCard({ slip, token, onConfirmed }) {
     }
   };
 
+  // Safe number formatting helpers — guard against null/undefined API values
+  const safeFmt   = (v, dec = 2) => (Number(v) || 0).toFixed(dec);
+  const safeLocale = (v)         => (Number(v) || 0).toLocaleString('en-IN');
+
   return (
     <div className={`form-card hover:shadow-md transition-all ${isPaid ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-amber-200 dark:border-amber-900/40'}`}>
       <div className="flex items-center justify-between mb-4">
@@ -52,38 +56,56 @@ function SalarySlipCard({ slip, token, onConfirmed }) {
       <div className="space-y-2.5 border-t border-border pt-4">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Base Salary</span>
-          <span className="font-medium text-foreground">₹{slip.amount.toLocaleString('en-IN')}</span>
+          <span className="font-medium text-foreground">₹{safeLocale(slip.amount)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Absent Deduction ({slip.absentDays} days)</span>
-          <span className="font-medium text-rose-600">-₹{slip.deductions.toFixed(2)}</span>
+          <span className="text-muted-foreground">Absent Deduction ({slip.absentDays || 0} days)</span>
+          <span className="font-medium text-rose-600">-₹{safeFmt(slip.deductions)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">PF Contribution (12%)</span>
-          <span className="font-medium text-amber-600">-₹{slip.pfContribution.toFixed(2)}</span>
+          <span className="font-medium text-amber-600">-₹{safeFmt(slip.pfContribution)}</span>
         </div>
-        {slip.overtime > 0 && (
+        {(slip.bonus || 0) > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Overtime Pay</span>
-            <span className="font-medium text-emerald-600">+₹{slip.overtime.toFixed(2)}</span>
+            <span className="text-muted-foreground">Bonus</span>
+            <span className="font-medium text-emerald-600">+₹{safeFmt(slip.bonus)}</span>
           </div>
         )}
-        {slip.incentive > 0 && (
+        {(slip.overtime || 0) > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Overtime Pay</span>
+            <span className="font-medium text-emerald-600">+₹{safeFmt(slip.overtime)}</span>
+          </div>
+        )}
+        {(slip.incentive || 0) > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Incentive</span>
-            <span className="font-medium text-emerald-600">+₹{slip.incentive.toFixed(2)}</span>
+            <span className="font-medium text-emerald-600">+₹{safeFmt(slip.incentive)}</span>
+          </div>
+        )}
+        {(slip.allowances || 0) > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Allowances</span>
+            <span className="font-medium text-emerald-600">+₹{safeFmt(slip.allowances)}</span>
+          </div>
+        )}
+        {(slip.tds || 0) > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">TDS</span>
+            <span className="font-medium text-rose-600">-₹{safeFmt(slip.tds)}</span>
           </div>
         )}
         <div className="flex justify-between text-sm font-bold border-t border-border pt-2.5 mt-2.5">
           <span className="text-foreground">Net Pay</span>
-          <span className="text-emerald-600 text-lg">₹{slip.netPay.toFixed(2)}</span>
+          <span className="text-emerald-600 text-lg">₹{safeFmt(slip.netPay)}</span>
         </div>
       </div>
 
       {isPaid && slip.paidAt && (
         <p className="text-xs text-muted-foreground mt-3">
           Paid on {new Date(slip.paidAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-          {slip.paymentMethod && <span className="ml-2 font-semibold">via {slip.paymentMethod.replace('_', ' ')}</span>}
+          {slip.paymentMethod && <span className="ml-2 font-semibold">via {slip.paymentMethod.replace(/_/g, ' ')}</span>}
         </p>
       )}
 
@@ -111,26 +133,37 @@ export default function MyPayroll() {
   const [data, setData] = useState({ salaries: [], pfBalance: 0, lastUpdatedMonth: null });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchPayroll = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/my`, {
-          headers: { Authorization: `Bearer ${token}` }
+  // fetchPayroll defined in component scope (not inside useEffect)
+  // so it can be passed as a prop and called from child components
+  const fetchPayroll = useCallback(async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        // Defensive: ensure salaries is always an array
+        setData({
+          salaries: Array.isArray(json.data?.salaries) ? json.data.salaries : [],
+          pfBalance: json.data?.pfBalance || 0,
+          lastUpdatedMonth: json.data?.lastUpdatedMonth || null,
         });
-        const json = await res.json();
-        if (json.success) setData(json.data);
-        else toast.error('Failed to load payroll data');
-      } catch {
-        toast.error('Network error');
-      } finally {
-        setLoading(false);
+      } else {
+        toast.error('Failed to load payroll data');
       }
-    };
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
     fetchPayroll();
-  }, []);
+  }, [fetchPayroll]);
 
-  const totalEarned = data.salaries.filter(s => s.status === 'PAID').reduce((a, s) => a + s.netPay, 0);
-
+  const salaries = data.salaries || [];
+  const totalEarned = salaries.filter(s => s.status === 'PAID').reduce((a, s) => a + (s.netPay || 0), 0);
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
 
   return (
@@ -141,7 +174,7 @@ export default function MyPayroll() {
           <FileText size={22} />
         </div>
         <div>
-          <h1 className="page-title">My Payslips & PF</h1>
+          <h1 className="page-title">My Payslips &amp; PF</h1>
           <p className="page-subtitle">Your salary history, deductions, and provident fund balance.</p>
         </div>
       </div>
@@ -154,7 +187,7 @@ export default function MyPayroll() {
             : ((user?.firstName?.[0] || '') + (user?.lastName?.[0] || ''))}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-xl">{displayName}</p>
+          <p className="font-bold text-xl">{displayName || 'Employee'}</p>
           <p className="text-white/60 text-sm capitalize">{user?.role?.replace(/_/g, ' ').toLowerCase()}</p>
         </div>
         <div className="text-right hidden sm:block">
@@ -166,38 +199,56 @@ export default function MyPayroll() {
         </div>
       </div>
 
-      {/* Summary */}
+      {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="kpi-card">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Net Earned</p>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-              <DollarSign size={16} />
+        {loading ? (
+          [1,2,3].map(i => (
+            <div key={i} className="kpi-card animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="h-3 bg-muted rounded w-28" />
+                <div className="w-9 h-9 rounded-xl bg-muted" />
+              </div>
+              <div className="h-7 bg-muted rounded w-36 mt-3" />
+              <div className="h-3 bg-muted rounded w-24 mt-2" />
             </div>
-          </div>
-          <p className="text-2xl font-bold text-foreground mt-2">₹{totalEarned.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-muted-foreground mt-1">Across all paid months</p>
-        </div>
-        <div className="kpi-card">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">PF Accumulated</p>
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
-              <Shield size={16} />
+          ))
+        ) : (
+          <>
+            <div className="kpi-card">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Net Earned</p>
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                  <DollarSign size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-2">₹{totalEarned.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground mt-1">Across all paid months</p>
             </div>
-          </div>
-          <p className="text-2xl font-bold text-foreground mt-2">₹{(data.pfBalance || 0).toLocaleString('en-IN')}</p>
-          <p className="text-xs text-muted-foreground mt-1">Redeemable on exit</p>
-        </div>
-        <div className="kpi-card">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Slips</p>
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <FileText size={16} />
+            <div className="kpi-card">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">PF Accumulated</p>
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                  <Shield size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-2">₹{(data.pfBalance || 0).toLocaleString('en-IN')}</p>
+              <p className="text-xs text-muted-foreground mt-1">Redeemable on exit</p>
             </div>
-          </div>
-          <p className="text-2xl font-bold text-foreground mt-2">{data.salaries.length}</p>
-          <p className="text-xs text-muted-foreground mt-1">{data.salaries.filter(s => s.status === 'PAID').length} paid, {data.salaries.filter(s => s.status === 'PENDING').length} pending</p>
-        </div>
+            <div className="kpi-card">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Slips</p>
+                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <FileText size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-2">{salaries.length}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {salaries.filter(s => s.status === 'PAID').length} paid,&nbsp;
+                {salaries.filter(s => s.status === 'PENDING').length} pending
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Salary Slips Grid */}
@@ -207,7 +258,7 @@ export default function MyPayroll() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {[...Array(3)].map((_, i) => <div key={i} className="h-52 bg-muted rounded-2xl animate-pulse" />)}
           </div>
-        ) : data.salaries.length === 0 ? (
+        ) : salaries.length === 0 ? (
           <div className="form-card text-center py-16">
             <FileText size={40} className="mx-auto mb-3 text-muted-foreground/40" />
             <p className="font-semibold text-foreground">No payslips yet</p>
@@ -215,7 +266,14 @@ export default function MyPayroll() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {data.salaries.map(slip => <SalarySlipCard key={slip.id} slip={slip} token={token} onConfirmed={fetchPayroll} />)}
+            {salaries.map(slip => (
+              <SalarySlipCard
+                key={slip.id}
+                slip={slip}
+                token={token}
+                onConfirmed={fetchPayroll}  // ✅ now in scope
+              />
+            ))}
           </div>
         )}
       </div>

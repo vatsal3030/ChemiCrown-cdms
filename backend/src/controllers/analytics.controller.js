@@ -8,23 +8,15 @@ exports.getDashboardStats = async (req, res, next) => {
     startOfWeek.setDate(now.getDate() - 7);
 
     // ── 1. Total Revenue ────────────────────────────────────────────────────
-    // Online payments that succeeded (Razorpay, UPI)
-    const onlineRevenue = await prisma.payment.aggregate({
-      where: { status: 'SUCCESS' },
-      _sum: { amount: true }
-    }).catch(() => ({ _sum: { amount: 0 } }));
+    // Sum order.total for all DELIVERED, non-deleted orders.
+    // This is the canonical revenue: every delivered order = payment received.
+    // Covers both COD (no payment record) and online (Razorpay/UPI) orders.
+    const deliveredRevenue = await prisma.order.aggregate({
+      where: { status: 'DELIVERED', deletedAt: null },
+      _sum: { total: true }
+    }).catch(() => ({ _sum: { total: 0 } }));
 
-    // COD revenue: PAY_ON_DELIVERY payments that have succeeded
-    // (Only created when admin confirms COD payment on delivery)
-    const codPayments = await prisma.payment.aggregate({
-      where: {
-        paymentMethod: 'PAY_ON_DELIVERY',
-        status: 'SUCCESS'
-      },
-      _sum: { amount: true }
-    }).catch(() => ({ _sum: { amount: 0 } }));
-
-    const totalRevenue = (onlineRevenue._sum.amount || 0) + (codPayments._sum.amount || 0);
+    const totalRevenue = deliveredRevenue._sum.total || 0;
 
     // ── 2. Active & Pending Orders ──────────────────────────────────────────
     const [activeOrdersCount, pendingOrdersCount] = await Promise.all([
@@ -50,7 +42,9 @@ exports.getDashboardStats = async (req, res, next) => {
     ]);
 
     // ── 4. Low Inventory Alerts ─────────────────────────────────────────────
+    // IMPORTANT: filter out soft-deleted products (deletedAt != null)
     const lowInventoryItems = await prisma.inventory.findMany({
+      where: { product: { deletedAt: null } },
       include: { product: { select: { id: true, name: true, sku: true } } }
     }).catch(() => []);
 

@@ -25,14 +25,14 @@ router.get('/:id/salary',         hc.getSalaries);
 router.post('/:id/salary',        hc.updateSalary);
 router.put('/:id/salary-config',  hc.updateSalaryConfig);   // ← NEW: set base salary / PF rate
 
-// Attendance
-router.post('/:id/attendance', hc.markAttendance);
+// Attendance — READ: all HR roles, WRITE: SUPER_ADMIN only (Bug 5 fix)
+router.post('/:id/attendance', requireRole(['SUPER_ADMIN']), hc.markAttendance);
 router.get('/:id/attendance',  hc.getAttendance);
 
-// ── Disciplinary Actions ──────────────────────────────────────────────────────
-router.post('/:id/warnings',               hc.issueWarning);    // ← NEW: formal warning
-router.get('/:id/warnings',                hc.getWarnings);     // ← NEW: list warnings
-router.delete('/:id/warnings/:warnId',     hc.deleteWarning);   // ← NEW: delete warning
+// ── Disciplinary Actions — SUPER_ADMIN only for write operations ──────────────
+router.post('/:id/warnings',               requireRole(['SUPER_ADMIN']), hc.issueWarning);
+router.get('/:id/warnings',                hc.getWarnings);               // readable by all HR roles
+router.delete('/:id/warnings/:warnId',     requireRole(['SUPER_ADMIN']), hc.deleteWarning);
 
 router.post('/:id/terminate',  hc.terminateEmployee);   // ← NEW
 router.post('/:id/suspend',    hc.suspendEmployee);     // ← NEW
