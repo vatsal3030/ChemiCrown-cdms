@@ -518,6 +518,57 @@ exports.bulkPay = async (req, res, next) => {
       }).catch(() => {});
     }
 
+
     res.json({ success: true, message: `Processed ${slips.length} payments for ${month}` });
   } catch (error) { next(error); }
+};
+
+/**
+ * POST|PUT /api/payroll/:id/confirm
+ * Employee confirms they have received their salary.
+ * Sets confirmedByEmployee = true on the salary slip.
+ */
+exports.confirmReceipt = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const slip = await prisma.salary.findUnique({
+      where: { id },
+      include: {
+        employee: {
+          include: { user: { select: { id: true } } }
+        }
+      }
+    });
+
+    if (!slip) {
+      return res.status(404).json({ success: false, message: 'Salary slip not found' });
+    }
+
+    // Only the owner employee OR a super admin can confirm
+    const isOwner = slip.employee?.user?.id === req.user.id;
+    const isAdmin = ['SUPER_ADMIN', 'OWNER'].includes(req.user.role);
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'You can only confirm your own salary receipts' });
+    }
+
+    if (slip.status !== 'PAID') {
+      return res.status(400).json({ success: false, message: 'Only PAID salary slips can be confirmed' });
+    }
+
+    // Idempotent — already confirmed is fine
+    if (slip.confirmedByEmployee) {
+      return res.json({ success: true, message: 'Already confirmed', data: slip });
+    }
+
+    const updated = await prisma.salary.update({
+      where: { id },
+      data: { confirmedByEmployee: true }
+    });
+
+    res.json({ success: true, message: 'Salary receipt confirmed successfully', data: updated });
+  } catch (error) {
+    next(error);
+  }
 };

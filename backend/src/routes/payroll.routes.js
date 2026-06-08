@@ -11,7 +11,9 @@ const allStaff  = requireRole(['MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETI
 
 // ── Employee self-service ─────────────────────────────────────────────────────
 router.get('/my',          allStaff,  pc.getMyPayroll);
-router.post('/:id/confirm', pc.confirmReceipt);
+router.post('/:id/confirm', pc.confirmReceipt);  // legacy / MyAttendance
+router.put('/:id/confirm',  pc.confirmReceipt);  // MyPayroll page
+
 
 // ── Admin / HR ────────────────────────────────────────────────────────────────
 router.get('/',                        adminOnly, pc.getAllSalaries);
