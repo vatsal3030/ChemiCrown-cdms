@@ -222,7 +222,7 @@ export default function NotificationDropdown() {
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-[420px] bg-card border border-border rounded-2xl shadow-2xl shadow-black/15 dark:shadow-black/40 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-200">
+        <div className="absolute -right-2 sm:right-0 mt-3 w-[340px] sm:w-[420px] bg-card border border-border rounded-2xl shadow-2xl shadow-black/15 dark:shadow-black/40 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-200">
 
           {/* Header */}
           <div className="px-5 pt-4 pb-3 border-b border-border bg-linear-to-br from-primary/5 to-transparent">
