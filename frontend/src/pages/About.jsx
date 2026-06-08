@@ -52,7 +52,7 @@ export default function About() {
                   <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">1995</div>
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-foreground">Foundation</h3>
-                <p className="text-muted-foreground">Geeta Chemicals was established in a small manufacturing unit, focusing on high-grade GP Thinner for local automotive industries.</p>
+                <p className="text-muted-foreground">ChemiCrown was established in a small manufacturing unit, focusing on high-grade GP Thinner for local automotive industries.</p>
               </div>
             </div>
 

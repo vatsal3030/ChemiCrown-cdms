@@ -32,7 +32,7 @@ export default function Home() {
           </h1>
           
           <p className="mx-auto max-w-2xl text-lg sm:text-xl text-slate-300 mb-12 leading-relaxed font-light">
-            Geeta Chemicals delivers premium thinners, solvents, and specialized industrial chemicals with uncompromising quality and reliable distribution networks across India.
+            ChemiCrown delivers premium thinners, solvents, and specialized industrial chemicals with uncompromising quality and reliable distribution networks across India.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
