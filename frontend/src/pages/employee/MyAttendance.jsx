@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ClipboardCheck, Calendar, DollarSign, PiggyBank, ShieldCheck, Send, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import useSWR from 'swr';
 import { useAuth } from '../../context/AuthContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 

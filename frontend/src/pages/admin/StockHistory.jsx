@@ -2,7 +2,7 @@ import useSWR from 'swr';
 import { History, ArrowUpRight, ArrowDownRight, User, Search, Filter, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'react-router-dom';
 import useDebounce from '@/hooks/useDebounce';
