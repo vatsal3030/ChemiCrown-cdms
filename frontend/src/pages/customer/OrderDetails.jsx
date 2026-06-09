@@ -461,7 +461,7 @@ export default function OrderDetails() {
       {/* ── Refund Request Modal ── */}
       {refundModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
             <div className="p-5 border-b border-border flex items-center justify-between">
               <h2 className="font-bold text-foreground flex items-center gap-2">
                 <RotateCcw size={16} className="text-amber-600" /> Refund Request

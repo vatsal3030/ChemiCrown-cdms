@@ -180,7 +180,7 @@ export default function Notifications() {
   }, {});
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500 max-w-3xl mx-auto">
+    <div className="space-y-5 animate-in fade-in duration-500 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">

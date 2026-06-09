@@ -80,7 +80,7 @@ export default function Wishlist() {
           <div className="p-16 text-center flex flex-col items-center">
             <Heart className="w-16 h-16 text-slate-200 dark:text-slate-800 mb-4" />
             <h3 className="text-xl font-bold text-foreground mb-2">Your wishlist is empty</h3>
-            <p className="text-muted-foreground mb-6 max-w-md">Browse our catalog and tap the heart icon to save items you're interested in for later.</p>
+            <p className="text-muted-foreground mb-6 max-w-5xl">Browse our catalog and tap the heart icon to save items you're interested in for later.</p>
             <Button onClick={() => navigate('/dashboard/catalog')}>Explore Catalog</Button>
           </div>
         ) : (

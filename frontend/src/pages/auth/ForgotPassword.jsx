@@ -111,7 +111,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-      <div className="max-w-md w-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
+      <div className="max-w-5xl w-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
         <div className="p-8">
           <div className="flex flex-col items-center">
             <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-16 w-16 mb-6 object-contain" />

@@ -26,7 +26,7 @@ export default function Cart() {
             <ShoppingCart className="h-8 w-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-bold text-foreground mb-2">Your cart is empty</h3>
-          <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto px-4">
+          <p className="text-muted-foreground text-sm mb-6 max-w-4xl mx-auto px-4">
             Browse our catalog to find chemicals you need.
           </p>
           <Button onClick={() => navigate('/dashboard/catalog')} className="rounded-xl">

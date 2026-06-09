@@ -52,7 +52,7 @@ export default function ReportIssue() {
 
   if (submitted) {
     return (
-      <div className="max-w-md mx-auto mt-12 text-center space-y-4 animate-in zoom-in-95 duration-500">
+      <div className="max-w-5xl mx-auto mt-12 text-center space-y-4 animate-in zoom-in-95 duration-500">
         <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
           <CheckCircle2 size={32} className="text-emerald-600 dark:text-emerald-400" />
         </div>
@@ -71,7 +71,7 @@ export default function ReportIssue() {
   }
 
   return (
-    <div className="animate-in fade-in duration-500 max-w-5xl mx-auto">
+    <div className="animate-in fade-in duration-500 w-full max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-5">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Report an Issue</h1>
@@ -175,7 +175,7 @@ export default function ReportIssue() {
                 required
                 rows={8}
                 maxLength={2000}
-                className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary resize-y"
+                className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary resize-y min-h-[200px]"
               />
               <p className="text-[10px] text-muted-foreground mt-1 text-right">{form.description.length}/2000</p>
             </div>

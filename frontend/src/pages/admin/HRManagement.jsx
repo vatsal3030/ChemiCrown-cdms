@@ -68,7 +68,7 @@ function IssueWarningModal({ employee, token, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-bold flex items-center gap-2 text-amber-600">
             <ShieldAlert size={20} /> Issue Warning
@@ -109,8 +109,8 @@ function IssueWarningModal({ employee, token, onClose, onSuccess }) {
             <textarea
               value={reason}
               onChange={e => setReason(e.target.value)}
-              rows={3}
-              className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              rows={5}
+              className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary resize-y min-h-[120px]"
               placeholder="Describe the reason for this warning..."
             />
           </div>
@@ -153,7 +153,7 @@ function TerminateModal({ employee, token, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-destructive/30 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+      <div className="bg-card border border-destructive/30 rounded-2xl shadow-2xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-bold flex items-center gap-2 text-destructive">
             <UserX size={20} /> Terminate Employee
@@ -178,8 +178,8 @@ function TerminateModal({ employee, token, onClose, onSuccess }) {
             <textarea
               value={reason}
               onChange={e => setReason(e.target.value)}
-              rows={3}
-              className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-destructive resize-none"
+              rows={5}
+              className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-destructive resize-y min-h-[120px]"
               placeholder="Enter detailed reason..."
             />
           </div>
@@ -228,7 +228,7 @@ function SuspendModal({ employee, token, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-bold flex items-center gap-2 text-amber-600">
             <Clock size={20} /> Suspend Employee
@@ -251,8 +251,8 @@ function SuspendModal({ employee, token, onClose, onSuccess }) {
             <textarea
               value={reason}
               onChange={e => setReason(e.target.value)}
-              rows={3}
-              className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              rows={5}
+              className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary resize-y min-h-[120px]"
               placeholder="Reason for suspension..."
             />
           </div>
@@ -331,7 +331,7 @@ function ConfigureModal({ employee, token, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md my-4 animate-in zoom-in-95 duration-200">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-5xl my-4 animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
             <h2 className="text-lg font-bold flex items-center gap-2 text-foreground">
@@ -771,7 +771,7 @@ export default function HRManagement() {
           <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center">
             <Users size={40} className="mx-auto mb-3 text-primary/40" />
             <h3 className="text-lg font-semibold mb-2">Employee Analytics</h3>
-            <p className="text-slate-500 text-sm mb-4 max-w-md mx-auto">View individual employee pages for attendance calendars, payroll history, leave balances and performance.</p>
+            <p className="text-slate-500 text-sm mb-4 max-w-5xl mx-auto">View individual employee pages for attendance calendars, payroll history, leave balances and performance.</p>
             <Button onClick={() => setActiveTab('directory')}>Open Directory</Button>
           </div>
         </div>
@@ -783,7 +783,7 @@ export default function HRManagement() {
 
           {/* Toolbar */}
           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
-            <div className="relative w-full sm:max-w-sm">
+            <div className="relative w-full sm:max-w-4xl">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input placeholder="Search by name or email..." value={searchTerm}
                 onChange={e => setParam('q', e.target.value)} className="pl-9" />

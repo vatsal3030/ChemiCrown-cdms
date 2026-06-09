@@ -118,7 +118,7 @@ export default function Contact() {
       <div className="bg-muted py-12 md:py-20 border-b border-border">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">Contact Support</h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
+          <p className="text-base md:text-lg text-muted-foreground max-w-4xl mx-auto">
             Have a question about our chemicals, bulk pricing, or your recent order? Our team is here to help.
           </p>
         </div>
@@ -291,8 +291,8 @@ export default function Contact() {
                         value={form.message}
                         onChange={e => set('message', e.target.value)}
                         maxLength={1000}
-                        rows={5}
-                        className={`w-full p-3 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow resize-y min-h-[120px] ${errors.message ? 'border-destructive' : 'border-input'}`}
+                        rows={8}
+                        className={`w-full p-3 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow resize-y min-h-[200px] ${errors.message ? 'border-destructive' : 'border-input'}`}
                         placeholder="How can we help you today? Please include product names, quantities, or order IDs if relevant."
                       />
                       {errors.message && <p className="text-xs text-destructive mt-1">{errors.message}</p>}

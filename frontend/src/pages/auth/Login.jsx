@@ -93,7 +93,7 @@ export default function Login() {
 
       {/* ── Right Form Panel ── */}
       <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-5xl">
           {/* Logo (mobile only) */}
           <div className="flex justify-center mb-6 lg:hidden">
             <img src="/chemicrown.png" alt="ChemiCrown" className="h-12 w-12 object-contain rounded-lg" />

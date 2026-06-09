@@ -116,7 +116,7 @@ export default function Register() {
   if (registered) {
     return (
       <div className="flex-1 flex items-center justify-center bg-muted/30 px-4 py-12">
-        <div className="max-w-sm w-full bg-card rounded-2xl shadow-xl border border-border p-10 text-center">
+        <div className="max-w-4xl w-full bg-card rounded-2xl shadow-xl border border-border p-10 text-center">
           <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m4-2a10 10 0 11-20 0 10 10 0 0120 0z" />
@@ -175,7 +175,7 @@ export default function Register() {
 
       {/* ── Right Form Panel ── */}
       <div className="flex-1 flex items-center justify-center px-4 py-6 overflow-y-auto">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-5xl">
           {/* Mobile logo */}
           <div className="flex justify-center mb-5 lg:hidden">
             <img src="/chemicrown.png" alt="ChemiCrown" className="h-10 w-10 object-contain rounded-lg" />

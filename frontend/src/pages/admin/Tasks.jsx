@@ -69,7 +69,7 @@ function TaskDetailModal({ task, onClose, onStatusChange }) {
   if (!task) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card w-full max-w-lg rounded-2xl shadow-2xl border border-border p-6 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+      <div className="bg-card w-full max-w-4xl rounded-2xl shadow-2xl border border-border p-6 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-w-0 pr-4">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Task Details</p>
@@ -399,7 +399,7 @@ export default function Tasks() {
       {/* Assign Task Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-md rounded-2xl shadow-2xl border border-border p-6 animate-in zoom-in-95 duration-200">
+          <div className="bg-card w-full max-w-5xl rounded-2xl shadow-2xl border border-border p-6 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-foreground">Assign New Task</h2>
               <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-xl hover:bg-muted transition-colors">

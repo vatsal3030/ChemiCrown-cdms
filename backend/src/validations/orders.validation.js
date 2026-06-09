@@ -7,7 +7,7 @@ const createOrderSchema = z.object({
       quantity: z.number().int().positive(),
     })).min(1, "Cart cannot be empty"),
     companyName: z.string().min(2, "Company name is required"),
-    gstNumber: z.string().min(5, "Valid GST/Tax ID is required"),
+    gstNumber: z.string().optional().or(z.literal('')),
     phone: z.string().min(10, "Valid phone number is required"),
     email: z.string().email("Valid email is required"),
     shippingAddress: z.string().min(10, "Complete shipping address is required"),

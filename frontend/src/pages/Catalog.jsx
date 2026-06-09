@@ -194,10 +194,10 @@ export default function Catalog() {
           <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
             Premium Chemical Catalog
           </h1>
-          <p className="mt-2 sm:mt-4 text-base sm:text-xl text-muted-foreground mx-auto max-w-2xl">
+          <p className="mt-2 sm:mt-4 text-base sm:text-xl text-muted-foreground mx-auto max-w-5xl">
             Industrial &amp; laboratory chemicals — direct from manufacturer.
           </p>
-          <div className="mt-5 sm:mt-8 max-w-2xl mx-auto flex gap-2">
+          <div className="mt-5 sm:mt-8 max-w-5xl mx-auto flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               <input

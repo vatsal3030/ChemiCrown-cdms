@@ -7,7 +7,7 @@ export default function About() {
       <div className="bg-muted py-16 md:py-24 border-b border-border">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">About ChemiCrown</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-5xl mx-auto">
             Building the foundation of modern manufacturing through reliable, pure, and high-performance chemical solutions since 1995.
           </p>
         </div>

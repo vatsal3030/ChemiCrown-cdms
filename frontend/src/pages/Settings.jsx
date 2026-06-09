@@ -113,6 +113,10 @@ export default function Settings() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (!formData.firstName.trim()) { toast.error('First name is required'); return; }
+    if (formData.phone && !/^\+?[0-9\s\-]{10,15}$/.test(formData.phone)) {
+      toast.error('Invalid phone number format (10-15 digits expected)'); 
+      return; 
+    }
     setIsSaving(true);
     try {
       const data = new FormData();
@@ -168,7 +172,7 @@ export default function Settings() {
   const roleLabel = user?.role?.replace(/_/g, ' ') || '';
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl">
+    <div className="w-full space-y-6 animate-in fade-in duration-500">
       {/* Page Header */}
       <div className="page-header">
         <div className="page-header-icon bg-primary/10 text-primary">
@@ -242,32 +246,32 @@ export default function Settings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="form-label">First Name</label>
-                  <Input value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} placeholder="John" required />
+                  <Input className="w-full" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} placeholder="John" required />
                 </div>
                 <div>
                   <label className="form-label">Last Name</label>
-                  <Input value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} placeholder="Doe" />
+                  <Input className="w-full" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} placeholder="Doe" />
                 </div>
                 <div>
                   <label className="form-label">Email Address</label>
-                  <div className="relative">
+                  <div className="relative w-full">
                     <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={user?.email || ''} readOnly className="pl-9 bg-muted/60 text-muted-foreground cursor-not-allowed" />
+                    <Input value={user?.email || ''} readOnly className="pl-9 w-full bg-muted/60 text-muted-foreground cursor-not-allowed" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Email cannot be changed.</p>
                 </div>
                 <div>
                   <label className="form-label">Phone Number</label>
-                  <div className="relative">
+                  <div className="relative w-full">
                     <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+91 98765 43210" className="pl-9" />
+                    <Input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+91 98765 43210" className="pl-9 w-full" />
                   </div>
                 </div>
                 <div>
                   <label className="form-label">Role</label>
-                  <div className="relative">
+                  <div className="relative w-full">
                     <Shield size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={roleLabel} readOnly className="pl-9 bg-muted/60 text-muted-foreground cursor-not-allowed capitalize" />
+                    <Input value={roleLabel} readOnly className="pl-9 w-full bg-muted/60 text-muted-foreground cursor-not-allowed capitalize" />
                   </div>
                 </div>
               </div>

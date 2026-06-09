@@ -100,7 +100,7 @@ export default function ProductDetails() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 pb-20 animate-pulse">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-12 py-8 space-y-12 pb-20 animate-pulse">
         {/* Back Button Skeleton */}
         <div className="h-9 w-36 bg-slate-200 dark:bg-slate-800 rounded mb-[-20px]"></div>
         
@@ -146,30 +146,7 @@ export default function ProductDetails() {
             </div>
           </div>
 
-          {/* Right Column (Buy Box) Skeleton */}
-          <div className="md:col-span-12 lg:col-span-3">
-            <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-card space-y-5 shadow-sm">
-              <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
-              <div className="space-y-1">
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full max-w-[200px]"></div>
-              </div>
-              <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
-              
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3">
-                  <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
-                  <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded flex-1"></div>
-                </div>
-                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-full mt-2"></div>
-                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-full"></div>
-                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-full w-full mt-3"></div>
-              </div>
-              
-              <div className="flex justify-center pt-2">
-                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
-              </div>
-            </div>
-          </div>
+          {/* Right Column (Buy Box) Skeleton Removed for horizontal layout */}
         </div>
       </div>
     );
@@ -190,7 +167,7 @@ export default function ProductDetails() {
   const images = product.imageUrls?.length > 0 ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-10 pb-16 sm:pb-20 animate-in fade-in duration-500 overflow-x-hidden">
+    <div className="w-full px-4 sm:px-6 lg:px-12 py-4 sm:py-8 space-y-6 sm:space-y-10 pb-16 sm:pb-20 animate-in fade-in duration-500 overflow-x-hidden">
       <Button variant="ghost" onClick={() => {
         const isDashboard = location.pathname.startsWith('/dashboard');
         navigate(isDashboard ? '/dashboard/catalog' : '/catalog');
@@ -198,13 +175,12 @@ export default function ProductDetails() {
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Catalog
       </Button>
 
-      {/* Main Product Section - Responsive Grid Layout */}
-      {/* Mobile: image → buy-box → info (stacked). Desktop: image | info | buy-box (3 col) */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-start">
+      {/* Main Product Section - Landscape Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         
-        {/* Left Column: Image Gallery */}
-        <div className="md:col-span-5 lg:col-span-4 space-y-3">
-          <div className="relative group glass rounded-2xl border border-border flex items-center justify-center aspect-square shadow-sm overflow-hidden bg-white">
+        {/* Left Column: Image Gallery (Expanded) */}
+        <div className="lg:col-span-6 space-y-4">
+          <div className="relative group glass rounded-3xl border border-border flex items-center justify-center aspect-auto min-h-[500px] lg:min-h-[600px] shadow-sm overflow-hidden bg-white">
             {images.length > 0 ? (
               <>
                 <img 
@@ -241,8 +217,9 @@ export default function ProductDetails() {
           )}
         </div>
 
-        {/* Middle Column: Product Info — order 3 on mobile (below buy box) */}
-        <div className="md:col-span-7 lg:col-span-5 space-y-5 order-3 md:order-none">
+        {/* Middle Column: Product Info & Buy Box combo to use more space */}
+        <div className="lg:col-span-6 space-y-6 flex flex-col h-full">
+          {/* Header section */}
           <div className="border-b border-border pb-6">
             <div className="text-primary font-semibold hover:underline cursor-pointer inline-flex items-center text-sm mb-2">
               {product.category?.name || 'General'}
@@ -292,12 +269,14 @@ export default function ProductDetails() {
               </ul>
             </div>
           </div>
+        {/* We moved Buy Box logic into a horizontal layout beneath the product details instead of a separate small column */}
         </div>
+      </div>
 
-        {/* Right Column: Buy Box — on mobile appears below image via order, desktop is 3rd column */}
-        <div className="md:col-span-12 lg:col-span-3 order-2 md:order-none">
-          <div className="border border-border rounded-2xl p-5 bg-card shadow-sm flex flex-col space-y-4">
-            <div className="text-2xl font-bold">₹{product.price}</div>
+      {/* Buy Box & Actions Section - Horizontal layout to utilize width */}
+      <div className="mt-8 border border-border rounded-2xl p-6 lg:p-8 bg-card shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 w-full">
+        <div className="flex-1 space-y-2">
+            <div className="text-3xl lg:text-4xl font-bold">₹{product.price}</div>
             
             {inStock && (
               <div className="space-y-1">
@@ -310,13 +289,18 @@ export default function ProductDetails() {
 
             <div className="text-xl">
               {inStock ? (
-                <span className="text-green-600 dark:text-green-400 font-bold">In Stock.</span>
+                <span className="text-green-600 dark:text-green-400 font-bold">In Stock. Ready to Dispatch.</span>
               ) : (
-                <span className="text-red-600 dark:text-red-400 font-bold">Out of Stock.</span>
+                <span className="text-red-600 dark:text-red-400 font-bold">Currently Out of Stock.</span>
               )}
             </div>
+            
+            <div className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
+              <Shield size={14} className="text-green-600" /> Secure transaction & Verified Quality
+            </div>
+        </div>
 
-            <div className="space-y-3">
+        <div className="flex-1 w-full space-y-4 bg-slate-50 dark:bg-slate-900/40 p-6 rounded-2xl border border-border">
               <div className="flex items-center gap-3">
                 <label className="text-sm font-medium">Quantity:</label>
                 <div className="flex items-center border border-input rounded-md bg-background overflow-hidden h-9">
@@ -391,25 +375,21 @@ export default function ProductDetails() {
                 </>
               )}
               
-              <Button 
-                variant="outline" 
-                className={`w-full rounded-full shadow-sm font-bold mt-3 ${isFavorited ? 'border-red-200 text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600' : 'text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50'}`}
-                onClick={handleToggleFavorite}
-              >
-                <Heart className={`w-4 h-4 mr-2 ${isFavorited ? 'fill-red-500' : ''}`} /> 
-                {isFavorited ? 'Remove from Wishlist' : 'Add to Wishlist'}
-              </Button>
+              <div className="flex gap-4 pt-2">
+                <Button 
+                  variant="outline" 
+                  className={`flex-1 rounded-full shadow-sm font-bold h-12 ${isFavorited ? 'border-red-200 text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600' : 'text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50'}`}
+                  onClick={handleToggleFavorite}
+                >
+                  <Heart className={`w-5 h-5 mr-2 ${isFavorited ? 'fill-red-500' : ''}`} /> 
+                  {isFavorited ? 'Saved to Wishlist' : 'Add to Wishlist'}
+                </Button>
+              </div>
             </div>
-
-            <div className="text-xs text-muted-foreground flex items-center justify-center gap-1 pt-2">
-              <Shield size={12} /> Secure transaction
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Tabs Section */}
-      <div className="mt-12">
+      {/* Tabs Section - Full Width */}
+      <div className="mt-16 w-full">
         <div className="flex border-b border-border">
           <button 
             className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'description' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}

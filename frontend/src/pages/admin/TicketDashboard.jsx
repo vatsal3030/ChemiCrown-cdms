@@ -78,7 +78,7 @@ export default function TicketDashboard() {
       {/* Resolve Modal */}
       {selected && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <h2 className="font-bold text-foreground">Update Ticket</h2>
               <button onClick={() => setSelected(null)} className="p-1.5 hover:bg-muted rounded-lg"><X size={16} /></button>

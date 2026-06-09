@@ -155,7 +155,7 @@ export default function Inventory() {
 
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
-          <div className="relative flex-1 sm:max-w-md">
+          <div className="relative flex-1 sm:max-w-5xl">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search by name, CAS number..."

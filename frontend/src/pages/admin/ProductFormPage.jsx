@@ -233,7 +233,7 @@ export default function ProductFormPage() {
   if (fetching) return <div className="p-8 text-center text-slate-500">Loading product details...</div>;
 
   return (
-    <div className="max-w-[1600px] w-full px-4 mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="w-full px-4 sm:px-6 lg:px-12 space-y-6 animate-in fade-in duration-500 pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/dashboard/inventory" className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500">
