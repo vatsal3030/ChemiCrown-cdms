@@ -142,7 +142,7 @@ export default function RecycleBin() {
                       {item.name} {item.sku && <span className="text-slate-400 text-xs ml-2">({item.sku})</span>}
                     </td>
                     <td className="px-6 py-4 text-slate-500">
-                      {new Date(item.deletedAt).toLocaleDateString()}
+                      {new Date(item.deletedAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

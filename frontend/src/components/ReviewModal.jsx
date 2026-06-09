@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
@@ -7,7 +7,25 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
   const [rating, setRating] = useState(existingReview?.rating || 5);
   const [comment, setComment] = useState(existingReview?.comment || '');
   const [loading, setLoading] = useState(false);
-  const isEdit = !!existingReview;
+  const [fetchedReview, setFetchedReview] = useState(existingReview || null);
+  const isEdit = !!fetchedReview;
+
+  useEffect(() => {
+    if (isOpen && orderItem && !existingReview) {
+      fetch(`${import.meta.env.VITE_API_URL}/api/reviews/my/${orderItem.product.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.review) {
+          setFetchedReview(data.review);
+          setRating(data.review.rating);
+          setComment(data.review.comment || '');
+        }
+      })
+      .catch(() => {});
+    }
+  }, [isOpen, orderItem, existingReview, token]);
 
   if (!isOpen || !orderItem) return null;
 

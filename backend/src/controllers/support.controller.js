@@ -136,7 +136,7 @@ exports.deleteTicket = async (req, res, next) => {
  */
 exports.getAuditLogs = async (req, res, next) => {
   try {
-    const { userId, entity, action, from, to, page = 1, limit = 50 } = req.query;
+    const { userId, entity, action, from, to, page = 1, limit = 50, sortField = 'createdAt', sortOrder = 'desc' } = req.query;
     const where = {};
     if (userId) where.userId = userId;
     if (entity) where.entity = { contains: entity, mode: 'insensitive' };
@@ -157,7 +157,7 @@ exports.getAuditLogs = async (req, res, next) => {
         include: {
           user: { select: { firstName: true, lastName: true, email: true, role: true } }
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [sortField]: sortOrder },
         skip: (parseInt(page) - 1) * parseInt(limit),
         take: parseInt(limit)
       }),

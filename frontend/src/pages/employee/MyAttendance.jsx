@@ -114,6 +114,15 @@ export default function MyAttendance() {
     return 'badge badge-warning';
   };
 
+  // Generate calendar grid (simple 30 days visualization)
+  const today = new Date();
+  const past30Days = Array.from({length: 30}, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (29 - i));
+    d.setHours(0,0,0,0);
+    return d;
+  });
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
@@ -244,11 +253,40 @@ export default function MyAttendance() {
           <div className="data-table-header bg-muted/30">
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-muted-foreground" />
-              <h3 className="font-semibold text-foreground text-sm">Attendance Records</h3>
+              <h3 className="font-semibold text-foreground text-sm">30-Day Attendance Calendar</h3>
             </div>
             <span className="text-xs text-muted-foreground italic">View only — managed by HR</span>
           </div>
-          <div className="overflow-y-auto max-h-80">
+          
+          <div className="p-4 border-b border-border">
+            <div className="grid grid-cols-7 sm:grid-cols-10 gap-2 mb-4">
+              {past30Days.map((date, i) => {
+                const record = attendance.find(a => new Date(a.date).toDateString() === date.toDateString());
+                let colorClass = "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500";
+                if (record) {
+                  if (record.status === 'PRESENT') colorClass = "bg-emerald-100 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/40 dark:border-emerald-800 dark:text-emerald-400";
+                  else if (record.status === 'ABSENT') colorClass = "bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/40 dark:border-red-800 dark:text-red-400";
+                  else if (record.status === 'LEAVE') colorClass = "bg-blue-100 text-blue-600 border border-blue-200 dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-400";
+                  else if (record.status === 'HALF_DAY') colorClass = "bg-orange-100 text-orange-600 border border-orange-200 dark:bg-orange-900/40 dark:border-orange-800 dark:text-orange-400";
+                }
+                
+                return (
+                  <div key={i} className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs shadow-sm ${colorClass}`} title={date.toDateString() + (record ? `: ${record.status}` : ': No Data')}>
+                    <span className="font-bold">{date.getDate()}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground justify-center">
+              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-emerald-100 border border-emerald-200 dark:bg-emerald-900/40 dark:border-emerald-800"></div> Present</span>
+              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-red-100 border border-red-200 dark:bg-red-900/40 dark:border-red-800"></div> Absent</span>
+              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-orange-100 border border-orange-200 dark:bg-orange-900/40 dark:border-orange-800"></div> Half Day</span>
+              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-blue-100 border border-blue-200 dark:bg-blue-900/40 dark:border-blue-800"></div> Leave</span>
+              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-slate-100 dark:bg-slate-800"></div> No Data</span>
+            </div>
+          </div>
+
+          <div className="overflow-y-auto max-h-48">
             {attendance.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground text-sm">No attendance records yet.</div>
             ) : (

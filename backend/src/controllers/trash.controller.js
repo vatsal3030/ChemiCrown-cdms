@@ -67,9 +67,67 @@ exports.permanentlyDeleteItem = async (req, res, next) => {
     }
 
     if (type === 'PRODUCT') {
+      /**
+       * Must delete in dependency order to avoid FK constraint violations.
+       * The Prisma schema has a required relation `InventoryToProduct`, so
+       * prisma.product.delete() will fail if any Inventory record references this product.
+       * Delete all dependents manually before deleting the product.
+       */
+
+      // 1. Find all inventories for this product
+      const inventories = await prisma.inventory.findMany({
+        where: { productId: id },
+        select: { id: true }
+      });
+      const inventoryIds = inventories.map(inv => inv.id);
+
+      // 2. Delete stock transaction logs that reference these inventories
+      if (inventoryIds.length > 0) {
+        await prisma.inventoryTransaction.deleteMany({ where: { inventoryId: { in: inventoryIds } } }).catch(() => {});
+        await prisma.inventory.deleteMany({ where: { productId: id } });
+      }
+
+      // 3. Delete reviews and favorites
+      await prisma.review.deleteMany({ where: { productId: id } }).catch(() => {});
+      await prisma.favorite.deleteMany({ where: { productId: id } }).catch(() => {});
+
+      // 4. Delete OrderItems (set productId to null if nullable, or just delete them)
+      await prisma.orderItem.deleteMany({ where: { productId: id } }).catch(() => {});
+
+      // 5. Now delete the product (order items have a FK but usually cascade or are nullable)
       await prisma.product.delete({ where: { id } });
+
     } else if (type === 'EMPLOYEE') {
-      await prisma.employee.deleteMany({ where: { userId: id } });
+      /**
+       * Employee permanent deletion cascade:
+       * - Attendance, Payroll, LeaveRequest, EmployeeWarning, Task all use Employee.id (not User.id)
+       * - Must fetch the Employee record first to get its ID before deleting.
+       */
+      const employeeRecord = await prisma.employee.findFirst({
+        where: { userId: id },
+        select: { id: true }
+      });
+
+      if (employeeRecord) {
+        const empId = employeeRecord.id;
+        // Delete all records that reference Employee.id (use correct model names from schema)
+        await prisma.attendance.deleteMany({ where: { employeeId: empId } }).catch(() => {});
+        await prisma.leaveRequest.deleteMany({ where: { employeeId: empId } }).catch(() => {});
+        await prisma.employeeWarning.deleteMany({ where: { employeeId: empId } }).catch(() => {});
+        await prisma.overtime.deleteMany({ where: { employeeId: empId } }).catch(() => {});
+        await prisma.salesIncentive.deleteMany({ where: { employeeId: empId } }).catch(() => {});
+        // Task.assignedToId is non-nullable — soft-delete tasks instead of nullifying
+        await prisma.task.updateMany({ where: { assignedToId: empId }, data: { deletedAt: new Date() } }).catch(() => {});
+        await prisma.salary.deleteMany({ where: { employeeId: empId } }).catch(() => {});
+        await prisma.pFLedger.deleteMany({ where: { employeeId: empId } }).catch(() => {});
+        await prisma.employee.delete({ where: { id: empId } });
+      }
+
+      // Clean up user-level records (AuditLog.userId is non-nullable — delete them too)
+      await prisma.notification.deleteMany({ where: { userId: id } }).catch(() => {});
+      await prisma.auditLog.deleteMany({ where: { userId: id } }).catch(() => {});
+      await prisma.favorite.deleteMany({ where: { userId: id } }).catch(() => {});
+      await prisma.task.deleteMany({ where: { createdById: id } }).catch(() => {});
       await prisma.user.delete({ where: { id } });
     } else {
       return res.status(400).json({ error: 'Invalid type. Must be PRODUCT or EMPLOYEE' });
@@ -77,6 +135,8 @@ exports.permanentlyDeleteItem = async (req, res, next) => {
 
     res.status(200).json({ success: true, message: `${type} permanently deleted` });
   } catch (error) {
+    // Provide a clear error message for debugging
+    console.error('[permanentlyDeleteItem]', error.message);
     next(error);
   }
 };

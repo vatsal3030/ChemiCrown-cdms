@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
-import EmployeeModal from '@/components/admin/EmployeeModal';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -486,16 +485,21 @@ export default function HRManagement() {
   const sortOrder    = searchParams.get('order')  || 'asc';
 
   const setParam = (key, value) => {
-    setSearchParams(prev => {
-      if (!value || value === 'all') prev.delete(key);
-      else prev.set(key, value);
-      return prev;
-    }, { replace: true });
+    // IMPORTANT: Must preserve the hash when updating search params.
+    // Using setSearchParams alone strips the URL hash (#tab).
+    // Instead, build the new URL manually with both hash and params intact.
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (!value || value === 'all') newParams.delete(key);
+    else newParams.set(key, value);
+    const newSearch = newParams.toString();
+    navigate(
+      `${location.pathname}${newSearch ? '?' + newSearch : ''}#${activeTab}`,
+      { replace: true }
+    );
   };
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [leavesLoading, setLeavesLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -703,7 +707,7 @@ export default function HRManagement() {
           <h1 className="text-3xl font-bold tracking-tight">HR Management</h1>
           <p className="text-slate-500 mt-1">Manage employee records, disciplinary actions, and payroll.</p>
         </div>
-        <Button className="flex items-center gap-2" onClick={() => setIsModalOpen(true)}>
+        <Button className="flex items-center gap-2" onClick={() => navigate('/dashboard/hr/add-employee')}>
           <Plus size={16} /> Add Employee
         </Button>
       </div>
@@ -964,8 +968,9 @@ export default function HRManagement() {
                               {['PRESENT','ABSENT','HALF_DAY','LEAVE'].map(s => {
                                 const cls = { PRESENT:'text-emerald-600 border-emerald-200 hover:bg-emerald-50', ABSENT:'text-red-600 border-red-200 hover:bg-red-50', HALF_DAY:'text-amber-600 border-amber-200 hover:bg-amber-50', LEAVE:'text-blue-600 border-blue-200 hover:bg-blue-50' };
                                 return (
-                                  <Button key={s} size="sm" variant="outline" className={`text-xs h-7 ${cls[s]}`}
+                                  <Button key={s} size="sm" variant="outline" disabled={!isSuperAdmin} className={`text-xs h-7 ${cls[s]} ${!isSuperAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     onClick={async () => {
+                                      if (!isSuperAdmin) return;
                                       const r = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${emp.id}/attendance`, {
                                         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                                         body: JSON.stringify({ status: s, date: new Date().toISOString() })
@@ -992,9 +997,11 @@ export default function HRManagement() {
                           </td>
                           <td className="px-6 py-4 text-slate-500">{emp.employeeProfile?.pfRate || 12}%</td>
                           <td className="px-6 py-4">
-                            <Button size="sm" variant="outline" onClick={() => setSalaryTarget(emp)}>
-                              <Settings size={13} className="mr-1.5" /> Configure
-                            </Button>
+                            {isSuperAdmin && (
+                              <Button size="sm" variant="outline" onClick={() => setSalaryTarget(emp)}>
+                                <Settings size={13} className="mr-1.5" /> Configure
+                              </Button>
+                            )}
                           </td>
                         </>
                       )}
@@ -1003,28 +1010,33 @@ export default function HRManagement() {
                       {activeTab === 'warnings' && (
                         <td className="px-6 py-4">
                           <div className="flex gap-2 flex-wrap">
-                            <Button size="sm" variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50"
-                              onClick={() => setWarnTarget(emp)}>
-                              <ShieldAlert size={13} className="mr-1.5" /> Issue Warning
-                            </Button>
-                            {empStatus === 'ACTIVE' && (
-                              <Button size="sm" variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                                onClick={() => setSuspendTarget(emp)}>
-                                <Clock size={13} className="mr-1.5" /> Suspend
-                              </Button>
+                            {isSuperAdmin && (
+                              <>
+                                <Button size="sm" variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                                  onClick={() => setWarnTarget(emp)}>
+                                  <ShieldAlert size={13} className="mr-1.5" /> Issue Warning
+                                </Button>
+                                {empStatus === 'ACTIVE' && (
+                                  <Button size="sm" variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                                    onClick={() => setSuspendTarget(emp)}>
+                                    <Clock size={13} className="mr-1.5" /> Suspend
+                                  </Button>
+                                )}
+                                {empStatus === 'SUSPENDED' && (
+                                  <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                                    onClick={() => handleReinstate(emp)}>
+                                    <UserCheck size={13} className="mr-1.5" /> Reinstate
+                                  </Button>
+                                )}
+                                {empStatus !== 'TERMINATED' && (
+                                  <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={() => setTerminateTarget(emp)}>
+                                    <UserX size={13} className="mr-1.5" /> Terminate
+                                  </Button>
+                                )}
+                              </>
                             )}
-                            {empStatus === 'SUSPENDED' && (
-                              <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                                onClick={() => handleReinstate(emp)}>
-                                <UserCheck size={13} className="mr-1.5" /> Reinstate
-                              </Button>
-                            )}
-                            {empStatus !== 'TERMINATED' && (
-                              <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50"
-                                onClick={() => setTerminateTarget(emp)}>
-                                <UserX size={13} className="mr-1.5" /> Terminate
-                              </Button>
-                            )}
+                            {!isSuperAdmin && <span className="text-xs text-muted-foreground italic">Actions restricted to Super Admin</span>}
                           </div>
                         </td>
                       )}
@@ -1042,7 +1054,7 @@ export default function HRManagement() {
                                 <ShieldAlert size={13} />
                               </Button>
                             )}
-                            {empStatus !== 'TERMINATED' && (
+                            {isSuperAdmin && empStatus !== 'TERMINATED' && (
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                 onClick={() => setTerminateTarget(emp)} title="Terminate">
                                 <UserX size={15} />
@@ -1106,14 +1118,20 @@ export default function HRManagement() {
                       <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(lr.createdAt).toLocaleDateString('en-IN')}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => handleLeaveReview(lr.id, 'APPROVED')}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-semibold transition-colors dark:bg-emerald-900/30 dark:text-emerald-400">
-                            <CheckCircle2 size={12} /> Approve
-                          </button>
-                          <button onClick={() => handleLeaveReview(lr.id, 'REJECTED')}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold transition-colors dark:bg-red-900/30 dark:text-red-400">
-                            <XCircle size={12} /> Reject
-                          </button>
+                          {isSuperAdmin ? (
+                            <>
+                              <button onClick={() => handleLeaveReview(lr.id, 'APPROVED')}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-semibold transition-colors dark:bg-emerald-900/30 dark:text-emerald-400">
+                                <CheckCircle2 size={12} /> Approve
+                              </button>
+                              <button onClick={() => handleLeaveReview(lr.id, 'REJECTED')}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold transition-colors dark:bg-red-900/30 dark:text-red-400">
+                                <XCircle size={12} /> Reject
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">Restricted</span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1409,13 +1427,6 @@ export default function HRManagement() {
           onClose={() => setSalaryTarget(null)}
           onSuccess={() => { setSalaryTarget(null); fetchEmployees(); }} />
       )}
-
-      <EmployeeModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        token={token}
-        onSuccess={() => { setIsModalOpen(false); fetchEmployees(); }}
-      />
     </div>
   );
 }

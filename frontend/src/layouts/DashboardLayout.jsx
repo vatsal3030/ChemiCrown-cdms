@@ -49,7 +49,7 @@ const buildNavSections = (role) => {
     ops.items.push({ name: 'My Cart', path: '/dashboard/cart', icon: ShoppingCart });
     ops.items.push({ name: 'My Wishlist', path: '/dashboard/wishlist', icon: Heart });
   }
-  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING'].includes(role)) {
+  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER'].includes(role)) {
     ops.items.push({ name: 'Orders', path: '/dashboard/orders', icon: ClipboardList });
   }
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER'].includes(role)) {
@@ -137,13 +137,24 @@ function NavItem({ item, collapsed, onClick }) {
     >
       <Icon size={18} className={`shrink-0 transition-transform duration-300 ease-in-out ${iconAnim}`} />
       {!collapsed && <span className="truncate">{item.name}</span>}
+      {!collapsed && item.badge !== undefined && item.badge > 0 && (
+        <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+          {item.badge}
+        </span>
+      )}
+      {collapsed && item.badge !== undefined && item.badge > 0 && (
+        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
+      )}
     </Link>
   );
 }
 
+import { useCart } from '../context/CartContext';
+
 export default function DashboardLayout() {
   const location = useLocation();
   const { user, storedAccounts, logout, logoutAll, switchAccount } = useAuth();
+  const { cartItems } = useCart();
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
@@ -172,6 +183,16 @@ export default function DashboardLayout() {
   if (!user) return null;
 
   const navSections = buildNavSections(user.role);
+  
+  // Add badge to My Cart
+  navSections.forEach(section => {
+    section.items.forEach(item => {
+      if (item.name === 'My Cart') {
+        item.badge = cartItems.length;
+      }
+    });
+  });
+
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'User';
   const initials = (user.firstName?.[0] || '') + (user.lastName?.[0] || '');
 
@@ -189,7 +210,7 @@ export default function DashboardLayout() {
 
       {/* ─── Sidebar ─── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out md:relative md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out md:relative md:translate-x-0 h-full min-h-0 ${
           isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${collapsed ? 'md:w-[72px]' : 'w-64'}`}
         style={{ background: 'var(--sidebar)', scrollbarWidth: 'none', msOverflowStyle: 'none' }}

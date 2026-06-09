@@ -233,7 +233,7 @@ export default function ProductFormPage() {
   if (fetching) return <div className="p-8 text-center text-slate-500">Loading product details...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-[1600px] w-full px-4 mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/dashboard/inventory" className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500">
@@ -249,13 +249,55 @@ export default function ProductFormPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           
-          {/* Main Details Column */}
-          <div className="lg:col-span-2 space-y-8">
+          {/* Main Content Area */}
+          <div className="xl:col-span-3 space-y-6">
             
-            {/* Section 1: Basic Info */}
+            {/* Images Card (Moved to top priority) */}
+            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-200">Product Images (Priority)</h2>
+              <div 
+                className="w-full h-40 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-500 hover:text-primary hover:border-primary cursor-pointer transition-colors overflow-hidden relative group mb-4 bg-slate-50 dark:bg-slate-900/50"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload size={32} className="mb-2" />
+                <span className="text-base font-medium">Click to upload product images (Max 5)</span>
+                <p className="text-xs mt-1 text-slate-400">High-quality images significantly improve sales conversion.</p>
+                <input type="file" multiple ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+              </div>
+              
+              {previewUrls.length > 0 ? (
+                <div className="flex flex-wrap gap-4">
+                  {previewUrls.map((url, i) => (
+                    <div 
+                      key={i} 
+                      className="relative w-32 h-32 rounded-lg overflow-hidden group cursor-grab active:cursor-grabbing border border-slate-200 dark:border-slate-800 hover:border-primary transition-colors bg-slate-100 dark:bg-slate-900 shadow-sm"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, i)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, i)}
+                    >
+                      <img src={url} alt={`Preview ${i}`} className="w-full h-full object-cover pointer-events-none" />
+                      <button type="button" onClick={() => removeImage(i)} className="absolute top-1.5 right-1.5 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-500 shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      </button>
+                      {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-primary/90 text-white text-[10px] font-bold text-center py-0.5 uppercase tracking-wider">Primary</span>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-6 flex flex-col items-center justify-center border rounded-lg border-dashed bg-slate-50/50 dark:bg-slate-900/20">
+                  <p className="text-sm text-slate-500 font-medium">No images uploaded yet.</p>
+                  <p className="text-xs text-slate-400 mt-1">Upload at least one image to help customers identify this product.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Top Row: Basic & Packaging */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Section 1: Basic Info */}
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
               <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                 <Info className="text-primary" size={20} />
@@ -278,8 +320,8 @@ export default function ProductFormPage() {
                   <textarea 
                     value={formData.description} 
                     onChange={e=>setFormData({...formData, description: e.target.value})} 
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[100px]" 
-                    placeholder="Provide a detailed description of the product, its uses, and physical properties..." 
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[180px] shadow-sm resize-y" 
+                    placeholder="Provide a highly detailed description of the product, its primary uses, applications, appearance, and physical properties. A rich description helps customers understand the product better and improves search visibility..." 
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -293,10 +335,10 @@ export default function ProductFormPage() {
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
 
             {/* Section 2: Packaging */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col">
               <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                 <Package className="text-blue-500" size={20} />
                 Packaging & Categorization
@@ -362,65 +404,42 @@ export default function ProductFormPage() {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Section 3: Safety */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
-                <ShieldAlert className="text-red-500" size={20} />
-                Safety & Storage
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Safety Notes / Hazmat</label>
-                  <textarea 
-                    value={formData.safetyNotes} 
-                    onChange={e=>setFormData({...formData, safetyNotes: e.target.value})} 
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[100px]" 
-                    placeholder="E.g. Flammable liquid and vapor. Causes serious eye irritation. Wear protective gloves and eye protection..." 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Storage Instructions</label>
-                  <textarea 
-                    value={formData.storageInstructions} 
-                    onChange={e=>setFormData({...formData, storageInstructions: e.target.value})} 
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[100px]" 
-                    placeholder="E.g. Store in a well-ventilated place. Keep cool. Keep container tightly closed..." 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Section 4: Specifications */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
-                <Beaker className="text-purple-500" size={20} />
-                Product Specifications
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Brand</label>
-                  <Input type="text" value={formData.brand} onChange={e=>setFormData({...formData, brand: e.target.value})} placeholder="e.g. Merck" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Manufacturer</label>
-                  <Input type="text" value={formData.manufacturer} onChange={e=>setFormData({...formData, manufacturer: e.target.value})} placeholder="e.g. Sigma-Aldrich" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Item Form</label>
-                  <select value={formData.itemForm} onChange={e=>setFormData({...formData, itemForm: e.target.value})} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                    <option value="">Select Form...</option>
-                    <option value="Liquid">Liquid</option>
-                    <option value="Powder">Powder</option>
-                    <option value="Solid">Solid</option>
-                    <option value="Gas">Gas</option>
-                    <option value="Gel">Gel</option>
-                    <option value="Granules">Granules</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Purity</label>
-                  <Input type="text" value={formData.purity} onChange={e=>setFormData({...formData, purity: e.target.value})} placeholder="e.g. 99.9%" />
+            {/* Bottom Row: Specifications & Safety */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Section 4: Specifications (moved before safety for better layout flow) */}
+              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+                  <Beaker className="text-purple-500" size={20} />
+                  Product Specifications
+                </h2>
+                <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Brand</label>
+                    <Input type="text" value={formData.brand} onChange={e=>setFormData({...formData, brand: e.target.value})} placeholder="e.g. Merck" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Manufacturer</label>
+                    <Input type="text" value={formData.manufacturer} onChange={e=>setFormData({...formData, manufacturer: e.target.value})} placeholder="e.g. Sigma-Aldrich" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Item Form</label>
+                    <select value={formData.itemForm} onChange={e=>setFormData({...formData, itemForm: e.target.value})} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                      <option value="">Select Form...</option>
+                      <option value="Liquid">Liquid</option>
+                      <option value="Powder">Powder</option>
+                      <option value="Solid">Solid</option>
+                      <option value="Gas">Gas</option>
+                      <option value="Gel">Gel</option>
+                      <option value="Granules">Granules</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Purity</label>
+                    <Input type="text" value={formData.purity} onChange={e=>setFormData({...formData, purity: e.target.value})} placeholder="e.g. 99.9%" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Grade</label>
@@ -434,13 +453,41 @@ export default function ProductFormPage() {
                     <option value="HPLC Grade" />
                   </datalist>
                 </div>
+                </div>
+              </div>
+
+              {/* Section 3: Safety */}
+              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+                  <ShieldAlert className="text-red-500" size={20} />
+                  Safety & Storage
+                </h2>
+                <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Safety Notes / Hazmat</label>
+                  <textarea 
+                    value={formData.safetyNotes} 
+                    onChange={e=>setFormData({...formData, safetyNotes: e.target.value})} 
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[140px] resize-y shadow-sm" 
+                    placeholder="E.g. Highly flammable liquid and vapour. Keep away from heat, sparks, open flames. Causes serious eye irritation. Wear protective gloves/eye protection..." 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Storage Instructions</label>
+                  <textarea 
+                    value={formData.storageInstructions} 
+                    onChange={e=>setFormData({...formData, storageInstructions: e.target.value})} 
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[140px] resize-y shadow-sm" 
+                    placeholder="E.g. Store in a well-ventilated, secure place. Keep cool. Keep container tightly closed. Protect from direct sunlight..." 
+                  />
+                </div>
+                </div>
               </div>
             </div>
-
           </div>
 
           {/* Sidebar Column */}
-          <div className="space-y-8 sticky top-24 self-start">
+          <div className="space-y-6 xl:col-span-1 sticky top-24 self-start">
             
             {/* Action Card */}
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
@@ -499,40 +546,6 @@ export default function ProductFormPage() {
               </Button>
             </div>
 
-            {/* Images Card */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-200">Product Images</h2>
-              <div 
-                className="w-full h-32 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-500 hover:text-primary hover:border-primary cursor-pointer transition-colors overflow-hidden relative group mb-4 bg-slate-50 dark:bg-slate-900/50"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload size={24} className="mb-2" />
-                <span className="text-sm font-medium">Click to upload (Max 5)</span>
-                <input type="file" multiple ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
-              </div>
-              
-              {previewUrls.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {previewUrls.map((url, i) => (
-                    <div 
-                      key={i} 
-                      className="relative aspect-square rounded-lg overflow-hidden group cursor-grab active:cursor-grabbing border border-slate-200 dark:border-slate-800 hover:border-primary transition-colors bg-slate-100 dark:bg-slate-900"
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, i)}
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, i)}
-                    >
-                      <img src={url} alt={`Preview ${i}`} className="w-full h-full object-cover pointer-events-none" />
-                      <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-500 text-center py-4">No images uploaded yet.</p>
-              )}
-            </div>
 
           </div>
         </div>

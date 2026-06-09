@@ -32,6 +32,7 @@ import Inventory from './pages/Inventory';
 import ProductFormPage from './pages/admin/ProductFormPage';
 import CustomerVerification from './pages/admin/CustomerVerification';
 import HRManagement from './pages/admin/HRManagement';
+import AddEmployeePage from './pages/admin/AddEmployeePage';
 import EmployeeDetails from './pages/admin/EmployeeDetails';
 import StockHistory from './pages/admin/StockHistory';
 import RecycleBin from './pages/admin/RecycleBin';
@@ -46,6 +47,7 @@ import ProductDetails from './pages/ProductDetails';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import Payroll from './pages/admin/Payroll';
+import PayrollPaymentPage from './pages/admin/PayrollPaymentPage';
 import Finance from './pages/admin/Finance';
 import MyPayroll from './pages/employee/MyPayroll';
 import Support from './pages/Support';
@@ -191,8 +193,10 @@ function App() {
 
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
                     <Route path="hr" element={<HRManagement />} />
+                    <Route path="hr/add-employee" element={<AddEmployeePage />} />
                     <Route path="hr/:id" element={<EmployeeDetails />} />
                     <Route path="payroll" element={<Payroll />} />
+                    <Route path="payroll/pay/:id" element={<PayrollPaymentPage />} />
                     <Route path="holidays" element={<HolidayManagement />} />
                   </Route>
 

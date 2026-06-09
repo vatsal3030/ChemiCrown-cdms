@@ -23,19 +23,15 @@ const createOrder = async (req, res, next) => {
 
     let customer = await prisma.customer.findUnique({ where: { userId } });
     
-    // Auto-create customer profile if missing (helps smoothly onboard legacy users or fast-registrations)
+    // Auto-create customer profile if missing (helps smoothly onboard legacy users or fast-registrations, and allows staff to place orders)
     if (!customer) {
-      if (req.user.role === 'CUSTOMER') {
-        customer = await prisma.customer.create({
-          data: {
-            userId,
-            companyName: req.body.companyName || 'Retail Customer',
-            isVerified: true // Set to true to allow immediate ordering
-          }
-        });
-      } else {
-        return res.status(403).json({ error: 'Customer profile required.' });
-      }
+      customer = await prisma.customer.create({
+        data: {
+          userId,
+          companyName: req.body.companyName || (req.user.role === 'CUSTOMER' ? 'Retail Customer' : 'Internal Staff Order'),
+          isVerified: true // Set to true to allow immediate ordering
+        }
+      });
     }
     if (!customer.isVerified) {
       return res.status(403).json({ error: 'Your account is pending admin verification. You cannot place orders yet.' });
@@ -244,21 +240,32 @@ const getOrders = async (req, res, next) => {
       if (maxAmount) where.total.lte = parseFloat(maxAmount);
     }
 
-    // Search filter (by order ID prefix)
+    // Search filter (by order ID prefix or customer name)
     if (search) {
-      where.id = { contains: search, mode: 'insensitive' };
+      where.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { customer: { user: { firstName: { contains: search, mode: 'insensitive' } } } },
+        { customer: { user: { lastName: { contains: search, mode: 'insensitive' } } } },
+        { customer: { companyName: { contains: search, mode: 'insensitive' } } },
+      ];
     }
 
     const orders = await prisma.order.findMany({
       where,
       orderBy: { [sortField || 'createdAt']: sortOrder || 'desc' },
-      include: { items: true }
+      include: { 
+        items: true,
+        customer: {
+          include: { user: { select: { firstName: true, lastName: true } } }
+        }
+      }
     });
 
     const formatted = orders.map(o => ({
       id: o.id,
       createdAt: o.createdAt,
       status: o.status,
+      customer: o.customer,
       total: o.total || o.items.reduce((acc, item) => acc + (item.quantity * item.price), 0)
     }));
 

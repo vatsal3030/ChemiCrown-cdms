@@ -25,6 +25,12 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (isLoading) return;
+    
+    if (!email.trim() || !password) {
+      toast.error('Please enter both email and password to sign in');
+      return;
+    }
+    
     setPendingVerification(false);
     setIsLoading(true);
     try {
@@ -188,7 +194,6 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-9 pr-3 py-2.5 border border-input rounded-xl bg-background text-foreground text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   placeholder="john.doe@company.com"
-                  required
                 />
               </div>
             </div>
@@ -205,7 +210,6 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-9 pr-10 py-2.5 border border-input rounded-xl bg-background text-foreground text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   placeholder="••••••••"
-                  required
                 />
                 <button
                   type="button"

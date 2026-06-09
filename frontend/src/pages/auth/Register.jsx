@@ -99,9 +99,13 @@ export default function Register() {
         setRegistered(true);
         toast.success('Registration submitted! Awaiting admin verification.');
       } else {
-        toast.error(data.error || 'Registration failed');
+        if (data.error && data.error.toLowerCase().includes('email')) {
+          setErrors({ email: data.error });
+        } else {
+          toast.error(data.error || 'Registration failed');
+        }
       }
-    } catch {
+    } catch (err) {
       toast.error('Network error. Please try again.');
     } finally {
       setIsLoading(false);

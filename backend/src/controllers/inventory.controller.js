@@ -7,7 +7,7 @@ exports.getInventory = async (req, res, next) => {
   try {
     const {
       search, sortField = 'name', sortOrder = 'asc',
-      categoryId, stockStatus,
+      categoryId, stockStatus, isAvailable,
       grade, minPrice, maxPrice, inStockOnly, hazard,
       page = 1, limit = 10
     } = req.query;
@@ -28,6 +28,7 @@ exports.getInventory = async (req, res, next) => {
     }
 
     if (categoryId && categoryId !== 'all') where.categoryId = categoryId;
+    if (isAvailable !== undefined) where.isAvailable = isAvailable === 'true';
 
     // Grade filter — e.g. "AR", "LR", "Technical"
     if (grade && grade !== 'all') {

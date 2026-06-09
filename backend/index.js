@@ -118,7 +118,7 @@ const contactLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api/contact', contactLimiter);
+// Will apply contactLimiter directly to the route
 
 app.use('/api', apiLimiter);
 
@@ -137,24 +137,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ── Contact Form (public, no auth needed) ────────────────────────────────────
-app.post('/api/contact', (req, res) => {
-  const { name, email, phone, subject, message } = req.body;
 
-  // Basic validation
-  if (!name || name.trim().length < 2)
-    return res.status(400).json({ error: 'Full name is required.' });
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
-    return res.status(400).json({ error: 'Valid email is required.' });
-  if (!message || message.trim().length < 15)
-    return res.status(400).json({ error: 'Message must be at least 15 characters.' });
-
-  // Log submission (replace with nodemailer / SendGrid call when ready)
-  console.log(`[Contact Form] From: ${name} <${email}> | Subject: ${subject} | Phone: ${phone || 'N/A'}`);
-  console.log(`[Contact Form] Message: ${message.substring(0, 200)}`);
-
-  return res.status(200).json({ success: true, message: 'Message received. We will reply within 24 business hours.' });
-});
 
 // ── API Root Splash Page ──────────────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -198,6 +181,19 @@ const trashRoutes      = require('./src/routes/trash.routes');
 const tasksRoutes      = require('./src/routes/tasks.routes');
 const categoryRoutes   = require('./src/routes/category.routes');
 const reviewRoutes     = require('./src/routes/review.routes');
+const contactRoutes    = require('./src/routes/contact.routes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/hr', hrRoutes);
+app.use('/api/orders', ordersRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/trash', trashRoutes);
+app.use('/api/tasks', tasksRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/contact', contactLimiter, contactRoutes);
 const favoritesRoutes  = require('./src/routes/favorites.routes');
 const payrollRoutes    = require('./src/routes/payroll.routes');
 const financeRoutes    = require('./src/routes/finance.routes');

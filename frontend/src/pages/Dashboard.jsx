@@ -75,7 +75,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState(null); // null = not yet loaded (distinguish from loaded-but-empty)
-  const [showLowStock, setShowLowStock] = useState(false);
 
   const fetchData = async (isRefresh = false) => {
     try {
@@ -203,39 +202,15 @@ export default function Dashboard() {
           icon={Users}
           color="bg-emerald-500/10 text-emerald-500"
         />
-        <div
-          className="kpi-card group cursor-pointer"
-          onClick={() => setShowLowStock(v => !v)}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Low Stock Alerts</p>
-              <h3 className="text-3xl font-bold text-foreground">{stats.inventoryAlerts}</h3>
-            </div>
-            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform bg-rose-500/10 text-rose-500`}>
-              <AlertTriangle size={20} />
-            </div>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            {stats.inventoryAlerts > 0
-              ? <span className="badge badge-error"><ArrowDownRight size={12} />Critical</span>
-              : <span className="text-xs text-muted-foreground">All levels healthy</span>
-            }
-          </div>
-          {/* Expanded low stock list */}
-          {showLowStock && stats.lowStockProducts?.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border space-y-2 animate-in slide-in-from-top-2 duration-200">
-              {stats.lowStockProducts.map(p => (
-                <div key={p.id} className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-foreground truncate max-w-[60%]">{p.name}</span>
-                  <span className={`font-bold ${p.quantity === 0 ? 'text-red-600' : 'text-amber-600'}`}>
-                    {p.quantity === 0 ? 'OUT OF STOCK' : `${p.quantity} left`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <Link to="/dashboard/inventory?lowStock=1" className="block h-full transition-transform hover:-translate-y-0.5">
+          <StatCard
+            label="Low Stock Alerts"
+            value={stats.inventoryAlerts}
+            sub={stats.inventoryAlerts > 0 ? "Needs restock" : "All levels healthy"}
+            icon={AlertTriangle}
+            color={stats.inventoryAlerts > 0 ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"}
+          />
+        </Link>
       </div>
 
       {/* Quick Actions */}
@@ -336,6 +311,40 @@ export default function Dashboard() {
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Low Stock Items List */}
+        {stats.lowStockProducts?.length > 0 && (
+          <div className="bg-card rounded-2xl border border-rose-200 dark:border-rose-900/50 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-bold text-foreground flex items-center gap-2">
+                  <AlertTriangle size={18} className="text-rose-500" /> Action Required: Low Stock
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Click an item to view in inventory</p>
+              </div>
+              <Link to="/dashboard/inventory?lowStock=1" className="text-xs text-primary font-semibold hover:underline">
+                View All →
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {stats.lowStockProducts.slice(0, 5).map(p => (
+                <Link
+                  key={p.id}
+                  to={`/dashboard/inventory?search=${encodeURIComponent(p.name)}`}
+                  className="flex items-center justify-between p-3 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/30 transition-colors group"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">{p.name}</p>
+                    {p.casNumber && <p className="text-xs font-mono text-muted-foreground mt-0.5">CAS: {p.casNumber}</p>}
+                  </div>
+                  <div className={`shrink-0 ml-4 font-bold text-sm px-2.5 py-1 rounded-lg ${p.quantity === 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                    {p.quantity === 0 ? 'OUT OF STOCK' : `${p.quantity} left`}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Inventory Bar Chart */}
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">

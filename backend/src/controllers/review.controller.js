@@ -116,3 +116,20 @@ exports.getProductReviews = async (req, res, next) => {
     next(error);
   }
 };
+exports.getMyReview = async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user.id;
+
+    const customer = await prisma.customer.findUnique({ where: { userId } });
+    if (!customer) return res.status(200).json({ review: null });
+
+    const review = await prisma.review.findFirst({
+      where: { customerId: customer.id, productId }
+    });
+
+    res.status(200).json({ review });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
   Search, Plus, Filter, Trash2, ArrowUpDown, History,
   SlidersHorizontal, X, RefreshCw, Package, IndianRupee
@@ -12,16 +12,15 @@ import toast from 'react-hot-toast';
 import useSWR from 'swr';
 import useDebounce from '@/hooks/useDebounce';
 import AddStockModal from '@/components/AddStockModal';
-import StockLogsModal from '@/components/admin/StockLogsModal';
 
 export default function Inventory() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // All filter state from URL
+  // All filter state from URL — support both ?q= and ?search= for cross-page navigation
   const page           = parseInt(searchParams.get('page') || '1', 10);
-  const searchTerm     = searchParams.get('q')        || '';
+  const searchTerm     = searchParams.get('q') || searchParams.get('search') || '';
   const sortField      = searchParams.get('sort')     || 'name';
   const sortOrder      = searchParams.get('order')    || 'asc';
   const categoryFilter = searchParams.get('cat')      || 'all';
@@ -42,13 +41,16 @@ export default function Inventory() {
 
   const [categories, setCategories]       = useState([]);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
-  const [isLogsModalOpen, setIsLogsModalOpen]   = useState(false);
   const [stockProduct, setStockProduct]         = useState(null);
   const [showFilters, setShowFilters]           = useState(false);
   const [totalPages, setTotalPages]             = useState(1);
 
-  // Temp filter state (applied when "Apply" is clicked)
   const [temp, setTemp] = useState({ cat: categoryFilter, stock: stockFilter, status: statusFilter, minPrice, maxPrice });
+
+  useEffect(() => {
+    setTemp({ cat: categoryFilter, stock: stockFilter, status: statusFilter, minPrice, maxPrice });
+  }, [categoryFilter, stockFilter, statusFilter, minPrice, maxPrice]);
+
   const limit = 10;
 
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -408,9 +410,9 @@ export default function Inventory() {
                       <td className="px-6 py-4 font-semibold text-foreground">₹{product.price}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {/* Stock History — visible on all sizes */}
-                          <Button variant="outline" size="icon" className="h-8 w-8" title="Stock History"
-                            onClick={() => { setStockProduct(product); setIsLogsModalOpen(true); }}>
+                          {/* Stock History — navigate to stock-history page with pre-filter */}
+                          <Button variant="outline" size="icon" className="h-8 w-8" title="View Stock History"
+                            onClick={() => navigate(`/dashboard/stock-history?q=${encodeURIComponent(product.name)}`)}>
                             <History size={14} className="text-slate-500" />
                           </Button>
                           {/* Add Stock — icon on mobile, icon+text on md+ */}
@@ -478,12 +480,6 @@ export default function Inventory() {
         }}
       />
 
-      <StockLogsModal
-        isOpen={isLogsModalOpen}
-        onClose={() => setIsLogsModalOpen(false)}
-        product={stockProduct}
-        token={token}
-      />
     </div>
   );
 }

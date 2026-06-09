@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft, Package, MapPin, Truck, CheckCircle2,
   Clock, XCircle, RefreshCw, Star, ChevronRight, AlertTriangle,
-  RotateCcw
+  RotateCcw, Building2, Phone, Mail, Hash, ExternalLink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReviewModal from '@/components/ReviewModal';
@@ -248,55 +248,68 @@ export default function OrderDetails() {
         </div>
       )}
 
-      {/* ── Progress Timeline ── */}
-      {!isCancelled && (
-        <div className="form-card overflow-x-auto">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Order Progress</p>
-          <div className="flex items-center min-w-[440px]">
-            {TIMELINE.map((step, idx) => {
-              const done = idx <= currentStep;
-              const active = idx === currentStep;
-              const Ic = STATUS_CONFIG[step]?.icon || Clock;
-              return (
-                <div key={step} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
-                      done ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-muted text-muted-foreground'
-                    } ${active ? 'ring-4 ring-primary/20 scale-110' : ''}`}>
-                      <Ic size={13} />
+      {/* ── MAIN CONTENT GRID ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        
+        {/* LEFT COLUMN: Timeline & Items */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* ── Progress Timeline ── */}
+          {!isCancelled && (
+            <div className="form-card overflow-x-auto">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Order Progress</p>
+              <div className="flex items-center min-w-[440px]">
+                {TIMELINE.map((step, idx) => {
+                  const done = idx <= currentStep;
+                  const active = idx === currentStep;
+                  const Ic = STATUS_CONFIG[step]?.icon || Clock;
+                  return (
+                    <div key={step} className="flex items-center flex-1 last:flex-none">
+                      <div className="flex flex-col items-center gap-1">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                          done ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-muted text-muted-foreground'
+                        } ${active ? 'ring-4 ring-primary/20 scale-110' : ''}`}>
+                          <Ic size={13} />
+                        </div>
+                        <span className={`text-[9px] font-semibold text-center leading-tight whitespace-nowrap ${done ? 'text-primary' : 'text-muted-foreground'}`}>
+                          {STATUS_CONFIG[step]?.label}
+                        </span>
+                      </div>
+                      {idx < TIMELINE.length - 1 && (
+                        <div className={`flex-1 h-0.5 mx-1 mb-4 rounded-full transition-all duration-500 ${done ? 'bg-primary' : 'bg-muted'}`} />
+                      )}
                     </div>
-                    <span className={`text-[9px] font-semibold text-center leading-tight whitespace-nowrap ${done ? 'text-primary' : 'text-muted-foreground'}`}>
-                      {STATUS_CONFIG[step]?.label}
-                    </span>
-                  </div>
-                  {idx < TIMELINE.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-1 mb-4 rounded-full transition-all duration-500 ${done ? 'bg-primary' : 'bg-muted'}`} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-      {/* ── MAIN: Items + Right Sidebar on desktop ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-
-        {/* Items Ordered (takes 2/3 on desktop) */}
-        <div className="lg:col-span-2 form-card">
-          <h2 className="font-bold text-sm text-foreground mb-3">Items Ordered</h2>
-          <div className="divide-y divide-border">
+          {/* ── Items Ordered ── */}
+          <div className="form-card">
+            <h2 className="font-bold text-sm text-foreground mb-3">Items Ordered</h2>
+        <div className="divide-y divide-border">
             {order.items?.map((item) => (
               <div key={item.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                {/* Product image */}
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-muted rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-border">
+                {/* Product image — clickable link to catalog */}
+                <Link
+                  to={`/dashboard/catalog/${item.productId || item.product?.id}`}
+                  className="w-12 h-12 sm:w-14 sm:h-14 bg-muted rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-border hover:border-primary transition-colors"
+                  title="View product details"
+                >
                   {item.product?.imageUrls?.length > 0
                     ? <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-full h-full object-cover" />
                     : <Package size={18} className="text-muted-foreground" />}
-                </div>
+                </Link>
                 {/* Name + details */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-foreground line-clamp-1">{item.product?.name}</p>
+                  {/* Product name — clickable link */}
+                  <Link
+                    to={`/dashboard/catalog/${item.productId || item.product?.id}`}
+                    className="font-semibold text-sm text-foreground line-clamp-1 hover:text-primary transition-colors inline-flex items-center gap-1"
+                  >
+                    {item.product?.name}
+                    <ExternalLink size={10} className="opacity-40" />
+                  </Link>
                   <p className="text-xs text-muted-foreground">
                     {item.quantity} × ₹{Number(item.price).toFixed(2)} / {item.product?.unit}
                   </p>
@@ -304,12 +317,12 @@ export default function OrderDetails() {
                     <p className="text-[10px] text-muted-foreground font-mono">CAS: {item.product.casNumber}</p>
                   )}
                   {/* Review button — only for delivered orders */}
-                  {isDelivered && (
+                  {isDelivered && isCustomer && (
                     <button
                       onClick={() => setReviewModal({ open: true, item })}
                       className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
                     >
-                      <Star size={11} className="fill-current" /> Write a Review
+                      <Star size={11} className="fill-current" /> Write / Edit Review
                     </button>
                   )}
                 </div>
@@ -320,11 +333,12 @@ export default function OrderDetails() {
               </div>
             ))}
           </div>
+          </div>
         </div>
 
-        {/* Right sidebar: Summary + Shipping + Payment stacked compactly */}
-        <div className="space-y-3">
-          {/* Order Summary */}
+        {/* RIGHT COLUMN: Summary, Address, Payment */}
+        <div className="space-y-6">
+        {/* Order Summary */}
           <div className="form-card">
             <h2 className="font-bold text-sm text-foreground mb-3">Order Summary</h2>
             <div className="space-y-2 text-xs sm:text-sm">
@@ -380,6 +394,46 @@ export default function OrderDetails() {
                   <span className={`font-semibold ${order.payment?.status === 'SUCCESS' ? 'text-emerald-600' : 'text-amber-600'}`}>
                     {order.payment?.status}
                   </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Admin-only: Customer Business Info */}
+          {isAdmin && order.customer && (
+            <div className="form-card border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10">
+              <h2 className="font-bold text-sm text-foreground mb-2 flex items-center gap-1.5">
+                <Building2 size={13} className="text-blue-600" /> Customer Info
+              </h2>
+              <div className="text-xs space-y-1.5">
+                {order.customer.companyName && (
+                  <div className="flex items-center gap-1.5">
+                    <Building2 size={11} className="text-muted-foreground shrink-0" />
+                    <span className="font-semibold text-foreground">{order.customer.companyName}</span>
+                  </div>
+                )}
+                {order.customer.gstNumber && (
+                  <div className="flex items-center gap-1.5">
+                    <Hash size={11} className="text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">GST:</span>
+                    <span className="font-mono font-semibold text-foreground">{order.customer.gstNumber}</span>
+                  </div>
+                )}
+                {order.customer.user?.phone && (
+                  <div className="flex items-center gap-1.5">
+                    <Phone size={11} className="text-muted-foreground shrink-0" />
+                    <a href={`tel:${order.customer.user.phone}`} className="text-primary hover:underline">{order.customer.user.phone}</a>
+                  </div>
+                )}
+                {order.customer.user?.email && (
+                  <div className="flex items-center gap-1.5">
+                    <Mail size={11} className="text-muted-foreground shrink-0" />
+                    <a href={`mailto:${order.customer.user.email}`} className="text-primary hover:underline break-all">{order.customer.user.email}</a>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 pt-1 border-t border-blue-200 dark:border-blue-800">
+                  <span className="text-muted-foreground">Customer ID:</span>
+                  <span className="font-mono text-[10px] text-foreground">{order.customerId}</span>
                 </div>
               </div>
             </div>

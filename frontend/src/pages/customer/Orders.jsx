@@ -69,6 +69,10 @@ export default function Orders() {
   // Temp filter state (applied on click)
   const [tempFilters, setTempFilters] = useState({ status: statusFilter, from: dateFrom, to: dateTo, minAmt: minAmount, maxAmt: maxAmount });
 
+  useEffect(() => {
+    setTempFilters({ status: statusFilter, from: dateFrom, to: dateTo, minAmt: minAmount, maxAmt: maxAmount });
+  }, [statusFilter, dateFrom, dateTo, minAmount, maxAmount]);
+
   const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES'].includes(user?.role);
 
   const fetchOrders = useCallback(async () => {
@@ -132,8 +136,15 @@ export default function Orders() {
   };
 
   const toggleSort = (field) => {
-    if (sortField === field) setParam('order', sortOrder === 'asc' ? 'desc' : 'asc');
-    else { setParam('sort', field); setParam('order', 'asc'); }
+    setSearchParams(prev => {
+      if (sortField === field) {
+        prev.set('order', sortOrder === 'asc' ? 'desc' : 'asc');
+      } else {
+        prev.set('sort', field);
+        prev.set('order', 'asc');
+      }
+      return prev;
+    });
   };
 
   const handleCancel = async (id) => {
@@ -207,7 +218,7 @@ export default function Orders() {
     statusFilter !== 'all', !!dateFrom, !!dateTo, !!minAmount, !!maxAmount
   ].filter(Boolean).length;
 
-  const cols = isAdmin ? 6 : 5;
+  const cols = isAdmin ? 7 : 5;
 
   // Count by status for summary chips
   const statusCounts = orders.reduce((acc, o) => {
@@ -552,13 +563,14 @@ export default function Orders() {
             <thead className="border-b border-border bg-primary/5">
               <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('id')}>
-                  <div className="flex items-center gap-1">Order ID <ArrowUpDown size={12} /></div>
+                  <div className="flex items-center gap-1">Order ID <ArrowUpDown size={12} className={sortField === 'id' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('createdAt')}>
-                  <div className="flex items-center gap-1">Date <ArrowUpDown size={12} /></div>
+                  <div className="flex items-center gap-1">Date <ArrowUpDown size={12} className={sortField === 'createdAt' ? 'text-primary' : ''} /></div>
                 </th>
+                {isAdmin && <th className="data-table-cell text-left">Customer</th>}
                 <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('total')}>
-                  <div className="flex items-center gap-1">Total <ArrowUpDown size={12} /></div>
+                  <div className="flex items-center gap-1">Total <ArrowUpDown size={12} className={sortField === 'total' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="data-table-cell text-left">Status</th>
                 {isAdmin && <th className="data-table-cell text-left">Advance</th>}
@@ -604,6 +616,16 @@ export default function Orders() {
                     <td className="data-table-cell text-muted-foreground text-xs">
                       {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
+                    {isAdmin && (
+                      <td className="data-table-cell">
+                        <div className="font-semibold text-foreground text-xs">
+                          {order.customer?.companyName || 'Retail Customer'}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {order.customer?.user?.firstName} {order.customer?.user?.lastName}
+                        </div>
+                      </td>
+                    )}
                     <td className="data-table-cell font-semibold text-foreground">
                       ₹{Number(order.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>

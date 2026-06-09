@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Search, Filter, Trash2, RefreshCw, ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
+import { Shield, Search, Filter, Trash2, RefreshCw, ChevronLeft, ChevronRight, Clock, X, ArrowUpDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'react-router-dom';
@@ -22,12 +22,13 @@ export default function AuditLog() {
   const [total, setTotal] = useState(0);
   const limit = 25;
 
-  // All filters from URL
-  const page    = parseInt(searchParams.get('page')   || '1', 10);
-  const action  = searchParams.get('action') || '';
-  const entity  = searchParams.get('entity') || '';
-  const from    = searchParams.get('from')   || '';
-  const to      = searchParams.get('to')     || '';
+  const page      = parseInt(searchParams.get('page') || '1', 10);
+  const action    = searchParams.get('action') || '';
+  const entity    = searchParams.get('entity') || '';
+  const from      = searchParams.get('from')   || '';
+  const to        = searchParams.get('to')     || '';
+  const sortField = searchParams.get('sort')   || 'createdAt';
+  const sortOrder = searchParams.get('order')  || 'desc';
 
   // Temp filter state (applied on click)
   const [temp, setTemp] = useState({ action, entity, from, to });
@@ -44,7 +45,7 @@ export default function AuditLog() {
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit });
+      const params = new URLSearchParams({ page, limit, sortField, sortOrder });
       if (action) params.set('action', action);
       if (entity) params.set('entity', entity);
       if (from)   params.set('from', from);
@@ -57,7 +58,7 @@ export default function AuditLog() {
       else toast.error('Failed to load audit logs');
     } catch { toast.error('Network error'); }
     finally { setLoading(false); }
-  }, [page, action, entity, from, to, token]);
+  }, [page, action, entity, from, to, sortField, sortOrder, token]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
@@ -81,6 +82,18 @@ export default function AuditLog() {
   };
 
   const hasActiveFilters = action || entity || from || to;
+
+  const toggleSort = (field) => {
+    setSearchParams(prev => {
+      if (sortField === field) {
+        prev.set('order', sortOrder === 'asc' ? 'desc' : 'asc');
+      } else {
+        prev.set('sort', field);
+        prev.set('order', 'asc');
+      }
+      return prev;
+    }, { replace: true });
+  };
 
 
   const handleDelete = async (id) => {
@@ -133,23 +146,48 @@ export default function AuditLog() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <label className="form-label text-xs">Action</label>
-            <input
-              type="text"
-              placeholder="e.g. ROLE_CHANGED"
+            <select
               value={temp.action}
               onChange={e => setTemp(t => ({ ...t, action: e.target.value }))}
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            >
+              <option value="">All Actions</option>
+              <option value="LOGIN">LOGIN</option>
+              <option value="LOGOUT">LOGOUT</option>
+              <option value="ROLE_CHANGED">ROLE_CHANGED</option>
+              <option value="UPDATED_INVENTORY">UPDATED_INVENTORY</option>
+              <option value="CREATED_PRODUCT">CREATED_PRODUCT</option>
+              <option value="UPDATED_PRODUCT">UPDATED_PRODUCT</option>
+              <option value="DELETED_PRODUCT">DELETED_PRODUCT</option>
+              <option value="CREATED_USER">CREATED_USER</option>
+              <option value="UPDATED_USER">UPDATED_USER</option>
+              <option value="DELETED_USER">DELETED_USER</option>
+              <option value="PROCESSED_PAYROLL">PROCESSED_PAYROLL</option>
+              <option value="VERIFIED_PAYMENT">VERIFIED_PAYMENT</option>
+              <option value="CANCELLED_ORDER">CANCELLED_ORDER</option>
+              <option value="ISSUED_WARNING">ISSUED_WARNING</option>
+              <option value="TERMINATED_EMPLOYEE">TERMINATED_EMPLOYEE</option>
+              <option value="SUSPENDED_EMPLOYEE">SUSPENDED_EMPLOYEE</option>
+            </select>
           </div>
           <div>
             <label className="form-label text-xs">Entity</label>
-            <input
-              type="text"
-              placeholder="e.g. User, Product"
+            <select
               value={temp.entity}
               onChange={e => setTemp(t => ({ ...t, entity: e.target.value }))}
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            >
+              <option value="">All Entities</option>
+              <option value="User">User</option>
+              <option value="Product">Product</option>
+              <option value="Order">Order</option>
+              <option value="Inventory">Inventory</option>
+              <option value="Employee">Employee</option>
+              <option value="Customer">Customer</option>
+              <option value="Salary">Salary</option>
+              <option value="LeaveRequest">LeaveRequest</option>
+              <option value="Payment">Payment</option>
+            </select>
           </div>
           <div>
             <label className="form-label text-xs">From Date</label>
@@ -185,10 +223,16 @@ export default function AuditLog() {
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-primary/5">
               <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                <th className="data-table-cell text-left">Timestamp</th>
+                <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('createdAt')}>
+                  <div className="flex items-center gap-1">Timestamp <ArrowUpDown size={12} className={sortField === 'createdAt' ? 'text-primary' : ''} /></div>
+                </th>
                 <th className="data-table-cell text-left">User</th>
-                <th className="data-table-cell text-left">Action</th>
-                <th className="data-table-cell text-left">Entity</th>
+                <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('action')}>
+                  <div className="flex items-center gap-1">Action <ArrowUpDown size={12} className={sortField === 'action' ? 'text-primary' : ''} /></div>
+                </th>
+                <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('entity')}>
+                  <div className="flex items-center gap-1">Entity <ArrowUpDown size={12} className={sortField === 'entity' ? 'text-primary' : ''} /></div>
+                </th>
                 <th className="data-table-cell text-left">Entity ID</th>
                 <th className="data-table-cell text-right">Delete</th>
               </tr>
