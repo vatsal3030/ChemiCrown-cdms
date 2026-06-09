@@ -135,7 +135,7 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     const user = await prisma.user.findUnique({ 
       where: { email },
@@ -166,7 +166,8 @@ const login = async (req, res, next) => {
       }
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const tokenExpiry = rememberMe ? '30d' : '7d';
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: tokenExpiry });
 
     res.status(200).json({
       message: 'Login successful',

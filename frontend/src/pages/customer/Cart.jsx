@@ -8,84 +8,112 @@ export default function Cart() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <ShoppingCart className="w-8 h-8 text-primary" /> My Cart
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400">
-            Review your selected products and proceed to checkout
-          </p>
-        </div>
+    <div className="flex-1 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
+      {/* Header */}
+      <div className="mb-5">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
+          My Cart
+        </h2>
+        <p className="text-muted-foreground text-sm mt-0.5">
+          Review your selected products and proceed to checkout
+        </p>
       </div>
 
       {cartItems.length === 0 ? (
-        <div className="text-center py-20 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="w-20 h-20 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShoppingCart className="h-10 w-10 text-slate-400" />
+        <div className="text-center py-16 bg-card rounded-2xl border border-border shadow-sm">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShoppingCart className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Your cart is empty</h3>
-          <p className="text-slate-500 mb-8 max-w-md mx-auto">
-            Looks like you haven't added any chemicals to your cart yet. Browse our catalog to find what you need.
+          <h3 className="text-lg font-bold text-foreground mb-2">Your cart is empty</h3>
+          <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto px-4">
+            Browse our catalog to find chemicals you need.
           </p>
-          <Button onClick={() => navigate('/dashboard/catalog')} size="lg" className="rounded-xl">
+          <Button onClick={() => navigate('/dashboard/catalog')} className="rounded-xl">
             Browse Catalog
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <h3 className="font-bold text-lg text-slate-900 dark:text-white">Cart Items ({cartItems.length})</h3>
-                <Button variant="ghost" size="sm" onClick={clearCart} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30">
-                  <Trash2 className="w-4 h-4 mr-2" /> Clear All
-                </Button>
+        // Stack on mobile, side-by-side on lg
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
+
+          {/* ── Cart Items (takes 2/3 on desktop) ── */}
+          <div className="lg:col-span-2">
+            <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+              {/* Card header */}
+              <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-border flex justify-between items-center">
+                <h3 className="font-bold text-sm sm:text-base text-foreground">
+                  Cart Items ({cartItems.length})
+                </h3>
+                <button
+                  onClick={clearCart}
+                  className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 px-2.5 py-1.5 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Clear All
+                </button>
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+
+              {/* Items list */}
+              <div className="divide-y divide-border">
                 {cartItems.map(item => (
-                  <div key={item.product.id} className="p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                    <div className="w-24 h-24 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden shrink-0 flex items-center justify-center border border-slate-200 dark:border-slate-800">
-                      {item.product.imageUrls && item.product.imageUrls.length > 0 ? (
+                  <div key={item.product.id} className="px-4 py-3 sm:px-5 sm:py-4 flex gap-3 sm:gap-4 items-center">
+                    {/* Product image */}
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-muted rounded-xl overflow-hidden shrink-0 border border-border">
+                      {item.product.imageUrls?.length > 0 ? (
                         <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-full h-full object-cover" />
                       ) : (
-                        <Package className="text-slate-400 w-8 h-8" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="text-muted-foreground w-6 h-6" />
+                        </div>
                       )}
                     </div>
-                    <div className="flex-1">
-                      <Link to={`/dashboard/catalog/${item.product.id}`} className="font-bold text-lg text-slate-900 dark:text-white hover:text-primary transition-colors line-clamp-1">
+
+                    {/* Name + price */}
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        to={`/dashboard/catalog/${item.product.id}`}
+                        className="font-semibold text-sm text-foreground hover:text-primary transition-colors line-clamp-1"
+                      >
                         {item.product.name}
                       </Link>
-                      <p className="text-sm text-slate-500 mt-1 line-clamp-1">{item.product.description}</p>
-                      <div className="flex items-center gap-4 mt-3">
-                        <span className="font-bold text-primary">₹{item.product.price.toLocaleString('en-IN')}</span>
-                        <span className="text-sm text-slate-500 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md">
-                          {item.product.packageSize} {item.product.unit}
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className="font-bold text-sm text-primary">
+                          ₹{item.product.price.toLocaleString('en-IN')}
                         </span>
+                        {item.product.packageSize && (
+                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            {item.product.packageSize} {item.product.unit}
+                          </span>
+                        )}
                       </div>
+                      {/* Subtotal on mobile */}
+                      <p className="text-xs text-muted-foreground mt-0.5 sm:hidden">
+                        Subtotal: ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg p-1">
+
+                    {/* Qty controls + delete */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center border border-border rounded-lg overflow-hidden h-8">
                         <button
                           onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
-                          className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                          className="w-7 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                         >
-                          <Minus size={14} />
+                          <Minus size={12} />
                         </button>
-                        <span className="w-10 text-center font-medium">{item.quantity}</span>
+                        <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                          className="w-7 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                         >
-                          <Plus size={14} />
+                          <Plus size={12} />
                         </button>
                       </div>
                       <button
                         onClick={() => removeFromCart(item.product.id)}
-                        className="w-10 h-10 flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
+                        className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -94,40 +122,44 @@ export default function Cart() {
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm sticky top-6">
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6">Order Summary</h3>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+          {/* ── Order Summary (sidebar on desktop, stacked on mobile) ── */}
+          <div className="lg:sticky lg:top-6">
+            <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-sm">
+              <h3 className="font-bold text-sm sm:text-base text-foreground mb-4">Order Summary</h3>
+
+              <div className="space-y-2.5 text-sm">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
-                  <span className="font-medium text-slate-900 dark:text-white">₹{cartTotal.toLocaleString('en-IN')}</span>
+                  <span className="font-medium text-foreground">₹{cartTotal.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                <div className="flex justify-between text-muted-foreground">
                   <span>GST (18%)</span>
-                  <span className="font-medium text-slate-900 dark:text-white">₹{(cartTotal * 0.18).toLocaleString('en-IN')}</span>
+                  <span className="font-medium text-foreground">₹{Math.round(cartTotal * 0.18).toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Delivery</span>
-                  <span className="text-xs text-muted-foreground self-center ml-2">(Calculated at checkout)</span>
-                </div>
-                
-                <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-slate-900 dark:text-white">Total Estimate</span>
-                    <span className="text-2xl font-bold text-primary">₹{(cartTotal * 1.18).toLocaleString('en-IN')}</span>
-                  </div>
+                  <span className="text-xs text-muted-foreground/70">Calculated at checkout</span>
                 </div>
               </div>
 
-              <Button 
-                onClick={() => navigate('/dashboard/checkout')} 
-                className="w-full mt-8 rounded-xl py-6 text-lg shadow-md hover:shadow-lg transition-all"
+              <div className="border-t border-border mt-4 pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-sm text-foreground">Estimated Total</span>
+                  <span className="text-xl font-extrabold text-primary">
+                    ₹{Math.round(cartTotal * 1.18).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => navigate('/dashboard/checkout')}
+                className="w-full mt-5 rounded-xl"
               >
-                Proceed to Checkout <ArrowRight className="ml-2 w-5 h-5" />
+                Checkout <ArrowRight className="ml-1.5 w-4 h-4" />
               </Button>
-              <div className="mt-4 text-center">
-                <Link to="/dashboard/catalog" className="text-sm text-primary hover:underline font-medium">
+
+              <div className="mt-3 text-center">
+                <Link to="/dashboard/catalog" className="text-xs text-primary hover:underline font-medium">
                   Continue Shopping
                 </Link>
               </div>

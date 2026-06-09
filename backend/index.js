@@ -109,6 +109,17 @@ const apiLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
+
+// Contact form: strict (5 per 10 minutes per IP) to prevent spam
+const contactLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 5,
+  message: { error: 'Too many messages sent. Please wait 10 minutes before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/contact', contactLimiter);
+
 app.use('/api', apiLimiter);
 
 // ── Make io accessible inside route controllers ───────────────────────────────
@@ -124,6 +135,25 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
   });
+});
+
+// ── Contact Form (public, no auth needed) ────────────────────────────────────
+app.post('/api/contact', (req, res) => {
+  const { name, email, phone, subject, message } = req.body;
+
+  // Basic validation
+  if (!name || name.trim().length < 2)
+    return res.status(400).json({ error: 'Full name is required.' });
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
+    return res.status(400).json({ error: 'Valid email is required.' });
+  if (!message || message.trim().length < 15)
+    return res.status(400).json({ error: 'Message must be at least 15 characters.' });
+
+  // Log submission (replace with nodemailer / SendGrid call when ready)
+  console.log(`[Contact Form] From: ${name} <${email}> | Subject: ${subject} | Phone: ${phone || 'N/A'}`);
+  console.log(`[Contact Form] Message: ${message.substring(0, 200)}`);
+
+  return res.status(200).json({ success: true, message: 'Message received. We will reply within 24 business hours.' });
 });
 
 // ── API Root Splash Page ──────────────────────────────────────────────────────

@@ -1,71 +1,79 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Add a review
+// Add or update a review (upsert: one editable review per product per customer)
 exports.addReview = async (req, res, next) => {
   try {
     const { productId, rating, comment } = req.body;
     const userId = req.user.id;
 
+    if (!productId) {
+      return res.status(400).json({ success: false, message: 'productId is required' });
+    }
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
     }
 
     // Find the customer profile
-    const customer = await prisma.customer.findUnique({
-      where: { userId }
-    });
-
+    const customer = await prisma.customer.findUnique({ where: { userId } });
     if (!customer) {
       return res.status(403).json({ success: false, message: 'Only registered customers can leave reviews' });
     }
 
-    // Verify if customer has a DELIVERED order for this product
+    // Verify the customer has a DELIVERED order for this product
     const validOrder = await prisma.order.findFirst({
       where: {
         customerId: customer.id,
         status: 'DELIVERED',
-        items: {
-          some: {
-            productId: productId
-          }
-        }
+        items: { some: { productId } }
       }
     });
 
     if (!validOrder) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'You can only review products after they have been successfully delivered to you.' 
+      return res.status(403).json({
+        success: false,
+        message: 'You can only review products after they have been delivered to you.'
       });
     }
 
-    // Check if review already exists
+    // Check if review already exists — if yes, UPDATE it (edit mode)
     const existingReview = await prisma.review.findFirst({
-      where: {
-        customerId: customer.id,
-        productId: productId
-      }
+      where: { customerId: customer.id, productId }
     });
+
+    let review;
+    let isEdit = false;
 
     if (existingReview) {
-      return res.status(400).json({ success: false, message: 'You have already reviewed this product' });
+      // Update existing review
+      review = await prisma.review.update({
+        where: { id: existingReview.id },
+        data: { rating: parseInt(rating), comment: comment || null }
+      });
+      isEdit = true;
+    } else {
+      // Create new review
+      review = await prisma.review.create({
+        data: {
+          rating: parseInt(rating),
+          comment: comment || null,
+          productId,
+          customerId: customer.id
+        }
+      });
     }
 
-    const review = await prisma.review.create({
-      data: {
-        rating: parseInt(rating),
-        comment,
-        productId,
-        customerId: customer.id
-      }
+    res.status(isEdit ? 200 : 201).json({
+      success: true,
+      data: review,
+      message: isEdit ? 'Review updated successfully' : 'Review added successfully',
+      isEdit
     });
-
-    res.status(201).json({ success: true, data: review, message: 'Review added successfully' });
   } catch (error) {
     next(error);
   }
 };
+
 
 // Get reviews for a product
 exports.getProductReviews = async (req, res, next) => {

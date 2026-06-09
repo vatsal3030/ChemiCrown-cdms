@@ -55,7 +55,7 @@ import TicketDashboard from './pages/admin/TicketDashboard';
 import HolidayManagement from './pages/admin/HolidayManagement';
 import NotFound from './pages/NotFound';
 
-import { Toaster } from 'react-hot-toast';
+import { Toaster, ToastBar, toast as hotToast } from 'react-hot-toast';
 
 function DynamicTitle() {
   const location = useLocation();
@@ -101,7 +101,39 @@ function App() {
           <BrowserRouter>
             <DynamicTitle />
             <ScrollToTop />
-            <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+            <Toaster
+              position="top-right"
+              containerStyle={{ top: 70 }}
+              toastOptions={{
+                duration: 3000,
+                style: { maxWidth: '340px', fontSize: '14px', cursor: 'pointer', paddingRight: '8px' },
+                success: { duration: 3000 },
+                error: { duration: 4500 },
+              }}
+            >
+              {(t) => (
+                <ToastBar toast={t}>
+                  {({ icon, message }) => (
+                    <div
+                      className="flex items-start gap-2 w-full"
+                      onClick={() => hotToast.dismiss(t.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {icon}
+                      <span className="flex-1 text-sm">{message}</span>
+                      {/* × dismiss button */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); hotToast.dismiss(t.id); }}
+                        style={{ color: '#9ca3af', marginLeft: '4px', lineHeight: 1, flexShrink: 0 }}
+                        aria-label="Dismiss"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </ToastBar>
+              )}
+            </Toaster>
             <Routes>
               {/* Zone A: Public Website */}
               <Route path="/" element={<PublicLayout />}>
@@ -146,8 +178,8 @@ function App() {
                     <Route path="orders/:id" element={<OrderDetails />} />
                   </Route>
                   
-                  {/* Customer Routes */}
-                  <Route element={<ProtectedRoute allowedRoles={['CUSTOMER']} />}>
+                  {/* Customer-style shopping routes — also accessible by in-company roles */}
+                  <Route element={<ProtectedRoute allowedRoles={['CUSTOMER', 'SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER']} />}>
                     <Route path="cart" element={<Cart />} />
                     <Route path="checkout" element={<Checkout />} />
                     <Route path="wishlist" element={<Wishlist />} />

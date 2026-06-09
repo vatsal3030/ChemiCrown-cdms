@@ -144,7 +144,11 @@ exports.getAuditLogs = async (req, res, next) => {
     if (from || to) {
       where.createdAt = {};
       if (from) where.createdAt.gte = new Date(from);
-      if (to) where.createdAt.lte = new Date(to);
+      if (to) {
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        where.createdAt.lte = toDate;
+      }
     }
 
     const [logs, total] = await Promise.all([

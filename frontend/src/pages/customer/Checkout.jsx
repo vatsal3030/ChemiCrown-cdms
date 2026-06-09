@@ -85,9 +85,8 @@ export default function Checkout() {
   const handlePayment = async () => {
     const errors = {};
     if (!formData.companyName.trim()) errors.companyName = 'Company name is required';
-    if (!formData.gstNumber.trim()) {
-      errors.gstNumber = 'GST number is required';
-    } else if (!GST_REGEX.test(formData.gstNumber.trim().toUpperCase())) {
+    // GST is optional — only validate format if provided
+    if (formData.gstNumber.trim() && !GST_REGEX.test(formData.gstNumber.trim().toUpperCase())) {
       errors.gstNumber = 'Invalid GST number format (e.g. 22AAAAA0000A1Z5)';
     }
     if (!formData.shippingAddress.trim()) errors.shippingAddress = 'Shipping address is required';
@@ -288,13 +287,13 @@ export default function Checkout() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in">
+    <div className="px-3 py-5 sm:px-6 sm:py-8 max-w-6xl mx-auto space-y-5 sm:space-y-8 animate-in fade-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Secure Checkout</h1>
         <p className="text-muted-foreground mt-2">Review your order details and complete the payment.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-start">
         <div className="space-y-6">
           <div className="bg-card border border-border p-6 rounded-xl shadow-sm">
             <h3 className="font-semibold text-lg border-b border-border pb-4 mb-4 text-foreground flex items-center justify-between">
@@ -378,7 +377,7 @@ export default function Checkout() {
                   {fieldErrors.companyName && <p className="text-xs text-red-600 mt-1">{fieldErrors.companyName}</p>}
                 </div>
                 <div id="field-gstNumber">
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">GST Number *</label>
+                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">GST Number <span className="text-muted-foreground font-normal">(Optional)</span></label>
                   <Input 
                     placeholder="22AAAAA0000A1Z5"
                     value={formData.gstNumber}
@@ -448,10 +447,9 @@ export default function Checkout() {
               <CreditCard className="w-5 h-5 text-primary" /> Payment Method
             </h3>
             
-            <div className="space-y-3 mb-6">
-              {/* Razorpay */}
+              <div className="space-y-2.5 mb-5">
               <label 
-                className={`flex items-start p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'RAZORPAY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
+                className={`flex items-start p-3 sm:p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'RAZORPAY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
               >
                 <input 
                   type="radio" 
@@ -474,9 +472,9 @@ export default function Checkout() {
                 </div>
               </label>
 
-              {/* UPI / QR — works independently of Razorpay activation */}
+              {/* UPI / QR */}
               <label 
-                className={`flex items-start p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'UPI_QR' ? 'border-green-500 bg-green-50 dark:bg-green-950/30 ring-2 ring-green-500/20' : 'border-border hover:bg-muted'}`}
+                className={`flex items-start p-3 sm:p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'UPI_QR' ? 'border-green-500 bg-green-50 dark:bg-green-950/30 ring-2 ring-green-500/20' : 'border-border hover:bg-muted'}`}
               >
                 <input 
                   type="radio" 
@@ -504,7 +502,7 @@ export default function Checkout() {
 
               {/* Pay on Delivery */}
               <label 
-                className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'PAY_ON_DELIVERY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
+                className={`flex items-center p-3 sm:p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'PAY_ON_DELIVERY' ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:bg-muted'}`}
               >
                 <input 
                   type="radio" 

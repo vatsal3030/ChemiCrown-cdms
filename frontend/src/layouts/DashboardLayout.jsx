@@ -44,6 +44,11 @@ const buildNavSections = (role) => {
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER', 'SALES'].includes(role)) {
     ops.items.push({ name: 'Product Catalog', path: '/dashboard/catalog', icon: Store });
   }
+  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER'].includes(role)) {
+    // In-company staff can also use cart, wishlist and place orders
+    ops.items.push({ name: 'My Cart', path: '/dashboard/cart', icon: ShoppingCart });
+    ops.items.push({ name: 'My Wishlist', path: '/dashboard/wishlist', icon: Heart });
+  }
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING'].includes(role)) {
     ops.items.push({ name: 'Orders', path: '/dashboard/orders', icon: ClipboardList });
   }

@@ -36,8 +36,13 @@ exports.getDashboardStats = async (req, res, next) => {
       prisma.customer.count({
         where: { isVerified: true, deletedAt: null }
       }).catch(() => 0),
+      // Customer has no createdAt — filter through the related User
       prisma.customer.count({
-        where: { isVerified: true, deletedAt: null, createdAt: { gte: startOfWeek } }
+        where: {
+          isVerified: true,
+          deletedAt: null,
+          user: { createdAt: { gte: startOfWeek } }
+        }
       }).catch(() => 0)
     ]);
 

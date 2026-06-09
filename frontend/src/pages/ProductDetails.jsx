@@ -190,7 +190,7 @@ export default function ProductDetails() {
   const images = product.imageUrls?.length > 0 ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 pb-20 animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-10 pb-16 sm:pb-20 animate-in fade-in duration-500 overflow-x-hidden">
       <Button variant="ghost" onClick={() => {
         const isDashboard = location.pathname.startsWith('/dashboard');
         navigate(isDashboard ? '/dashboard/catalog' : '/catalog');
@@ -198,11 +198,12 @@ export default function ProductDetails() {
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Catalog
       </Button>
 
-      {/* Main Product Section - 3 Column Layout (Amazon Style) */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start relative">
+      {/* Main Product Section - Responsive Grid Layout */}
+      {/* Mobile: image → buy-box → info (stacked). Desktop: image | info | buy-box (3 col) */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-start">
         
-        {/* Left Column: Image Gallery (4 cols) */}
-        <div className="md:col-span-5 lg:col-span-4 space-y-4 sticky top-24">
+        {/* Left Column: Image Gallery */}
+        <div className="md:col-span-5 lg:col-span-4 space-y-3">
           <div className="relative group glass rounded-2xl border border-border flex items-center justify-center aspect-square shadow-sm overflow-hidden bg-white">
             {images.length > 0 ? (
               <>
@@ -240,8 +241,8 @@ export default function ProductDetails() {
           )}
         </div>
 
-        {/* Middle Column: Product Info (5 cols) */}
-        <div className="md:col-span-7 lg:col-span-5 space-y-6">
+        {/* Middle Column: Product Info — order 3 on mobile (below buy box) */}
+        <div className="md:col-span-7 lg:col-span-5 space-y-5 order-3 md:order-none">
           <div className="border-b border-border pb-6">
             <div className="text-primary font-semibold hover:underline cursor-pointer inline-flex items-center text-sm mb-2">
               {product.category?.name || 'General'}
@@ -266,18 +267,18 @@ export default function ProductDetails() {
             </div>
             <p className="text-sm text-muted-foreground">Inclusive of all taxes</p>
 
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-100 dark:border-slate-800 text-sm">
-              <table className="w-full text-left border-collapse">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-3 sm:p-5 rounded-xl border border-slate-100 dark:border-slate-800 text-xs sm:text-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-0">
                 <tbody>
-                  {product.brand && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">Brand</th><td className="py-2.5 text-foreground font-semibold">{product.brand}</td></tr>}
-                  {product.manufacturer && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">Manufacturer</th><td className="py-2.5 text-foreground">{product.manufacturer}</td></tr>}
-                  {product.itemForm && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">Item Form</th><td className="py-2.5 text-foreground">{product.itemForm}</td></tr>}
-                  {product.purity && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">Purity</th><td className="py-2.5 text-foreground">{product.purity}</td></tr>}
-                  {product.grade && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">Grade</th><td className="py-2.5 text-foreground">{product.grade}</td></tr>}
-                  {product.mfgDate && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">Mfg Date</th><td className="py-2.5 text-foreground">{new Date(product.mfgDate).toLocaleDateString()}</td></tr>}
-                  {product.expiryDate && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">Expiry Date</th><td className="py-2.5 text-foreground">{new Date(product.expiryDate).toLocaleDateString()}</td></tr>}
-                  {product.casNumber && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">CAS Number</th><td className="py-2.5 font-mono text-foreground">{product.casNumber}</td></tr>}
-                  {product.sku && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2.5 text-muted-foreground font-medium w-1/3">SKU</th><td className="py-2.5 font-mono text-foreground">{product.sku}</td></tr>}
+                  {product.brand && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Brand</th><td className="py-2 text-foreground font-semibold break-words">{product.brand}</td></tr>}
+                  {product.manufacturer && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Manufacturer</th><td className="py-2 text-foreground break-words">{product.manufacturer}</td></tr>}
+                  {product.itemForm && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Item Form</th><td className="py-2 text-foreground">{product.itemForm}</td></tr>}
+                  {product.purity && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Purity</th><td className="py-2 text-foreground">{product.purity}</td></tr>}
+                  {product.grade && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Grade</th><td className="py-2 text-foreground">{product.grade}</td></tr>}
+                  {product.mfgDate && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Mfg Date</th><td className="py-2 text-foreground">{new Date(product.mfgDate).toLocaleDateString()}</td></tr>}
+                  {product.expiryDate && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Expiry</th><td className="py-2 text-foreground">{new Date(product.expiryDate).toLocaleDateString()}</td></tr>}
+                  {product.casNumber && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">CAS</th><td className="py-2 font-mono text-foreground break-all">{product.casNumber}</td></tr>}
+                  {product.sku && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">SKU</th><td className="py-2 font-mono text-foreground break-all text-[10px] sm:text-xs">{product.sku}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -293,9 +294,9 @@ export default function ProductDetails() {
           </div>
         </div>
 
-        {/* Right Column: Buy Box (3 cols) */}
-        <div className="md:col-span-12 lg:col-span-3">
-          <div className="border border-border rounded-2xl p-6 sticky top-24 bg-card shadow-sm flex flex-col space-y-5">
+        {/* Right Column: Buy Box — on mobile appears below image via order, desktop is 3rd column */}
+        <div className="md:col-span-12 lg:col-span-3 order-2 md:order-none">
+          <div className="border border-border rounded-2xl p-5 bg-card shadow-sm flex flex-col space-y-4">
             <div className="text-2xl font-bold">₹{product.price}</div>
             
             {inStock && (

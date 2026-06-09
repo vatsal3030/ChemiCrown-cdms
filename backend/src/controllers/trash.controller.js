@@ -58,22 +58,21 @@ exports.restoreItem = async (req, res, next) => {
 
 exports.permanentlyDeleteItem = async (req, res, next) => {
   try {
-    const { id, type } = req.body;
+    // Accept from query params (DELETE with body is unreliable across clients/proxies)
+    const id   = req.query.id   || req.body?.id;
+    const type = req.query.type || req.body?.type;
 
     if (!id || !type) {
-      return res.status(400).json({ error: 'ID and Type are required' });
+      return res.status(400).json({ error: 'id and type query params are required' });
     }
 
     if (type === 'PRODUCT') {
-      // Hard delete: cascade via Prisma relations defined in schema
-      // Inventory, reviews, favorites, orderItems are cascade-deleted by DB
       await prisma.product.delete({ where: { id } });
     } else if (type === 'EMPLOYEE') {
-      // Hard delete employee profile first (FK constraint), then user
       await prisma.employee.deleteMany({ where: { userId: id } });
       await prisma.user.delete({ where: { id } });
     } else {
-      return res.status(400).json({ error: 'Invalid type' });
+      return res.status(400).json({ error: 'Invalid type. Must be PRODUCT or EMPLOYEE' });
     }
 
     res.status(200).json({ success: true, message: `${type} permanently deleted` });

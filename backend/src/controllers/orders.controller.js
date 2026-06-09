@@ -202,28 +202,57 @@ const verifyPayment = async (req, res, next) => {
 
 const getOrders = async (req, res, next) => {
   try {
-    const { search, sortField, sortOrder } = req.query;
-    
+    const {
+      search, sortField, sortOrder,
+      status, from, to,
+      minAmount, maxAmount
+    } = req.query;
+
     let where = {};
+
+    // Scope to customer if role is CUSTOMER
     if (req.user.role === 'CUSTOMER') {
       const customer = await prisma.customer.findUnique({ where: { userId: req.user.id } });
       if (customer) {
-         where.customerId = customer.id;
+        where.customerId = customer.id;
       } else {
-         return res.status(200).json({ success: true, data: [] });
+        return res.status(200).json({ success: true, data: [] });
       }
     }
-    
+
+    // Status filter
+    if (status && status !== 'all') {
+      where.status = status.toUpperCase();
+    }
+
+    // Date range filter
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt.gte = new Date(from);
+      if (to) {
+        // Include full day by setting to end of that day
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        where.createdAt.lte = toDate;
+      }
+    }
+
+    // Amount range filter
+    if (minAmount || maxAmount) {
+      where.total = {};
+      if (minAmount) where.total.gte = parseFloat(minAmount);
+      if (maxAmount) where.total.lte = parseFloat(maxAmount);
+    }
+
+    // Search filter (by order ID prefix)
     if (search) {
-      where.id = { contains: search };
+      where.id = { contains: search, mode: 'insensitive' };
     }
 
     const orders = await prisma.order.findMany({
       where,
       orderBy: { [sortField || 'createdAt']: sortOrder || 'desc' },
-      include: {
-        items: true
-      }
+      include: { items: true }
     });
 
     const formatted = orders.map(o => ({
@@ -238,6 +267,7 @@ const getOrders = async (req, res, next) => {
     next(error);
   }
 };
+
 
 const getOrderById = async (req, res, next) => {
   try {

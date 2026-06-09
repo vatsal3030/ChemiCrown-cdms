@@ -55,20 +55,20 @@ export default function RecycleBin() {
 
   const handlePermanentDelete = async (id, type, name) => {
     const confirmed = window.confirm(
-      `⚠️ PERMANENT DELETE\n\nThis will permanently delete "${name}" and ALL related data. This action CANNOT be undone.\n\nType OK to confirm.`
+      `⚠️ PERMANENT DELETE\n\nThis will permanently delete "${name}" and ALL related data. This action CANNOT be undone.\n\nClick OK to confirm.`
     );
     if (!confirmed) return;
 
     setDeletingId(id);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/trash/permanent`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ id, type })
-      });
+      // Pass id & type as query params — DELETE with body is unreliable
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/trash/permanent?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       const json = await res.json();
       if (json.success) {
         toast.success(`${type === 'PRODUCT' ? 'Product' : 'Employee'} permanently deleted`);

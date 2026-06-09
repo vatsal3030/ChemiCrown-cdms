@@ -3,10 +3,11 @@ import { Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 
-export default function ReviewModal({ isOpen, onClose, orderItem, token, onSuccess }) {
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
+export default function ReviewModal({ isOpen, onClose, orderItem, token, onSuccess, existingReview }) {
+  const [rating, setRating] = useState(existingReview?.rating || 5);
+  const [comment, setComment] = useState(existingReview?.comment || '');
   const [loading, setLoading] = useState(false);
+  const isEdit = !!existingReview;
 
   if (!isOpen || !orderItem) return null;
 
@@ -32,11 +33,11 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
       const json = await res.json();
       
       if (res.ok) {
-        toast.success('Review submitted successfully!');
-        onSuccess();
+        toast.success(json.isEdit ? 'Review updated successfully!' : 'Review submitted successfully!');
+        if (onSuccess) onSuccess(json.isEdit);
         onClose();
       } else {
-        toast.error(json.error || 'Failed to submit review');
+        toast.error(json.message || json.error || 'Failed to submit review');
       }
     } catch {
       toast.error('Network error. Please try again.');
@@ -50,7 +51,7 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">
-            Write a Review
+            {isEdit ? 'Edit Your Review' : 'Write a Review'}
           </h2>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
             <X size={20} />
@@ -108,7 +109,7 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Review'}
+              {loading ? 'Submitting...' : isEdit ? 'Update Review' : 'Submit Review'}
             </Button>
           </div>
         </form>
