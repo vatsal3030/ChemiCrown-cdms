@@ -6,6 +6,7 @@ const { requireAuth } = require('../middlewares/auth.middleware');
 router.use(requireAuth);
 
 router.get('/', tasksController.getTasks);
+router.get('/:id', tasksController.getTaskById);
 router.post('/', tasksController.createTask);
 router.patch('/:id/status', tasksController.updateTaskStatus);
 router.delete('/:id', tasksController.deleteTask);

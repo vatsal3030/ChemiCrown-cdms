@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const supportController = require('../controllers/support.controller');
-const { requireAuth } = require('../middlewares/auth.middleware');
+const { requireAuthStrict } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 
-router.use(requireAuth);
+router.use(requireAuthStrict);
 
 // Support Tickets
 router.post('/', supportController.createTicket);

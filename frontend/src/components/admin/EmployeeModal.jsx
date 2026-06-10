@@ -177,7 +177,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Joining Date</label>
               <input 
-                type="date" 
+                type="date" max={new Date().toISOString().split('T')[0]}
                 value={formData.joiningDate}
                 onChange={e => setFormData({...formData, joiningDate: e.target.value})}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -191,7 +191,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Base Salary (₹)</label>
                 <input 
-                  type="number" 
+                  type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                   value={formData.baseSalary}
                   onChange={e => setFormData({...formData, baseSalary: e.target.value})}
                   className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -200,7 +200,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">CTC (₹)</label>
                 <input 
-                  type="number" 
+                  type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                   value={formData.ctc}
                   onChange={e => setFormData({...formData, ctc: e.target.value})}
                   className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -209,7 +209,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">PF Rate (%)</label>
                 <input 
-                  type="number" 
+                  type="number" min="0" max="100" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                   value={formData.pfRate}
                   onChange={e => setFormData({...formData, pfRate: e.target.value})}
                   className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"

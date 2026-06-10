@@ -6,7 +6,7 @@ import {
   CheckSquare, Plus, Trash2, GripVertical,
   X, Calendar, Search, Filter
 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const COLUMNS = [
@@ -137,13 +137,9 @@ export default function Tasks() {
     }, { replace: true });
   };
 
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [employees, setEmployees] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [viewingTask, setViewingTask] = useState(null);
-  const [formData, setFormData] = useState({ title: '', description: '', assignedToId: '' });
-  const [submitting, setSubmitting] = useState(false);
 
   // Drag state
   const [draggingId, setDraggingId] = useState(null);
@@ -163,41 +159,11 @@ export default function Tasks() {
     finally { setLoading(false); }
   };
 
-  const fetchEmployees = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) setEmployees(data.data);
-    } catch (err) { console.error('Fetch employees error', err); }
-  };
+
 
   useEffect(() => {
     fetchTasks();
-    if (canManage) fetchEmployees();
   }, [token]);
-
-  const handleCreateTask = async (e) => {
-    e.preventDefault();
-    if (!formData.title.trim() || !formData.assignedToId) return toast.error('Title and assignee are required');
-    try {
-      setSubmitting(true);
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(formData)
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success('Task assigned!');
-        setIsModalOpen(false);
-        setFormData({ title: '', description: '', assignedToId: '' });
-        fetchTasks();
-      } else toast.error(data.error || 'Failed to create task');
-    } catch (err) { console.error(err); toast.error('Network error'); }
-    finally { setSubmitting(false); }
-  };
 
   const updateStatus = async (id, status) => {
     // Optimistic update
@@ -302,7 +268,7 @@ export default function Tasks() {
             </button>
           )}
           {canManage && (
-            <Button onClick={() => setIsModalOpen(true)}>
+            <Button onClick={() => navigate('/dashboard/tasks/assign')}>
               <Plus size={16} className="mr-2" /> Assign Task
             </Button>
           )}
@@ -374,7 +340,7 @@ export default function Tasks() {
                         user={user}
                         onDelete={handleDelete}
                         onStatusChange={updateStatus}
-                        onView={setViewingTask}
+                        onView={(t) => navigate(`/dashboard/tasks/${t.id}`)}
                         dragging={draggingId === task.id}
                         dragHandleProps={{}}
                       />
@@ -384,74 +350,6 @@ export default function Tasks() {
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Task Detail Modal */}
-      {viewingTask && (
-        <TaskDetailModal
-          task={viewingTask}
-          onClose={() => setViewingTask(null)}
-          onStatusChange={updateStatus}
-        />
-      )}
-
-      {/* Assign Task Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-5xl rounded-2xl shadow-2xl border border-border p-6 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-foreground">Assign New Task</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-xl hover:bg-muted transition-colors">
-                <X size={18} className="text-muted-foreground" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateTask} className="space-y-4">
-              <div>
-                <label className="form-label">Task Title *</label>
-                <Input
-                  required
-                  value={formData.title}
-                  onChange={e => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. Audit Stock Level"
-                />
-              </div>
-              <div>
-                <label className="form-label">Description (Optional)</label>
-                <textarea
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                  rows={3}
-                  value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the task..."
-                />
-              </div>
-              <div>
-                <label className="form-label">Assign To *</label>
-                <select
-                  required
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={formData.assignedToId}
-                  onChange={e => setFormData({ ...formData, assignedToId: e.target.value })}
-                >
-                  <option value="">Select Employee</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.employeeProfile?.id}>
-                      {emp.firstName} {emp.lastName} — {emp.role.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" className="flex-1" disabled={submitting}>
-                  {submitting ? 'Assigning...' : 'Assign Task'}
-                </Button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
     </div>

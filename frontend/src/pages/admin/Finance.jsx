@@ -109,7 +109,7 @@ function ExpenseModal({ expense, token, onClose, onSuccess }) {
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Amount (₹) *</label>
-              <Input type="number" value={form.amount} onChange={e => upd('amount', e.target.value)} placeholder="0.00" min="0" />
+              <Input type="number" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={form.amount} onChange={e => upd('amount', e.target.value)} placeholder="0.00" min="0" />
             </div>
           </div>
           <div>

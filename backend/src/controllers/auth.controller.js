@@ -287,6 +287,91 @@ const rejectCustomer = async (req, res, next) => {
   }
 };
 
+const getAllCustomers = async (req, res, next) => {
+  try {
+    const customers = await prisma.customer.findMany({
+      include: { user: true },
+      orderBy: { user: { createdAt: 'desc' } }
+    });
+    
+    const formatted = customers.map(c => ({
+      id: c.id,
+      company: c.companyName || `${c.user.firstName} ${c.user.lastName}`,
+      email: c.user.email,
+      gst: c.gstNumber || 'N/A',
+      isVerified: c.isVerified,
+      isBlocked: !!c.user.deletedAt,
+      appliedAt: c.user.createdAt ? c.user.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    }));
+    
+    res.status(200).json({ success: true, customers: formatted });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getCustomerById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+      include: {
+        user: { select: { firstName: true, lastName: true, email: true, phone: true, deletedAt: true, createdAt: true } },
+        orders: {
+          include: { items: true, payment: true },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (!customer) return res.status(404).json({ success: false, error: 'Customer not found' });
+
+    res.status(200).json({ success: true, data: customer });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const toggleCustomerStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body; // 'block' or 'unblock'
+    
+    const customer = await prisma.customer.findUnique({ where: { id } });
+    if (!customer) return res.status(404).json({ success: false, error: 'Customer not found' });
+
+    await prisma.user.update({
+      where: { id: customer.userId },
+      data: { deletedAt: action === 'block' ? new Date() : null }
+    });
+
+    res.status(200).json({ success: true, message: `Customer ${action}ed successfully` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const warnCustomer = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { message } = req.body;
+    
+    const customer = await prisma.customer.findUnique({ where: { id } });
+    if (!customer) return res.status(404).json({ success: false, error: 'Customer not found' });
+
+    await prisma.notification.create({
+      data: {
+        userId: customer.userId,
+        message: `[WARNING] ${message}`
+      }
+    });
+
+    res.status(200).json({ success: true, message: 'Warning sent to customer' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const { sendOtpEmail } = require('../services/email.service');
 const crypto = require('crypto');
 
@@ -406,5 +491,9 @@ module.exports = {
   rejectCustomer,
   forgotPassword,
   verifyOtp,
-  resetPassword
+  resetPassword,
+  getAllCustomers,
+  getCustomerById,
+  toggleCustomerStatus,
+  warnCustomer
 };

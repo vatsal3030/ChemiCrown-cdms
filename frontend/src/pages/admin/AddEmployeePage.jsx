@@ -68,6 +68,12 @@ export default function AddEmployeePage() {
     if (!form.department) return toast.error('Department is required');
     if (!form.jobTitle)   return toast.error('Job title is required');
 
+    // Number validations
+    if (form.baseSalary && parseFloat(form.baseSalary) < 0) return toast.error('Base Salary cannot be negative');
+    if (form.ctc && parseFloat(form.ctc) < 0) return toast.error('CTC cannot be negative');
+    if (form.pfRate && (parseFloat(form.pfRate) < 0 || parseFloat(form.pfRate) > 100)) return toast.error('Invalid PF Rate');
+    if (form.salesTarget && parseFloat(form.salesTarget) < 0) return toast.error('Sales target cannot be negative');
+
     setLoading(true);
     try {
       const payload = {
@@ -259,7 +265,8 @@ export default function AddEmployeePage() {
                 <div className="relative">
                   <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
-                    type="date" value={form.joiningDate}
+                    type="date"
+                    max={new Date().toISOString().split('T')[0]} value={form.joiningDate}
                     onChange={e => set('joiningDate', e.target.value)}
                     className="form-input pl-9"
                   />
@@ -274,6 +281,7 @@ export default function AddEmployeePage() {
                   <IndianRupee size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="number" min={0} step={1000} value={form.salesTarget}
+                    onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                     onChange={e => set('salesTarget', e.target.value)}
                     placeholder="e.g. 500000"
                     className="form-input pl-9"
@@ -300,6 +308,7 @@ export default function AddEmployeePage() {
                   <IndianRupee size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="number" min={0} step={500} value={form.baseSalary}
+                    onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                     onChange={e => set('baseSalary', e.target.value)}
                     placeholder="e.g. 35000"
                     className="form-input pl-8"
@@ -312,6 +321,7 @@ export default function AddEmployeePage() {
                   <IndianRupee size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="number" min={0} step={10000} value={form.ctc}
+                    onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                     onChange={e => set('ctc', e.target.value)}
                     placeholder="e.g. 500000"
                     className="form-input pl-8"
@@ -324,6 +334,7 @@ export default function AddEmployeePage() {
                   <Percent size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="number" min={0} max={24} step={0.5} value={form.pfRate}
+                    onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                     onChange={e => set('pfRate', e.target.value)}
                     className="form-input pl-8"
                   />

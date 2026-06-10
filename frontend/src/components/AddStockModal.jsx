@@ -89,6 +89,7 @@ export default function AddStockModal({ isOpen, onClose, product, token, onSucce
                       type="number" 
                       required 
                       value={addedQuantity} 
+                      onKeyDown={e => { if (e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                       onChange={(e) => setAddedQuantity(e.target.value)} 
                       placeholder="e.g. 50 or -5" 
                       className="text-lg font-bold py-6 bg-white dark:bg-slate-900 border-primary/30 focus-visible:ring-primary/50"
@@ -115,6 +116,7 @@ export default function AddStockModal({ isOpen, onClose, product, token, onSucce
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Manufacturing Date</label>
                   <Input 
                     type="date"
+                    max={new Date().toISOString().split('T')[0]}
                     value={mfgDate} 
                     onChange={(e) => setMfgDate(e.target.value)} 
                     className="bg-white dark:bg-slate-950"
@@ -124,6 +126,7 @@ export default function AddStockModal({ isOpen, onClose, product, token, onSucce
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Expiry Date</label>
                   <Input 
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     value={expiryDate} 
                     onChange={(e) => setExpiryDate(e.target.value)} 
                     className="bg-white dark:bg-slate-950"

@@ -299,6 +299,11 @@ const getOrderById = async (req, res, next) => {
           include: {
             user: { select: { firstName: true, lastName: true, email: true, phone: true } }
           }
+        },
+        payment: true,
+        history: {
+          include: { user: { select: { firstName: true, lastName: true } } },
+          orderBy: { changedAt: 'desc' }
         }
       }
     });
@@ -410,7 +415,8 @@ const cancelOrder = async (req, res, next) => {
         data: {
           orderId:   id,
           oldStatus: order.status,
-          newStatus: 'CANCELLED'
+          newStatus: 'CANCELLED',
+          changedById: req.user?.id
         }
       });
 
@@ -568,7 +574,8 @@ const advanceOrderStatus = async (req, res, next) => {
         data: {
           orderId: id,
           oldStatus: order.status,
-          newStatus: nextStatus
+          newStatus: nextStatus,
+          changedById: req.user?.id
         }
       });
 
@@ -706,7 +713,8 @@ const verifyUpiPayment = async (req, res, next) => {
           data: {
             orderId,
             oldStatus: order.status,
-            newStatus: 'PROCESSING'
+            newStatus: 'PROCESSING',
+            changedById: req.user?.id
           }
         });
 

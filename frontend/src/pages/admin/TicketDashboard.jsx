@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Bug, Lightbulb, Database, AlertTriangle, CheckCircle2, Clock, RefreshCw, X, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Bug, Lightbulb, Database, AlertTriangle, CheckCircle2, Clock, RefreshCw, X, ChevronDown, Search, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 
 const TYPE_ICONS = { BUG: Bug, FEATURE_REQUEST: Lightbulb, DATA_ISSUE: Database, OTHER: AlertTriangle };
@@ -22,9 +24,14 @@ export default function TicketDashboard() {
   const { token, user } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState(null);
-  const [resolution, setResolution] = useState('');
-  const [resolving, setResolving] = useState(false);
+  
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [priorityFilter, setPriorityFilter] = useState('ALL');
+
+  const navigate = useNavigate();
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -40,25 +47,6 @@ export default function TicketDashboard() {
 
   useEffect(() => { fetchTickets(); }, []);
 
-  const handleResolve = async (id, status) => {
-    setResolving(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/support/${id}/resolve`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status, resolution })
-      });
-      const json = await res.json();
-      if (json.success) {
-        toast.success(`Ticket ${status.toLowerCase()}`);
-        setTickets(prev => prev.map(t => t.id === id ? { ...t, status, resolution } : t));
-        setSelected(null);
-        setResolution('');
-      } else toast.error(json.message || 'Failed');
-    } catch { toast.error('Network error'); }
-    finally { setResolving(false); }
-  };
-
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this ticket?')) return;
     try {
@@ -73,42 +61,29 @@ export default function TicketDashboard() {
     } catch { toast.error('Network error'); }
   };
 
+  const filteredTickets = useMemo(() => {
+    return tickets.filter(t => {
+      const matchSearch = searchTerm === '' || 
+        t.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (t.submitter?.firstName && t.submitter.firstName.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchType = typeFilter === 'ALL' || t.type === typeFilter;
+      const matchStatus = statusFilter === 'ALL' || t.status === statusFilter;
+      const matchPriority = priorityFilter === 'ALL' || t.priority === priorityFilter;
+      return matchSearch && matchType && matchStatus && matchPriority;
+    });
+  }, [tickets, searchTerm, typeFilter, statusFilter, priorityFilter]);
+
+  const hasFilters = searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL' || priorityFilter !== 'ALL';
+  const clearFilters = () => {
+    setSearchTerm('');
+    setTypeFilter('ALL');
+    setStatusFilter('ALL');
+    setPriorityFilter('ALL');
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Resolve Modal */}
-      {selected && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="font-bold text-foreground">Update Ticket</h2>
-              <button onClick={() => setSelected(null)} className="p-1.5 hover:bg-muted rounded-lg"><X size={16} /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="bg-muted/50 rounded-xl p-4">
-                <p className="font-semibold text-foreground">{selected.title}</p>
-                <p className="text-sm text-muted-foreground mt-1">{selected.description}</p>
-              </div>
-              <div>
-                <label className="form-label">Resolution / Response</label>
-                <textarea
-                  value={resolution}
-                  onChange={e => setResolution(e.target.value)}
-                  rows={3}
-                  placeholder="Describe the resolution or action taken..."
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => handleResolve(selected.id, 'IN_PROGRESS')} disabled={resolving}>Mark In Progress</Button>
-                <Button onClick={() => handleResolve(selected.id, 'RESOLVED')} disabled={resolving}>
-                  <CheckCircle2 size={14} className="mr-1.5" />
-                  {resolving ? 'Saving...' : 'Mark Resolved'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       <div className="page-header mb-0">
         <div className="page-header-icon bg-red-500/10 text-red-600"><Bug size={22} /></div>
@@ -129,6 +104,47 @@ export default function TicketDashboard() {
         ))}
       </div>
 
+      <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 items-center mb-6">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+          <Input 
+            className="w-full pl-9 h-9 text-sm" 
+            placeholder="Search tickets by title or user..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <select 
+          value={typeFilter} 
+          onChange={e => setTypeFilter(e.target.value)}
+          className="w-full md:w-36 h-9 text-sm bg-background border border-input rounded-md px-3"
+        >
+          <option value="ALL">All Types</option>
+          {Object.keys(TYPE_ICONS).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
+        </select>
+        <select 
+          value={statusFilter} 
+          onChange={e => setStatusFilter(e.target.value)}
+          className="w-full md:w-36 h-9 text-sm bg-background border border-input rounded-md px-3"
+        >
+          <option value="ALL">All Statuses</option>
+          {Object.keys(STATUS_STYLES).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
+        </select>
+        <select 
+          value={priorityFilter} 
+          onChange={e => setPriorityFilter(e.target.value)}
+          className="w-full md:w-36 h-9 text-sm bg-background border border-input rounded-md px-3"
+        >
+          <option value="ALL">All Priorities</option>
+          {Object.keys(PRIORITY_STYLES).map(k => <option key={k} value={k}>{k}</option>)}
+        </select>
+        {hasFilters && (
+          <Button variant="outline" size="sm" onClick={clearFilters} className="w-full md:w-auto h-9 text-muted-foreground">
+            <X size={14} className="mr-1" /> Clear
+          </Button>
+        )}
+      </div>
+
       <div className="data-table-wrapper">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -146,9 +162,9 @@ export default function TicketDashboard() {
             <tbody className="divide-y divide-border">
               {loading ? [...Array(5)].map((_, i) => (
                 <tr key={i}>{[...Array(7)].map((_, j) => <td key={j} className="data-table-cell"><div className="h-4 bg-muted rounded animate-pulse" /></td>)}</tr>
-              )) : tickets.length === 0 ? (
-                <tr><td colSpan={7} className="py-16 text-center text-muted-foreground">No tickets found.</td></tr>
-              ) : tickets.map(t => {
+              )) : filteredTickets.length === 0 ? (
+                <tr><td colSpan={7} className="py-16 text-center text-muted-foreground">No tickets found matching filters.</td></tr>
+              ) : filteredTickets.map(t => {
                 const Icon = TYPE_ICONS[t.type] || AlertTriangle;
                 return (
                   <tr key={t.id} className="data-table-row">
@@ -166,7 +182,7 @@ export default function TicketDashboard() {
                     <td className="data-table-cell text-right">
                       <div className="flex justify-end gap-2">
                         {t.status !== 'RESOLVED' && t.status !== 'CLOSED' && (
-                          <Button size="sm" variant="outline" className="text-xs" onClick={() => { setSelected(t); setResolution(t.resolution || ''); }}>
+                          <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate(`/dashboard/tickets/${t.id}`)}>
                             Review
                           </Button>
                         )}

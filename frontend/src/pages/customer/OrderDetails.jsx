@@ -334,6 +334,45 @@ export default function OrderDetails() {
             ))}
           </div>
           </div>
+
+          {/* ── Status History ── */}
+          {order.statusHistory && order.statusHistory.length > 0 && (
+            <div className="form-card">
+              <h2 className="font-bold text-sm text-foreground mb-4">Status History</h2>
+              <div className="space-y-4">
+                {order.statusHistory.map((history, idx) => (
+                  <div key={history.id} className="relative pl-6">
+                    {/* Timeline line */}
+                    {idx !== order.statusHistory.length - 1 && (
+                      <div className="absolute left-[11px] top-6 bottom-[-16px] w-[2px] bg-border" />
+                    )}
+                    {/* Timeline dot */}
+                    <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center border-2 border-background">
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                    </div>
+                    {/* Content */}
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">{STATUS_CONFIG[history.status]?.label || history.status}</p>
+                      <p className="text-[10px] text-muted-foreground mb-1">
+                        {new Date(history.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </p>
+                      {history.note && (
+                        <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded-lg mt-1 border border-border">
+                          {history.note}
+                        </p>
+                      )}
+                      {isAdmin && history.changedBy && (
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Changed by: <span className="font-medium text-foreground">{history.changedBy.firstName} {history.changedBy.lastName}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* RIGHT COLUMN: Summary, Address, Payment */}

@@ -202,7 +202,7 @@ export default function Dashboard() {
           icon={Users}
           color="bg-emerald-500/10 text-emerald-500"
         />
-        <Link to="/dashboard/inventory?lowStock=1" className="block h-full transition-transform hover:-translate-y-0.5">
+        <Link to="/dashboard/inventory?stock=low" className="block h-full transition-transform hover:-translate-y-0.5">
           <StatCard
             label="Low Stock Alerts"
             value={stats.inventoryAlerts}
@@ -322,7 +322,7 @@ export default function Dashboard() {
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Click an item to view in inventory</p>
               </div>
-              <Link to="/dashboard/inventory?lowStock=1" className="text-xs text-primary font-semibold hover:underline">
+              <Link to="/dashboard/inventory?filter=low_stock" className="text-xs text-primary font-semibold hover:underline">
                 View All →
               </Link>
             </div>

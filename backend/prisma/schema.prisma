@@ -28,6 +28,8 @@ model User {
   auditLogs       AuditLog[]
   tasksAssigned   Task[]   @relation("TaskAssigner")
   favorites       Favorite[]
+  inventoryTransactions InventoryTransaction[] @relation("InventoryTxUser")
+  orderStateChanges   OrderStatusHistory[]   @relation("OrderStateChanger")
 }
 
 enum Role {
@@ -183,7 +185,9 @@ model InventoryTransaction {
   supplierId  String?
   supplier    Supplier? @relation(fields: [supplierId], references: [id])
   remarks     String?
-  createdBy   String?  // Auditability
+  userId      String?
+  user        User?    @relation("InventoryTxUser", fields: [userId], references: [id])
+  createdBy   String?  // Auditability (Name string)
   updatedBy   String?  // Auditability
   createdAt   DateTime @default(now())
 }
@@ -282,6 +286,8 @@ model OrderStatusHistory {
   order     Order       @relation(fields: [orderId], references: [id])
   oldStatus OrderStatus
   newStatus OrderStatus
+  changedById String?     // Track who changed the order state
+  user        User?       @relation("OrderStateChanger", fields: [changedById], references: [id])
   changedAt DateTime    @default(now())
 }
 
@@ -451,6 +457,7 @@ model Task {
   id          String   @id @default(uuid())
   title       String
   description String?
+  dueDate     DateTime?
   status      TaskStatus @default(PENDING)
   assignedToId String
   assignedTo   Employee @relation("TaskAssignee", fields: [assignedToId], references: [id])
@@ -484,6 +491,7 @@ model LeaveRequest {
   employeeId  String
   employee    Employee @relation(fields: [employeeId], references: [id])
   date        DateTime
+  endDate     DateTime? // Added to support multi-day leaves
   type        LeaveType @default(FULL_DAY)
   reason      String
   status      LeaveStatus @default(PENDING)
@@ -654,5 +662,6 @@ enum OvertimeStatus {
   PENDING
   APPROVED
   REJECTED
+  CANCELLED
   PAID
 }

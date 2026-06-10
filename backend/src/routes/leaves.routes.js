@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const leavesController = require('../controllers/leaves.controller');
-const { requireAuth } = require('../middlewares/auth.middleware');
+const { requireAuthStrict } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 
-router.use(requireAuth);
+router.use(requireAuthStrict);
 
 // Employee: submit and view own leaves
 router.post('/', leavesController.submitLeaveRequest);

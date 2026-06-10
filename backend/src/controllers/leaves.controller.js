@@ -6,9 +6,12 @@ const prisma = require('../config/prisma');
  */
 exports.submitLeaveRequest = async (req, res, next) => {
   try {
-    const { date, reason, type } = req.body;
+    const { date, endDate, reason, type } = req.body;
     
-    const employee = await prisma.employee.findUnique({ where: { userId: req.user.id } });
+    const employee = await prisma.employee.findUnique({ 
+      where: { userId: req.user.id },
+      include: { user: true }
+    });
     if (!employee) {
       return res.status(404).json({ success: false, message: 'Employee profile not found' });
     }
@@ -16,22 +19,32 @@ exports.submitLeaveRequest = async (req, res, next) => {
     // Check if a leave for this date already exists
     const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
+    const targetEndDate = endDate ? new Date(endDate) : null;
+    if (targetEndDate) targetEndDate.setHours(0, 0, 0, 0);
     
-    const existing = await prisma.leaveRequest.findFirst({
+    const existingLeaves = await prisma.leaveRequest.findMany({
       where: {
         employeeId: employee.id,
-        date: targetDate,
         status: { in: ['PENDING', 'APPROVED'] }
       }
     });
-    if (existing) {
-      return res.status(400).json({ success: false, message: 'A leave request already exists for this date.' });
+    
+    const endOfTarget = targetEndDate || targetDate;
+    const isOverlap = existingLeaves.some(l => {
+      const lStart = new Date(l.date).getTime();
+      const lEnd = l.endDate ? new Date(l.endDate).getTime() : lStart;
+      return targetDate.getTime() <= lEnd && endOfTarget.getTime() >= lStart;
+    });
+
+    if (isOverlap) {
+      return res.status(400).json({ success: false, message: 'A leave request already exists for these dates.' });
     }
 
     const leave = await prisma.leaveRequest.create({
       data: {
         employeeId: employee.id,
         date: targetDate,
+        endDate: targetEndDate,
         type: type || 'FULL_DAY',
         reason
       }
@@ -45,7 +58,7 @@ exports.submitLeaveRequest = async (req, res, next) => {
       prisma.notification.create({
         data: {
           userId: m.id,
-          message: `Leave request from ${req.user.firstName} ${req.user.lastName} for ${new Date(date).toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}.`
+          message: `Leave request from ${employee.user.firstName || ''} ${employee.user.lastName || ''} for ${new Date(date).toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}.`
         }
       })
     ));
@@ -135,20 +148,29 @@ exports.reviewLeave = async (req, res, next) => {
 
       // If approved, mark attendance as LEAVE on that date
       if (status === 'APPROVED') {
-        const targetDate = new Date(leave.date);
-        targetDate.setHours(0, 0, 0, 0);
-        const nextDay = new Date(targetDate);
-        nextDay.setDate(targetDate.getDate() + 1);
+        const start = new Date(leave.date);
+        start.setHours(0, 0, 0, 0);
+        const end = leave.endDate ? new Date(leave.endDate) : new Date(start);
+        end.setHours(0, 0, 0, 0);
 
-        const existing = await tx.attendance.findFirst({
-          where: { employeeId: leave.employeeId, date: { gte: targetDate, lt: nextDay } }
-        });
-        
         const attendanceStatus = leave.type === 'HALF_DAY' ? 'HALF_DAY' : 'LEAVE';
-        if (existing) {
-          await tx.attendance.update({ where: { id: existing.id }, data: { status: attendanceStatus } });
-        } else {
-          await tx.attendance.create({ data: { employeeId: leave.employeeId, date: targetDate, status: attendanceStatus } });
+
+        let currentDate = new Date(start);
+        while (currentDate <= end) {
+          const nextDay = new Date(currentDate);
+          nextDay.setDate(currentDate.getDate() + 1);
+
+          const existing = await tx.attendance.findFirst({
+            where: { employeeId: leave.employeeId, date: { gte: currentDate, lt: nextDay } }
+          });
+          
+          if (existing) {
+            await tx.attendance.update({ where: { id: existing.id }, data: { status: attendanceStatus } });
+          } else {
+            await tx.attendance.create({ data: { employeeId: leave.employeeId, date: new Date(currentDate), status: attendanceStatus } });
+          }
+          
+          currentDate.setDate(currentDate.getDate() + 1);
         }
       }
 

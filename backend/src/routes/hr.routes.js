@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const hc = require('../controllers/hr.controller');
-const { requireAuth } = require('../middlewares/auth.middleware');
+const { requireAuthStrict } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
 
 const hrAccess = requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']);
 
-router.use(requireAuth);
+router.use(requireAuthStrict);
 
 // Employee self-service (any authenticated user)
 router.get('/me', hc.getMyPayroll);
@@ -16,6 +16,7 @@ router.use(hrAccess);
 
 // Employee CRUD
 router.get('/',       hc.getEmployees);
+router.get('/:id',    hc.getEmployeeById);
 router.post('/',      hc.addEmployee);
 router.put('/:id',    hc.updateEmployee);
 router.delete('/:id', hc.deleteEmployee);

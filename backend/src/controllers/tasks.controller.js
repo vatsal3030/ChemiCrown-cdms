@@ -33,37 +33,80 @@ exports.getTasks = async (req, res, next) => {
   }
 };
 
-exports.createTask = async (req, res, next) => {
+exports.getTaskById = async (req, res, next) => {
   try {
-    const { title, description, assignedToId } = req.body;
-    
-    if (!title || !assignedToId) {
-      return res.status(400).json({ error: 'Title and Assignee are required' });
-    }
-
-    // Role check: Only SUPER_ADMIN, OWNER, MANAGER, HR can create tasks for others
-    if (!['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'You do not have permission to assign tasks.' });
-    }
-
-    const task = await prisma.task.create({
-      data: {
-        title,
-        description,
-        assignedToId,
-        assignedById: req.user.id
-      },
+    const { id } = req.params;
+    const task = await prisma.task.findUnique({
+      where: { id },
       include: {
-        assignedTo: { include: { user: { select: { firstName: true, lastName: true, email: true } } } },
-        assignedBy: { select: { firstName: true, lastName: true, email: true } }
+        assignedTo: { include: { user: { select: { firstName: true, lastName: true, email: true, role: true } } } },
+        assignedBy: { select: { firstName: true, lastName: true, email: true, role: true } }
       }
     });
 
-    res.status(201).json({ success: true, data: task });
+    if (!task || task.deletedAt) return res.status(404).json({ error: 'Task not found' });
+
+    // Role check
+    const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role);
+    const isAssignee = task.assignedTo?.userId === req.user.id;
+    const isAssigner = task.assignedById === req.user.id;
+
+    if (!isAdmin && !isAssignee && !isAssigner) {
+      return res.status(403).json({ error: 'Not authorized to view this task' });
+    }
+
+    res.status(200).json({ success: true, data: task });
   } catch (error) {
     next(error);
   }
 };
+
+exports.createTask = async (req, res, next) => {
+    try {
+      const { title, description, assignedToId, dueDate } = req.body;
+      
+      if (!title || !assignedToId) {
+        return res.status(400).json({ error: 'Title and Assignee are required' });
+      }
+
+      // Role check: Only SUPER_ADMIN, OWNER, MANAGER, HR can create tasks for others
+      if (!['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'You do not have permission to assign tasks.' });
+      }
+
+      const employee = await prisma.employee.findUnique({ where: { id: assignedToId } });
+      if (!employee) return res.status(404).json({ error: 'Assignee not found' });
+
+      const task = await prisma.$transaction(async (tx) => {
+        const newTask = await tx.task.create({
+          data: {
+            title,
+            description,
+            dueDate: dueDate ? new Date(dueDate) : null,
+            assignedToId,
+            assignedById: req.user.id
+          },
+          include: {
+            assignedTo: { include: { user: { select: { firstName: true, lastName: true, email: true } } } },
+            assignedBy: { select: { firstName: true, lastName: true, email: true } }
+          }
+        });
+
+        await tx.notification.create({
+          data: {
+            userId: employee.userId,
+            message: `You have been assigned a new task: "${title}" by ${req.user.firstName || 'Admin'}. ${dueDate ? `Due date: ${new Date(dueDate).toLocaleDateString()}` : ''}`
+          }
+        });
+
+        return newTask;
+      });
+
+      res.status(201).json({ success: true, data: task });
+    } catch (error) {
+      next(error);
+    }
+  };
 
 exports.updateTaskStatus = async (req, res, next) => {
   try {
@@ -86,9 +129,26 @@ exports.updateTaskStatus = async (req, res, next) => {
       return res.status(403).json({ error: 'Not authorized to update this task' });
     }
 
-    const updatedTask = await prisma.task.update({
-      where: { id },
-      data: { status }
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const taskRes = await tx.task.update({
+        where: { id },
+        data: { status },
+        include: { assignedTo: { select: { userId: true } } }
+      });
+      
+      // Notify the assigner and the assignee (if updated by the other)
+      const notifyUserId = isAssignee ? task.assignedById : task.assignedTo.userId;
+      if (notifyUserId) {
+        await tx.notification.create({
+          data: {
+            userId: notifyUserId,
+            message: `Task "${task.title}" status changed to ${status} by ${req.user.firstName || 'System'}`,
+            type: "SYSTEM"
+          }
+        });
+      }
+      
+      return taskRes;
     });
 
     res.status(200).json({ success: true, data: updatedTask });

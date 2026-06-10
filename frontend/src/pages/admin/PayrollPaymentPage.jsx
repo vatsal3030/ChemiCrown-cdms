@@ -30,6 +30,15 @@ export default function PayrollPaymentPage() {
   const [remarks, setRemarks] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState('');
 
+  // Reset fields when payment method changes
+  useEffect(() => {
+    setTransactionRef('');
+    setBankUsed('');
+    setChequeDate('');
+    setChequeBank('');
+    setRemarks('');
+  }, [method]);
+
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/payroll?status=PENDING`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -288,7 +297,16 @@ export default function PayrollPaymentPage() {
                 </div>
               </div>
 
-              <Button onClick={handleConfirm} disabled={processing || (method !== 'CASH' && !transactionRef)} className="w-full h-12 text-base mt-6">
+              <Button 
+                onClick={handleConfirm} 
+                disabled={
+                  processing || 
+                  (method === 'BANK_TRANSFER' && !transactionRef) || 
+                  (method === 'UPI' && !transactionRef) || 
+                  (method === 'CHEQUE' && (!transactionRef || !chequeDate))
+                } 
+                className="w-full h-12 text-base mt-6"
+              >
                 {processing ? 'Processing...' : <><CheckCircle2 size={18} className="mr-2" /> Confirm Payment</>}
               </Button>
             </div>

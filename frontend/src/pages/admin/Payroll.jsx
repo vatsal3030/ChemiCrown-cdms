@@ -277,13 +277,13 @@ export default function Payroll() {
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
                   <IndianRupee size={11} className="inline mr-0.5" />Min Net Pay
                 </label>
-                <Input type="number" placeholder="₹ 0" value={temp.minNet} onChange={e => setTemp(t => ({ ...t, minNet: e.target.value }))} />
+                <Input type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} placeholder="₹ 0" value={temp.minNet} onChange={e => setTemp(t => ({ ...t, minNet: e.target.value }))} />
               </div>
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
                   <IndianRupee size={11} className="inline mr-0.5" />Max Net Pay
                 </label>
-                <Input type="number" placeholder="₹ ∞" value={temp.maxNet} onChange={e => setTemp(t => ({ ...t, maxNet: e.target.value }))} />
+                <Input type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} placeholder="₹ ∞" value={temp.maxNet} onChange={e => setTemp(t => ({ ...t, maxNet: e.target.value }))} />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-4">

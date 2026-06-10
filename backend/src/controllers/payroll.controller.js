@@ -195,7 +195,14 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
       }
     });
 
-    res.json({ success: true, message: `Payroll generated for ${month}. Working days: ${totalWorkingDays} (Sundays: ${sundaysCount}, Holidays: ${holidayDays})`, data: results });
+    const generatedCount = results.filter(r => !r.skipped).length;
+    const skippedCount = results.filter(r => r.skipped).length;
+
+    res.json({ 
+      success: true, 
+      message: `Generated ${generatedCount} slips. Skipped ${skippedCount} (already exist or no base salary). Working days: ${totalWorkingDays}`, 
+      data: results 
+    });
   } catch (error) {
     next(error);
   }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowLeft, User, Phone, Mail, Building, Briefcase, Calendar as CalendarIcon, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, Building, Briefcase, Calendar as CalendarIcon, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import toast from 'react-hot-toast';
 
@@ -13,6 +13,7 @@ export default function EmployeeDetails() {
   const [attendance, setAttendance] = useState([]);
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewDate, setViewDate] = useState(new Date());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,14 +67,23 @@ export default function EmployeeDetails() {
     amount: s.amount
   })).reverse();
 
-  // Generate calendar grid (simple 30 days visualization)
-  const today = new Date();
-  const past30Days = Array.from({length: 30}, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (29 - i));
-    d.setHours(0,0,0,0);
-    return d;
+  // Generate calendar grid (month view)
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const daysInMonth = getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth());
+  const monthDays = Array.from({length: daysInMonth}, (_, i) => {
+    return new Date(viewDate.getFullYear(), viewDate.getMonth(), i + 1);
   });
+
+  const handlePrevMonth = () => {
+    setViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+  const handleNextMonth = () => {
+    setViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const joiningDate = employee.employeeProfile?.joiningDate ? new Date(employee.employeeProfile.joiningDate) : null;
+  const isPrevDisabled = joiningDate && viewDate.getFullYear() === joiningDate.getFullYear() && viewDate.getMonth() === joiningDate.getMonth();
+  const isNextDisabled = viewDate.getFullYear() === new Date().getFullYear() && viewDate.getMonth() === new Date().getMonth();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto pb-10">
@@ -105,7 +115,14 @@ export default function EmployeeDetails() {
         {/* Attendance Stats & Calendar */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold mb-4">Attendance Overview (Last 30 Days)</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Attendance Overview</h2>
+              <div className="flex items-center gap-3">
+                <button disabled={isPrevDisabled} onClick={handlePrevMonth} className="p-1 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-600"><ChevronLeft size={16} /></button>
+                <span className="text-sm font-semibold w-24 text-center">{viewDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</span>
+                <button disabled={isNextDisabled} onClick={handleNextMonth} className="p-1 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-600"><ChevronRight size={16} /></button>
+              </div>
+            </div>
             <div className="h-64 mb-6">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -119,8 +136,14 @@ export default function EmployeeDetails() {
             </div>
 
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Daily Log</h3>
-            <div className="grid grid-cols-7 sm:grid-cols-10 gap-2">
-              {past30Days.map((date, i) => {
+            <div className="grid grid-cols-7 gap-2">
+              {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                <div key={d} className="text-center text-xs font-bold text-slate-400">{d}</div>
+              ))}
+              {Array.from({length: new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay()}).map((_, i) => (
+                <div key={`empty-${i}`} />
+              ))}
+              {monthDays.map((date, i) => {
                 const record = attendance.find(a => new Date(a.date).toDateString() === date.toDateString());
                 let colorClass = "bg-slate-100 text-slate-400";
                 if (record) {

@@ -4,11 +4,21 @@ const bcrypt = require('bcryptjs');
 
 exports.getEmployees = async (req, res, next) => {
   try {
-    const { search, sortField = 'firstName', sortOrder = 'asc', showTerminated = 'true' } = req.query;
+    const { search, sortField = 'firstName', sortOrder = 'asc', showTerminated = 'true', status, role, dept } = req.query;
 
     // By default show all including terminated (HR needs to see them), unless explicitly filtered
     const where = {};
     if (showTerminated === 'false') where.deletedAt = null;
+
+    if (role) where.role = role;
+    
+    // We need to filter by status and dept which are inside the employeeProfile relation
+    if (status || dept) {
+      where.employeeProfile = {
+        ...(status ? { status } : {}),
+        ...(dept ? { department: dept } : {})
+      };
+    }
 
     if (search) {
       where.OR = [
@@ -45,6 +55,32 @@ exports.getEmployees = async (req, res, next) => {
     });
 
     res.status(200).json({ success: true, data: employees });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getEmployeeById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const employee = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        employeeProfile: {
+          include: {
+            attendances: { orderBy: { date: 'desc' }, take: 30 },
+            salaries: { orderBy: { month: 'desc' } },
+            warnings: { orderBy: { createdAt: 'desc' } }
+          }
+        }
+      }
+    });
+
+    if (!employee || employee.role === 'CUSTOMER') {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    res.status(200).json({ success: true, data: employee });
   } catch (error) {
     next(error);
   }
@@ -378,6 +414,7 @@ exports.issueWarning = async (req, res, next) => {
       include: { user: { select: { id: true, firstName: true, lastName: true } } }
     });
     if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+    if (employee.userId === req.user.id) return res.status(403).json({ success: false, message: 'You cannot issue a warning to yourself' });
 
     const [warning] = await prisma.$transaction([
       prisma.employeeWarning.create({
@@ -432,6 +469,7 @@ exports.terminateEmployee = async (req, res, next) => {
 
     const employee = await prisma.employee.findUnique({ where: { id }, include: { user: true } });
     if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+    if (employee.userId === req.user.id) return res.status(403).json({ success: false, message: 'You cannot terminate yourself' });
 
     const termDate = effectiveDate ? new Date(effectiveDate) : new Date();
 
@@ -466,6 +504,7 @@ exports.suspendEmployee = async (req, res, next) => {
 
     const employee = await prisma.employee.findUnique({ where: { id }, include: { user: true } });
     if (!employee) return res.status(404).json({ success: false, message: 'Employee not found' });
+    if (employee.userId === req.user.id) return res.status(403).json({ success: false, message: 'You cannot suspend yourself' });
 
     await prisma.$transaction([
       prisma.employee.update({ where: { id }, data: { status: 'SUSPENDED', suspendedFrom: new Date(from), suspendedTo: new Date(to) } }),

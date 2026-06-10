@@ -34,9 +34,11 @@ import CustomerVerification from './pages/admin/CustomerVerification';
 import HRManagement from './pages/admin/HRManagement';
 import AddEmployeePage from './pages/admin/AddEmployeePage';
 import EmployeeDetails from './pages/admin/EmployeeDetails';
+import PayrollConfig from './pages/admin/PayrollConfig';
 import StockHistory from './pages/admin/StockHistory';
 import RecycleBin from './pages/admin/RecycleBin';
 import Tasks from './pages/admin/Tasks';
+import AssignTask from './pages/admin/AssignTask';
 import MyAttendance from './pages/employee/MyAttendance';
 import Orders from './pages/customer/Orders';
 import OrderDetails from './pages/customer/OrderDetails';
@@ -48,13 +50,16 @@ import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import Payroll from './pages/admin/Payroll';
 import PayrollPaymentPage from './pages/admin/PayrollPaymentPage';
+import HolidayManagement from './pages/admin/HolidayManagement';
 import Finance from './pages/admin/Finance';
 import MyPayroll from './pages/employee/MyPayroll';
+import TaskDetails from './pages/admin/TaskDetails';
+import CustomerProfile from './pages/admin/CustomerProfile';
 import Support from './pages/Support';
 import ReportIssue from './pages/ReportIssue';
 import AuditLog from './pages/admin/AuditLog';
 import TicketDashboard from './pages/admin/TicketDashboard';
-import HolidayManagement from './pages/admin/HolidayManagement';
+import SupportTicketReview from './pages/admin/SupportTicketReview';
 import NotFound from './pages/NotFound';
 
 import { Toaster, ToastBar, toast as hotToast } from 'react-hot-toast';
@@ -159,6 +164,7 @@ function App() {
                   {/* Super Admin & Owner Only */}
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']} />}>
                     <Route path="verify" element={<CustomerVerification />} />
+                    <Route path="customers/:id" element={<CustomerProfile />} />
                   </Route>
 
                   {/* Super Admin, Owner, & Manager */}
@@ -189,12 +195,15 @@ function App() {
 
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
                     <Route path="tasks" element={<Tasks />} />
+                    <Route path="tasks/assign" element={<AssignTask />} />
+                    <Route path="tasks/:id" element={<TaskDetails />} />
                   </Route>
 
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
                     <Route path="hr" element={<HRManagement />} />
                     <Route path="hr/add-employee" element={<AddEmployeePage />} />
                     <Route path="hr/:id" element={<EmployeeDetails />} />
+                    <Route path="hr/payroll-config/:id" element={<PayrollConfig />} />
                     <Route path="payroll" element={<Payroll />} />
                     <Route path="payroll/pay/:id" element={<PayrollPaymentPage />} />
                     <Route path="holidays" element={<HolidayManagement />} />
@@ -216,9 +225,9 @@ function App() {
                   {/* Support & Issue Reporting — all authenticated users */}
                   <Route path="support" element={<Support />} />
                   <Route path="report-issue" element={<ReportIssue />} />
-                  {/* Audit Logs & Ticket Dashboard — SUPER_ADMIN & OWNER only */}
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
                     <Route path="tickets" element={<TicketDashboard />} />
+                    <Route path="tickets/:id" element={<SupportTicketReview />} />
                   </Route>
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']} />}>
                     <Route path="audit-log" element={<AuditLog />} />

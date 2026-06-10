@@ -178,9 +178,9 @@ export default function ProductDetails() {
       {/* Main Product Section - Landscape Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         
-        {/* Left Column: Image Gallery (Expanded) */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="relative group glass rounded-3xl border border-border flex items-center justify-center aspect-auto min-h-[500px] lg:min-h-[600px] shadow-sm overflow-hidden bg-white">
+        {/* Left Column: Image Gallery */}
+        <div className="lg:col-span-4 space-y-4 sticky top-6">
+          <div className="relative group glass rounded-3xl border border-border flex items-center justify-center aspect-auto min-h-[400px] shadow-sm overflow-hidden bg-white">
             {images.length > 0 ? (
               <>
                 <img 
@@ -217,8 +217,8 @@ export default function ProductDetails() {
           )}
         </div>
 
-        {/* Middle Column: Product Info & Buy Box combo to use more space */}
-        <div className="lg:col-span-6 space-y-6 flex flex-col h-full">
+        {/* Middle Column: Product Info */}
+        <div className="lg:col-span-5 space-y-6 flex flex-col h-full">
           {/* Header section */}
           <div className="border-b border-border pb-6">
             <div className="text-primary font-semibold hover:underline cursor-pointer inline-flex items-center text-sm mb-2">
@@ -269,123 +269,104 @@ export default function ProductDetails() {
               </ul>
             </div>
           </div>
-        {/* We moved Buy Box logic into a horizontal layout beneath the product details instead of a separate small column */}
         </div>
-      </div>
 
-      {/* Buy Box & Actions Section - Horizontal layout to utilize width */}
-      <div className="mt-8 border border-border rounded-2xl p-6 lg:p-8 bg-card shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 w-full">
-        <div className="flex-1 space-y-2">
-            <div className="text-3xl lg:text-4xl font-bold">₹{product.price}</div>
-            
-            {inStock && (
-              <div className="space-y-1">
-                <div className="flex gap-2 text-sm text-muted-foreground">
-                  <span className="text-green-600 font-bold">FREE Delivery</span>
-                  <span>by Tomorrow</span>
-                </div>
+        {/* Right Column: Buy Box */}
+        <div className="lg:col-span-3 space-y-4 border border-border rounded-2xl p-5 bg-card shadow-sm sticky top-6">
+          <div className="text-3xl font-bold">₹{product.price}</div>
+          
+          {inStock && (
+            <div className="space-y-1">
+              <div className="flex gap-2 text-sm text-muted-foreground">
+                <span className="text-green-600 font-bold">FREE Delivery</span>
+                <span>by Tomorrow</span>
               </div>
+            </div>
+          )}
+
+          <div className="text-lg">
+            {inStock ? (
+              <span className="text-green-600 dark:text-green-400 font-bold">In Stock.</span>
+            ) : (
+              <span className="text-red-600 dark:text-red-400 font-bold">Currently Out of Stock.</span>
             )}
+          </div>
+          
+          <div className="text-sm text-muted-foreground flex items-center gap-2 pt-1 mb-4">
+            <Shield size={14} className="text-green-600" /> Secure transaction
+          </div>
 
-            <div className="text-xl">
-              {inStock ? (
-                <span className="text-green-600 dark:text-green-400 font-bold">In Stock. Ready to Dispatch.</span>
-              ) : (
-                <span className="text-red-600 dark:text-red-400 font-bold">Currently Out of Stock.</span>
-              )}
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium">Qty:</label>
+              <div className="flex items-center border border-input rounded-md bg-background overflow-hidden h-9 w-24">
+                <button 
+                  className="px-2 h-full hover:bg-slate-100 disabled:opacity-50 font-bold"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={!inStock || quantity <= 1}
+                >-</button>
+                <input 
+                  type="number"
+                  className="w-full text-center border-x border-input h-full bg-transparent text-sm focus:outline-none appearance-none m-0"
+                  value={quantity}
+                  min="1"
+                  max={product.inventory?.quantity || 1}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val)) setQuantity(Math.min(Math.max(1, val), product.inventory?.quantity || 1));
+                    else setQuantity('');
+                  }}
+                  onBlur={() => { if (!quantity || isNaN(quantity)) setQuantity(1); }}
+                  disabled={!inStock}
+                />
+                <button 
+                  className="px-2 h-full hover:bg-slate-100 disabled:opacity-50 font-bold"
+                  onClick={() => setQuantity(Math.min(product.inventory?.quantity || 1, (quantity || 0) + 1))}
+                  disabled={!inStock || quantity >= (product.inventory?.quantity || 1)}
+                >+</button>
+              </div>
             </div>
             
-            <div className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
-              <Shield size={14} className="text-green-600" /> Secure transaction & Verified Quality
-            </div>
+            {product.isAvailable === false ? (
+              <Button className="w-full rounded-full shadow-md bg-slate-300 text-slate-600 font-bold" disabled>
+                <XCircle className="w-4 h-4 mr-2" /> Unavailable
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  className="w-full rounded-full shadow-md bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold"
+                  disabled={!inStock}
+                  onClick={() => {
+                    if (!user) { navigate('/login', { state: { from: location } }); return; }
+                    addToCart(product, quantity);
+                  }}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
+                </Button>
+                <Button 
+                  className="w-full rounded-full shadow-md bg-orange-500 hover:bg-orange-600 text-white font-bold"
+                  disabled={!inStock}
+                  onClick={() => {
+                    if (!user) { navigate('/login', { state: { from: location } }); return; }
+                    addToCart(product, quantity);
+                    navigate('/dashboard/checkout');
+                  }}
+                >
+                  Buy Now
+                </Button>
+              </>
+            )}
+            
+            <Button 
+              variant="outline" 
+              className={`w-full rounded-full shadow-sm font-bold ${isFavorited ? 'border-red-200 text-red-500 bg-red-50' : ''}`}
+              onClick={handleToggleFavorite}
+            >
+              <Heart className={`w-5 h-5 mr-2 ${isFavorited ? 'fill-red-500' : ''}`} /> 
+              {isFavorited ? 'Saved to Wishlist' : 'Add to Wishlist'}
+            </Button>
+          </div>
         </div>
-
-        <div className="flex-1 w-full space-y-4 bg-slate-50 dark:bg-slate-900/40 p-6 rounded-2xl border border-border">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium">Quantity:</label>
-                <div className="flex items-center border border-input rounded-md bg-background overflow-hidden h-9">
-                  <button 
-                    className="px-3 h-full hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 text-slate-600 dark:text-slate-300 transition-colors flex items-center justify-center font-bold"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={!inStock || quantity <= 1}
-                  >-</button>
-                  <input 
-                    type="number"
-                    className="w-14 text-center border-x border-input h-full bg-transparent text-sm focus:outline-none focus:ring-0 appearance-none m-0"
-                    value={quantity}
-                    min="1"
-                    max={product.inventory?.quantity || 1}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (!isNaN(val)) {
-                        setQuantity(Math.min(Math.max(1, val), product.inventory?.quantity || 1));
-                      } else {
-                        setQuantity('');
-                      }
-                    }}
-                    onBlur={() => {
-                      if (!quantity || isNaN(quantity)) setQuantity(1);
-                    }}
-                    disabled={!inStock}
-                  />
-                  <button 
-                    className="px-3 h-full hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 text-slate-600 dark:text-slate-300 transition-colors flex items-center justify-center font-bold"
-                    onClick={() => setQuantity(Math.min(product.inventory?.quantity || 1, (quantity || 0) + 1))}
-                    disabled={!inStock || quantity >= (product.inventory?.quantity || 1)}
-                  >+</button>
-                </div>
-              </div>
-              
-              {product.isAvailable === false ? (
-                <Button 
-                  className="w-full rounded-full shadow-md bg-slate-300 text-slate-600 font-bold border-none"
-                  disabled
-                >
-                  <XCircle className="w-4 h-4 mr-2" /> Unavailable
-                </Button>
-              ) : (
-                <>
-                  <Button 
-                    className="w-full rounded-full shadow-md bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold border-none"
-                    disabled={!inStock}
-                    onClick={() => {
-                      if (!user) {
-                        navigate('/login', { state: { from: location } });
-                        return;
-                      }
-                      addToCart(product, quantity);
-                    }}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
-                  </Button>
-                  <Button 
-                    className="w-full rounded-full shadow-md bg-orange-500 hover:bg-orange-600 text-white font-bold border-none"
-                    disabled={!inStock}
-                    onClick={() => {
-                      if (!user) {
-                        navigate('/login', { state: { from: location } });
-                        return;
-                      }
-                      addToCart(product, quantity);
-                      navigate('/dashboard/checkout');
-                    }}
-                  >
-                    Buy Now
-                  </Button>
-                </>
-              )}
-              
-              <div className="flex gap-4 pt-2">
-                <Button 
-                  variant="outline" 
-                  className={`flex-1 rounded-full shadow-sm font-bold h-12 ${isFavorited ? 'border-red-200 text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600' : 'text-slate-600 hover:text-slate-900 border-slate-200 hover:bg-slate-50'}`}
-                  onClick={handleToggleFavorite}
-                >
-                  <Heart className={`w-5 h-5 mr-2 ${isFavorited ? 'fill-red-500' : ''}`} /> 
-                  {isFavorited ? 'Saved to Wishlist' : 'Add to Wishlist'}
-                </Button>
-              </div>
-            </div>
       </div>
 
       {/* Tabs Section - Full Width */}

@@ -13,6 +13,9 @@ export default function StockHistory() {
 
   const searchTerm = searchParams.get('q')    || '';
   const typeFilter = searchParams.get('type') || 'all';
+  const sortOrder  = searchParams.get('sort') || 'desc';
+  const startDate  = searchParams.get('startDate') || '';
+  const endDate    = searchParams.get('endDate') || '';
   const page       = parseInt(searchParams.get('page') || '1', 10);
   const limit = 20;
 
@@ -34,15 +37,25 @@ export default function StockHistory() {
     return json;
   };
 
+  const queryParams = new URLSearchParams({
+    search: debouncedSearch,
+    type: typeFilter,
+    sortOrder: sortOrder,
+    page: page,
+    limit: limit,
+  });
+  if (startDate) queryParams.append('startDate', startDate);
+  if (endDate) queryParams.append('endDate', endDate);
+
   const { data, error, isValidating } = useSWR(
-    token ? `${import.meta.env.VITE_API_URL}/api/inventory/logs/all?search=${debouncedSearch}&type=${typeFilter}&page=${page}&limit=${limit}` : null,
+    token ? `${import.meta.env.VITE_API_URL}/api/inventory/logs/all?${queryParams.toString()}` : null,
     fetcher
   );
 
   const logs = data?.data || [];
   const pagination = data?.pagination;
   const loading = (!data && !error) || isValidating;
-  const hasFilters = searchTerm || typeFilter !== 'all';
+  const hasFilters = searchTerm || typeFilter !== 'all' || sortOrder !== 'desc' || startDate || endDate;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -76,9 +89,34 @@ export default function StockHistory() {
             <option value="out">Stock Out</option>
           </select>
         </div>
+        <div className="relative w-full sm:w-auto shrink-0">
+          <select 
+            className="w-full sm:w-48 px-3 py-2 bg-transparent border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
+            value={sortOrder}
+            onChange={(e) => setParam('sort', e.target.value)}
+          >
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
+          </select>
+        </div>
+        <div className="relative w-full sm:w-auto shrink-0 flex items-center gap-2">
+          <Input 
+            type="date" 
+            className="w-full sm:w-36 text-sm" 
+            value={startDate}
+            onChange={(e) => setParam('startDate', e.target.value)}
+          />
+          <span className="text-slate-400">to</span>
+          <Input 
+            type="date" 
+            className="w-full sm:w-36 text-sm" 
+            value={endDate}
+            onChange={(e) => setParam('endDate', e.target.value)}
+          />
+        </div>
         {hasFilters && (
           <button
-            onClick={() => { setParam('q', ''); setParam('type', 'all'); }}
+            onClick={() => { setParam('q', ''); setParam('type', 'all'); setParam('sort', 'desc'); setParam('startDate', ''); setParam('endDate', ''); }}
             className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-destructive transition-colors text-sm shrink-0"
           >
             <X size={14} /> Clear
@@ -142,11 +180,24 @@ export default function StockHistory() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                           <User size={14} className="text-slate-400" />
-                          {log.createdBy || 'System'}
+                          {log.user?.employeeProfile?.id ? (
+                            <a href={`/dashboard/hr/${log.user.employeeProfile.id}`} className="text-primary hover:underline hover:text-primary/80">
+                              {log.user.firstName} {log.user.lastName}
+                            </a>
+                          ) : (
+                            log.createdBy || 'System'
+                          )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 max-w-[200px] truncate text-slate-600 dark:text-slate-400">
-                        {log.remarks || '-'}
+                      <td className="px-6 py-4 max-w-[200px]">
+                        {log.remarks ? (
+                          <div className="group relative w-full">
+                            <div className="truncate text-slate-600 dark:text-slate-400 cursor-help">{log.remarks}</div>
+                            <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-slate-800 text-white text-xs rounded-md p-2 shadow-lg min-w-[200px] max-w-[300px] whitespace-normal break-words">
+                              {log.remarks}
+                            </div>
+                          </div>
+                        ) : '-'}
                       </td>
                       <td className="px-6 py-4 text-slate-500 text-sm whitespace-nowrap">
                         {new Date(log.createdAt).toLocaleString()}

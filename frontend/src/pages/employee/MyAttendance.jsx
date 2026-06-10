@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ClipboardCheck, Calendar, DollarSign, PiggyBank, ShieldCheck, Send, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { ClipboardCheck, Calendar, DollarSign, PiggyBank, ShieldCheck, Send, CheckCircle2, Clock, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import useSWR from 'swr';
 import { useAuth } from '../../context/AuthContext';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -20,9 +20,10 @@ const getAttendanceStyle = (status) =>
 
 export default function MyAttendance() {
   const { token, user } = useAuth();
-  const [leaveForm, setLeaveForm] = useState({ date: '', reason: '', type: 'FULL_DAY' });
+  const [leaveForm, setLeaveForm] = useState({ date: '', endDate: '', reason: '', type: 'FULL_DAY', isMultiDay: false });
   const [submitting, setSubmitting] = useState(false);
   const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [viewDate, setViewDate] = useState(new Date());
   
   const fetcher = async (url) => {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -57,7 +58,7 @@ export default function MyAttendance() {
       const json = await res.json();
       if (json.success) {
         toast.success('Leave request submitted successfully!');
-        setLeaveForm({ date: '', reason: '', type: 'FULL_DAY' });
+        setLeaveForm({ date: '', endDate: '', reason: '', type: 'FULL_DAY', isMultiDay: false });
         setShowLeaveForm(false);
         mutateLeaves();
       } else {
@@ -114,14 +115,23 @@ export default function MyAttendance() {
     return 'badge badge-warning';
   };
 
-  // Generate calendar grid (simple 30 days visualization)
-  const today = new Date();
-  const past30Days = Array.from({length: 30}, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (29 - i));
-    d.setHours(0,0,0,0);
-    return d;
+  // Generate calendar grid (month view)
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const daysInMonth = getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth());
+  const monthDays = Array.from({length: daysInMonth}, (_, i) => {
+    return new Date(viewDate.getFullYear(), viewDate.getMonth(), i + 1);
   });
+
+  const handlePrevMonth = () => {
+    setViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+  const handleNextMonth = () => {
+    setViewDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const joiningDate = profile.employeeProfile?.joiningDate ? new Date(profile.employeeProfile.joiningDate) : null;
+  const isPrevDisabled = joiningDate && viewDate.getFullYear() === joiningDate.getFullYear() && viewDate.getMonth() === joiningDate.getMonth();
+  const isNextDisabled = viewDate.getFullYear() === new Date().getFullYear() && viewDate.getMonth() === new Date().getMonth();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -146,30 +156,55 @@ export default function MyAttendance() {
             <Send size={16} className="text-primary" /> Submit Leave Request
           </h2>
           <form onSubmit={handleLeaveRequest} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="form-label">Date of Leave</label>
-              <input
-                type="date"
-                value={leaveForm.date}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={e => setLeaveForm(f => ({ ...f, date: e.target.value }))}
-                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              />
-            </div>
-            <div>
-              <label className="form-label">Leave Type</label>
-              <select
-                value={leaveForm.type}
-                onChange={e => setLeaveForm(f => ({ ...f, type: e.target.value }))}
-                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="FULL_DAY">Full Day</option>
-                <option value="HALF_DAY">Half Day</option>
-              </select>
-            </div>
-            <div>
-              <label className="form-label">Reason</label>
+              <div className="flex flex-col justify-end">
+                <div className="flex items-center justify-between mb-1 min-h-[20px]">
+                  <label className="text-sm font-semibold">Start Date</label>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs font-normal text-muted-foreground">
+                    <input 
+                      type="checkbox" 
+                      checked={leaveForm.isMultiDay} 
+                      onChange={e => setLeaveForm(f => ({ ...f, isMultiDay: e.target.checked, endDate: '', type: 'FULL_DAY' }))}
+                      className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                    />
+                    Multi-day
+                  </label>
+                </div>
+                <input
+                  type="date"
+                  value={leaveForm.date}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={e => setLeaveForm(f => ({ ...f, date: e.target.value, endDate: f.isMultiDay && f.endDate < e.target.value ? '' : f.endDate }))}
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+            {leaveForm.isMultiDay ? (
+              <div className="flex flex-col justify-end">
+                <label className="form-label block mb-1 text-sm font-semibold min-h-[20px]">End Date</label>
+                <input
+                  type="date"
+                  value={leaveForm.endDate}
+                  min={leaveForm.date || new Date().toISOString().split('T')[0]}
+                  onChange={e => setLeaveForm(f => ({ ...f, endDate: e.target.value }))}
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col justify-end">
+                <label className="form-label block mb-1 text-sm font-semibold min-h-[20px]">Leave Type</label>
+                <select
+                  value={leaveForm.type}
+                  onChange={e => setLeaveForm(f => ({ ...f, type: e.target.value }))}
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="FULL_DAY">Full Day</option>
+                  <option value="HALF_DAY">Half Day</option>
+                </select>
+              </div>
+            )}
+            <div className="flex flex-col justify-end">
+              <label className="form-label block mb-1 text-sm font-semibold min-h-[20px]">Reason</label>
               <input
                 type="text"
                 placeholder="Brief reason for leave..."
@@ -197,8 +232,11 @@ export default function MyAttendance() {
             {leaveRequests.map(lr => (
               <div key={lr.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
                 <div>
-                  <p className="font-semibold text-sm text-foreground">{new Date(lr.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                  <p className="text-xs text-muted-foreground">{lr.type.replace('_', ' ')} — {lr.reason}</p>
+                  <p className="font-semibold text-sm text-foreground">
+                    {new Date(lr.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {lr.endDate && ` - ${new Date(lr.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{lr.reason}</p>
                 </div>
                 <span className={leaveStatusStyle(lr.status)}>{lr.status}</span>
               </div>
@@ -253,14 +291,24 @@ export default function MyAttendance() {
           <div className="data-table-header bg-muted/30">
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-muted-foreground" />
-              <h3 className="font-semibold text-foreground text-sm">30-Day Attendance Calendar</h3>
+              <h3 className="font-semibold text-foreground text-sm">Attendance Calendar</h3>
             </div>
-            <span className="text-xs text-muted-foreground italic">View only — managed by HR</span>
+            <div className="flex items-center gap-2">
+              <button disabled={isPrevDisabled} onClick={handlePrevMonth} className="p-1 rounded bg-background border border-border hover:bg-muted disabled:opacity-50"><ChevronLeft size={14} /></button>
+              <span className="text-xs font-semibold w-24 text-center">{viewDate.toLocaleDateString('default', { month: 'short', year: 'numeric' })}</span>
+              <button disabled={isNextDisabled} onClick={handleNextMonth} className="p-1 rounded bg-background border border-border hover:bg-muted disabled:opacity-50"><ChevronRight size={14} /></button>
+            </div>
           </div>
           
           <div className="p-4 border-b border-border">
-            <div className="grid grid-cols-7 sm:grid-cols-10 gap-2 mb-4">
-              {past30Days.map((date, i) => {
+            <div className="grid grid-cols-7 gap-2 mb-4">
+              {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                <div key={d} className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{d}</div>
+              ))}
+              {Array.from({length: new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay()}).map((_, i) => (
+                <div key={`empty-${i}`} />
+              ))}
+              {monthDays.map((date, i) => {
                 const record = attendance.find(a => new Date(a.date).toDateString() === date.toDateString());
                 let colorClass = "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500";
                 if (record) {

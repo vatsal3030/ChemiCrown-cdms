@@ -328,6 +328,7 @@ exports.addStock = async (req, res, next) => {
           quantity: Math.abs(qtyChange),
           supplierId,
           remarks,
+          userId: req.user ? req.user.id : null,
           createdBy: req.user ? `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() : 'System'
         }
       });
@@ -414,7 +415,7 @@ exports.getProductTransactions = async (req, res, next) => {
 // Get all inventory transactions
 exports.getAllTransactions = async (req, res, next) => {
   try {
-    const { page = 1, limit = 50, search = '', type = 'all', sortOrder = 'desc' } = req.query;
+    const { page = 1, limit = 50, search = '', type = 'all', sortOrder = 'desc', startDate, endDate } = req.query;
     const skip = (page - 1) * limit;
 
     const where = {};
@@ -422,6 +423,16 @@ exports.getAllTransactions = async (req, res, next) => {
       where.type = type.toUpperCase();
     }
     
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) {
+        const toDate = new Date(endDate);
+        toDate.setHours(23, 59, 59, 999);
+        where.createdAt.lte = toDate;
+      }
+    }
+
     if (search) {
       where.OR = [
         { inventory: { product: { name: { contains: search, mode: 'insensitive' } } } },
@@ -439,6 +450,7 @@ exports.getAllTransactions = async (req, res, next) => {
         take: parseInt(limit),
         include: { 
           supplier: true,
+          user: { select: { id: true, firstName: true, lastName: true, employeeProfile: { select: { id: true } } } },
           inventory: {
             include: { product: { select: { id: true, name: true, sku: true, unit: true } } }
           }

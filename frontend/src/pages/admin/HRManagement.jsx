@@ -4,7 +4,7 @@ import {
   AlertCircle, Eye, Users, CalendarCheck, TrendingUp, CheckCircle2,
   XCircle, Clock, ShieldAlert, UserX, UserCheck, AlertTriangle,
   ChevronDown, Filter, X, RefreshCw, Settings, SlidersHorizontal,
-  Building2, CreditCard, Smartphone, Target, Award, Timer, IndianRupee
+  Building2, CreditCard, Smartphone, Target, Award, Timer, IndianRupee, PiggyBank
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,12 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import {
+  PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid
+} from 'recharts';
+import EmployeeModal from '../../components/admin/EmployeeModal';
+import HRDetailsModal from '../../components/admin/HRDetailsModal';
 
 // ── Status Badge ──────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
@@ -170,7 +176,7 @@ function TerminateModal({ employee, token, onClose, onSuccess }) {
 
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Effective Date</label>
-            <Input type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} />
+            <Input type="date" min={new Date().toISOString().split('T')[0]} value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} />
           </div>
 
           <div>
@@ -239,11 +245,11 @@ function SuspendModal({ employee, token, onClose, onSuccess }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">From Date</label>
-              <Input type="date" value={from} onChange={e => setFrom(e.target.value)} />
+              <Input type="date" min={today} value={from} onChange={e => setFrom(e.target.value)} />
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">To Date</label>
-              <Input type="date" value={to} onChange={e => setTo(e.target.value)} />
+              <Input type="date" min={from || today} value={to} onChange={e => setTo(e.target.value)} />
             </div>
           </div>
           <div>
@@ -263,199 +269,6 @@ function SuspendModal({ employee, token, onClose, onSuccess }) {
             {loading ? 'Suspending...' : 'Confirm Suspension'}
           </Button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Configure Modal (Salary + Payment Details tabs) ──────────────────────────
-function ConfigureModal({ employee, token, onClose, onSuccess }) {
-  const emp = employee.employeeProfile;
-  const [tab, setTab] = useState('salary');
-
-  // Salary tab state
-  const [baseSalary, setBaseSalary] = useState(emp?.baseSalary || '');
-  const [ctc, setCtc] = useState(emp?.ctc || '');
-  const [pfRate, setPfRate] = useState(emp?.pfRate || 12);
-  const [salesTarget, setSalesTarget] = useState(emp?.salesTarget || '');
-
-  // Payment Details tab state
-  const [bankName, setBankName] = useState(emp?.bankName || '');
-  const [bankAccountName, setBankAccountName] = useState(emp?.bankAccountName || employee.firstName + ' ' + employee.lastName);
-  const [bankAccountNumber, setBankAccountNumber] = useState(emp?.bankAccountNumber || '');
-  const [bankIFSC, setBankIFSC] = useState(emp?.bankIFSC || '');
-  const [upiId, setUpiId] = useState(emp?.upiId || '');
-  const [paymentPreference, setPaymentPreference] = useState(emp?.paymentPreference || 'CASH');
-
-  const [loading, setLoading] = useState(false);
-
-  const saveSalary = async () => {
-    if (!baseSalary || parseFloat(baseSalary) <= 0) return toast.error('Enter a valid base salary');
-    setLoading(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${emp?.id}/salary-config`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ baseSalary, ctc, pfRate, salesTarget })
-      });
-      const json = await res.json();
-      if (json.success) { toast.success('Salary configuration saved'); onSuccess(); }
-      else toast.error(json.message || 'Failed');
-    } catch { toast.error('Network error'); }
-    setLoading(false);
-  };
-
-  const savePaymentDetails = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${emp?.id}/bank-details`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bankName, bankAccountName, bankAccountNumber, bankIFSC, upiId, paymentPreference })
-      });
-      const json = await res.json();
-      if (json.success) { toast.success('Payment details saved'); onSuccess(); }
-      else toast.error(json.message || 'Failed');
-    } catch { toast.error('Network error'); }
-    setLoading(false);
-  };
-
-  const PREF_OPTIONS = [
-    { key: 'CASH', label: 'Cash', icon: '💵' },
-    { key: 'BANK_TRANSFER', label: 'Bank Transfer', icon: '🏦' },
-    { key: 'UPI', label: 'UPI', icon: '📱' },
-    { key: 'CHEQUE', label: 'Cheque', icon: '📝' },
-  ];
-
-  const isSalesRole = ['SALES', 'MARKETING', 'DIGITAL_MARKETING'].includes(employee.role);
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-5xl my-4 animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div>
-            <h2 className="text-lg font-bold flex items-center gap-2 text-foreground">
-              <Settings size={20} className="text-primary" /> Configure Employee
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{employee.firstName} {employee.lastName}</p>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X size={16} /></button>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-border">
-          {[
-            { key: 'salary', label: 'Salary Config', icon: IndianRupee },
-            { key: 'payment', label: 'Payment Details', icon: Building2 },
-          ].map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                tab === t.key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <t.icon size={14} />
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Salary Config Tab */}
-        {tab === 'salary' && (
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Monthly Base Salary (₹) *</label>
-              <Input type="number" value={baseSalary} onChange={e => setBaseSalary(e.target.value)} placeholder="e.g. 45000" />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Annual CTC (₹)</label>
-              <Input type="number" value={ctc} onChange={e => setCtc(e.target.value)} placeholder="e.g. 540000" />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">PF Rate (%)</label>
-              <Input type="number" value={pfRate} onChange={e => setPfRate(e.target.value)} min="0" max="100" placeholder="12" />
-              <p className="text-xs text-muted-foreground mt-1">Standard PF rate is 12% of basic salary</p>
-            </div>
-            {isSalesRole && (
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                  <Target size={11} className="inline mr-1" />Monthly Sales Target (₹)
-                </label>
-                <Input type="number" value={salesTarget} onChange={e => setSalesTarget(e.target.value)} placeholder="e.g. 500000" />
-                <p className="text-xs text-muted-foreground mt-1">Commission is calculated on amount above target</p>
-              </div>
-            )}
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={onClose}>Cancel</Button>
-              <Button onClick={saveSalary} disabled={loading}>
-                {loading ? 'Saving...' : 'Save Salary Config'}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Payment Details Tab */}
-        {tab === 'payment' && (
-          <div className="p-6 space-y-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-400">
-              ℹ️ These details are used to auto-fill the salary payment modal and speed up payroll processing.
-            </div>
-
-            {/* Payment Preference */}
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Preferred Payment Method</label>
-              <div className="grid grid-cols-2 gap-2">
-                {PREF_OPTIONS.map(opt => (
-                  <button
-                    key={opt.key}
-                    onClick={() => setPaymentPreference(opt.key)}
-                    className={`p-2.5 rounded-xl border-2 text-left text-sm transition-all ${
-                      paymentPreference === opt.key ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'
-                    }`}
-                  >
-                    <span className="mr-1">{opt.icon}</span>
-                    <span className={`font-semibold text-xs ${paymentPreference === opt.key ? 'text-primary' : 'text-foreground'}`}>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Bank Details */}
-            <div className="space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><Building2 size={11} /> Bank Details</p>
-              <Input placeholder="Bank Name (e.g. HDFC Bank)" value={bankName} onChange={e => setBankName(e.target.value)} />
-              <Input placeholder="Account Holder Name" value={bankAccountName} onChange={e => setBankAccountName(e.target.value)} />
-              <Input placeholder="Account Number" value={bankAccountNumber} onChange={e => setBankAccountNumber(e.target.value)} className="font-mono" />
-              <Input
-                placeholder="IFSC Code (e.g. HDFC0001234)"
-                value={bankIFSC}
-                onChange={e => setBankIFSC(e.target.value.toUpperCase())}
-                className="font-mono"
-                maxLength={11}
-              />
-            </div>
-
-            {/* UPI */}
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">📱 UPI ID</p>
-              <Input
-                placeholder="e.g. john@gpay or 9876543210@paytm"
-                value={upiId}
-                onChange={e => setUpiId(e.target.value)}
-                className="font-mono"
-              />
-              <p className="text-xs text-muted-foreground">Used to auto-generate QR code in salary payment</p>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={onClose}>Cancel</Button>
-              <Button onClick={savePaymentDetails} disabled={loading}>
-                {loading ? 'Saving...' : 'Save Payment Details'}
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -504,18 +317,75 @@ export default function HRManagement() {
   const [leavesLoading, setLeavesLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [temp, setTemp] = useState({ status: statusFilter, role: roleFilter, dept: deptFilter });
+  const [leaveStatusFilter, setLeaveStatusFilter] = useState('PENDING');
+  const [leaveSortOrder, setLeaveSortOrder] = useState('desc');
 
   // Action modals
   const [warnTarget, setWarnTarget] = useState(null);
   const [terminateTarget, setTerminateTarget] = useState(null);
   const [suspendTarget, setSuspendTarget] = useState(null);
-  const [salaryTarget, setSalaryTarget] = useState(null);
+  const [detailsModal, setDetailsModal] = useState({ type: null, data: null });
+
+  // Attendance state
+  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [attendanceLoading, setAttendanceLoading] = useState({});
+  const [markedToday, setMarkedToday] = useState({});
 
   // Overtime & Incentive state
   const [overtimes, setOvertimes] = useState([]);
   const [incentives, setIncentives] = useState([]);
   const [otLoading, setOtLoading] = useState(false);
-  const [incLoading, setIncLoading] = useState(false);
+  const markAttendance = async (empId, status) => {
+    if (!isSuperAdmin) return;
+    setAttendanceLoading(prev => ({ ...prev, [empId]: true }));
+    try {
+      const r = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${empId}/attendance`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status, date: new Date(attendanceDate).toISOString() })
+      });
+      if (r.ok) {
+        toast.success(`Marked ${status.replace('_', ' ')}`);
+        setMarkedToday(prev => ({ ...prev, [empId]: status }));
+      } else toast.error('Failed');
+    } catch { toast.error('Network error'); }
+    finally { setAttendanceLoading(prev => ({ ...prev, [empId]: false })); }
+  };
+
+  const handleBulkAttendance = async (status) => {
+    if (!isSuperAdmin || selectedEmployees.length === 0) return;
+    
+    // Set loading for all selected
+    const loadingState = {};
+    selectedEmployees.forEach(id => loadingState[id] = true);
+    setAttendanceLoading(prev => ({ ...prev, ...loadingState }));
+    
+    let successCount = 0;
+    try {
+      // Execute concurrently
+      await Promise.all(selectedEmployees.map(async (empId) => {
+        const r = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${empId}/attendance`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ status, date: new Date(attendanceDate).toISOString() })
+        });
+        if (r.ok) {
+          successCount++;
+          setMarkedToday(prev => ({ ...prev, [empId]: status }));
+        }
+      }));
+      toast.success(`Marked ${status.replace('_',' ')} for ${successCount} employees`);
+      setSelectedEmployees([]);
+    } catch {
+      toast.error('Network error during bulk action');
+    } finally {
+      // Unset loading
+      setAttendanceLoading(prev => {
+        const next = { ...prev };
+        selectedEmployees.forEach(id => delete next[id]);
+        return next;
+      });
+    }
+  };
   const [otForm, setOtForm] = useState({ employeeId: '', date: '', hours: '', reason: '' });
   const [incForm, setIncForm] = useState({ employeeId: '', month: '', incentiveAmount: '', notes: '' });
   const [otFormOpen, setOtFormOpen] = useState(false);
@@ -576,6 +446,8 @@ export default function HRManagement() {
 
   const logOvertime = async () => {
     if (!otForm.employeeId || !otForm.date || !otForm.hours) return toast.error('Employee, date and hours are required');
+    if (parseFloat(otForm.hours) <= 0) return toast.error('Hours must be greater than 0');
+    if (new Date(otForm.date) > new Date()) return toast.error('Cannot log overtime for future dates');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/overtime`, {
         method: 'POST',
@@ -590,6 +462,7 @@ export default function HRManagement() {
 
   const logIncentive = async () => {
     if (!incForm.employeeId || !incForm.month || !incForm.incentiveAmount) return toast.error('All fields are required');
+    if (parseFloat(incForm.incentiveAmount) <= 0) return toast.error('Incentive amount must be greater than 0');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/incentives`, {
         method: 'POST',
@@ -620,19 +493,21 @@ export default function HRManagement() {
 
   useEffect(() => { fetchEmployees(); }, [searchTerm, sortField, sortOrder, statusFilter, deptFilter]);
 
-  const fetchLeaves = async () => {
+  const fetchLeaves = useCallback(async () => {
     setLeavesLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/leaves?status=PENDING`, {
+      const params = new URLSearchParams();
+      if (leaveStatusFilter !== 'all') params.set('status', leaveStatusFilter);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/leaves?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
       if (json.success) setLeaveRequests(json.data);
     } catch { toast.error('Failed to load leaves'); }
     finally { setLeavesLoading(false); }
-  };
+  }, [leaveStatusFilter, token]);
 
-  useEffect(() => { if (activeTab === 'leaves') fetchLeaves(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 'leaves') fetchLeaves(); }, [activeTab, leaveStatusFilter, fetchLeaves]);
 
   const handleLeaveReview = async (id, status) => {
     try {
@@ -644,7 +519,11 @@ export default function HRManagement() {
       const json = await res.json();
       if (json.success) {
         toast.success(`Leave ${status.toLowerCase()}`);
-        setLeaveRequests(prev => prev.filter(l => l.id !== id));
+        if (leaveStatusFilter === 'PENDING') {
+          setLeaveRequests(prev => prev.filter(l => l.id !== id));
+        } else {
+          fetchLeaves();
+        }
       } else toast.error(json.message || 'Failed');
     } catch { toast.error('Network error'); }
   };
@@ -679,10 +558,13 @@ export default function HRManagement() {
 
   const clearFilters = () => {
     setTemp({ status: 'all', role: 'all', dept: 'all' });
-    setSearchParams(prev => {
-      ['status','role','dept','q'].forEach(k => prev.delete(k));
-      return prev;
-    }, { replace: true });
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.delete('status');
+    newParams.delete('role');
+    newParams.delete('dept');
+    const newSearch = newParams.toString();
+    navigate(`${location.pathname}${newSearch ? '?' + newSearch : ''}#${activeTab}`, { replace: true });
+    setShowFilters(false);
   };
 
   // Client-side role filter (applied on top of server-side status/dept)
@@ -699,6 +581,19 @@ export default function HRManagement() {
   const hasActiveFilters = statusFilter !== 'all' || roleFilter !== 'all' || deptFilter !== 'all';
   const activeFilterCount = [statusFilter !== 'all', roleFilter !== 'all', deptFilter !== 'all'].filter(Boolean).length;
 
+  // Compute stats for charts
+  const deptData = uniqueDepts.map(dept => ({
+    name: dept || 'Unassigned',
+    value: employees.filter(e => e.employeeProfile?.department === dept).length
+  })).filter(d => d.value > 0);
+
+  const roleData = uniqueRoles.map(role => ({
+    name: role.replace(/_/g, ' '),
+    value: employees.filter(e => e.role === role).length
+  })).filter(d => d.value > 0);
+
+  const COLORS = ['#1F2E54', '#E6513A', '#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6'];
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
@@ -711,6 +606,14 @@ export default function HRManagement() {
           <Plus size={16} /> Add Employee
         </Button>
       </div>
+
+      {detailsModal.type && (
+        <HRDetailsModal 
+          type={detailsModal.type} 
+          data={detailsModal.data} 
+          onClose={() => setDetailsModal({ type: null, data: null })} 
+        />
+      )}
 
       {/* Tabs — URL hash based for persistence on refresh */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-1 overflow-x-auto">
@@ -738,9 +641,9 @@ export default function HRManagement() {
       {/* ── Dashboard Tab ── */}
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {loading ? (
-              [1,2,3,4].map(i => (
+              [1,2,3,4,5,6].map(i => (
                 <div key={i} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm animate-pulse">
                   <div className="w-11 h-11 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
                   <div className="flex-1 space-y-2">
@@ -752,9 +655,11 @@ export default function HRManagement() {
             ) : (
               [
                 { label: 'Total Employees', value: employees.length, icon: Users, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
-                { label: 'Active', value: activeCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
-                { label: 'Suspended', value: suspendedCount, icon: Clock, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
+                { label: 'Active Personnel', value: activeCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
+                { label: 'Pending Leaves', value: leaveRequests.filter(l => l.status === 'PENDING').length, icon: Clock, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
+                { label: 'Pending Overtimes', value: overtimes.filter(o => o.status === 'PENDING').length, icon: AlertCircle, color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' },
                 { label: 'Terminated', value: terminatedCount, icon: UserX, color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
+                { label: 'Pending Incentives', value: incentives.filter(i => i.status === 'PENDING').length, icon: PiggyBank, color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' },
               ].map(kpi => (
                 <div key={kpi.label} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm">
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${kpi.color}`}>
@@ -768,18 +673,82 @@ export default function HRManagement() {
               ))
             )}
           </div>
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center">
-            <Users size={40} className="mx-auto mb-3 text-primary/40" />
-            <h3 className="text-lg font-semibold mb-2">Employee Analytics</h3>
-            <p className="text-slate-500 text-sm mb-4 max-w-5xl mx-auto">View individual employee pages for attendance calendars, payroll history, leave balances and performance.</p>
-            <Button onClick={() => setActiveTab('directory')}>Open Directory</Button>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+              <h3 className="font-semibold text-foreground mb-4">Headcount by Department</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={deptData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                      {deptData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0' }} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+              <h3 className="font-semibold text-foreground mb-4">Employees by Role</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={roleData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <RechartsTooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0' }} />
+                    <Bar dataKey="value" fill="#1F2E54" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm lg:col-span-2">
+              <h3 className="font-semibold text-foreground mb-4">Pending HR Actions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-200 dark:border-amber-800/50">
+                  <h4 className="font-medium text-amber-800 dark:text-amber-500 mb-2">Leave Approvals</h4>
+                  <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mb-2">{leaveRequests.filter(l => l.status === 'PENDING').length}</p>
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab('leaves')} className="w-full text-amber-700 border-amber-300 hover:bg-amber-100">Review Leaves</Button>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-200 dark:border-purple-800/50">
+                  <h4 className="font-medium text-purple-800 dark:text-purple-500 mb-2">Overtime Verifications</h4>
+                  <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">{overtimes.filter(o => o.status === 'PENDING').length}</p>
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab('overtime')} className="w-full text-purple-700 border-purple-300 hover:bg-purple-100">Verify Overtimes</Button>
+                </div>
+                <div className="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800/50">
+                  <h4 className="font-medium text-indigo-800 dark:text-indigo-500 mb-2">Incentive Approvals</h4>
+                  <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">{incentives.filter(i => i.status === 'PENDING').length}</p>
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab('incentives')} className="w-full text-indigo-700 border-indigo-300 hover:bg-indigo-100">Review Incentives</Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* ── Directory / Attendance / Payroll / Warnings Tabs (shared table) ── */}
-      {['directory', 'attendance', 'payroll', 'warnings'].includes(activeTab) && (
+      {['directory','attendance','payroll','warnings'].includes(activeTab) && (
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+          
+          {/* Attendance Toolbar */}
+          {activeTab === 'attendance' && (
+            <div className="bg-slate-50 dark:bg-slate-900 border-b border-border p-3 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-semibold">Date:</label>
+                <Input type="date" value={attendanceDate} max={new Date().toISOString().split('T')[0]} onChange={e => setAttendanceDate(e.target.value)} className="w-auto h-8 text-sm" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">{selectedEmployees.length} selected</span>
+                <Button size="sm" variant="outline" className="h-8 text-emerald-600 border-emerald-200 hover:bg-emerald-50" disabled={selectedEmployees.length === 0} onClick={() => handleBulkAttendance('PRESENT')}>Present</Button>
+                <Button size="sm" variant="outline" className="h-8 text-red-600 border-red-200 hover:bg-red-50" disabled={selectedEmployees.length === 0} onClick={() => handleBulkAttendance('ABSENT')}>Absent</Button>
+                <Button size="sm" variant="outline" className="h-8 text-blue-600 border-blue-200 hover:bg-blue-50" disabled={selectedEmployees.length === 0} onClick={() => handleBulkAttendance('LEAVE')}>Leave</Button>
+              </div>
+            </div>
+          )}
 
           {/* Toolbar */}
           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
@@ -789,20 +758,6 @@ export default function HRManagement() {
                 onChange={e => setParam('q', e.target.value)} className="pl-9" />
             </div>
             <div className="flex gap-2 flex-wrap">
-              {/* Status filter */}
-              <select value={statusFilter} onChange={e => setParam('status', e.target.value)}
-                className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                <option value="all">All Status</option>
-                <option value="ACTIVE">Active</option>
-                <option value="SUSPENDED">Suspended</option>
-                <option value="TERMINATED">Terminated</option>
-              </select>
-              {/* Role filter */}
-              <select value={roleFilter} onChange={e => setParam('role', e.target.value)}
-                className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                <option value="all">All Roles</option>
-                {uniqueRoles.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
-              </select>
               {/* Advanced filter toggle */}
               <button
                 onClick={() => { setShowFilters(v => !v); setTemp({ status: statusFilter, role: roleFilter, dept: deptFilter }); }}
@@ -862,8 +817,8 @@ export default function HRManagement() {
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-4">
-                <button onClick={clearFilters} className="px-4 py-2 text-sm font-medium rounded-xl border border-border hover:bg-muted transition-colors">Reset</button>
-                <button onClick={applyFilters} className="px-4 py-2 text-sm font-semibold rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors">Apply</button>
+                <button type="button" onClick={clearFilters} className="px-4 py-2 text-sm font-medium rounded-xl border border-border hover:bg-muted transition-colors">Reset Filters</button>
+                <button type="button" onClick={applyFilters} className="px-4 py-2 text-sm font-semibold rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors">Apply</button>
               </div>
             </div>
           )}
@@ -895,10 +850,18 @@ export default function HRManagement() {
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('firstName')}>
+                  {activeTab === 'attendance' && (
+                    <th className="px-4 py-3 w-10">
+                      <input type="checkbox" className="rounded border-slate-300"
+                        checked={filteredEmployees.length > 0 && selectedEmployees.length === filteredEmployees.length}
+                        onChange={e => setSelectedEmployees(e.target.checked ? filteredEmployees.map(emp => emp.id) : [])}
+                      />
+                    </th>
+                  )}
+                  <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors text-left" onClick={() => toggleSort('firstName')}>
                     <div className="flex items-center gap-1">Employee <ArrowUpDown size={12} /></div>
                   </th>
-                  <th className="px-6 py-3">Role / Status</th>
+                  <th className="px-6 py-3 text-left">Role / Status</th>
                   {activeTab === 'directory'   && <th className="px-6 py-3">Department / Joined</th>}
                   {activeTab === 'attendance'  && <th className="px-6 py-3">Mark Attendance</th>}
                   {activeTab === 'payroll'     && <><th className="px-6 py-3">Base Salary</th><th className="px-6 py-3">PF Rate</th><th className="px-6 py-3">Configure</th></>}
@@ -910,6 +873,7 @@ export default function HRManagement() {
                 {loading ? (
                   [1,2,3,4].map(i => (
                     <tr key={i}>
+                      {activeTab === 'attendance' && <td className="px-4 py-4"><Skeleton className="w-4 h-4 rounded" /></td>}
                       <td className="px-6 py-4"><div className="flex items-center gap-3"><Skeleton className="w-8 h-8 rounded-full" /><div><Skeleton className="h-4 w-28 mb-1"/><Skeleton className="h-3 w-40"/></div></div></td>
                       <td className="px-6 py-4"><Skeleton className="h-5 w-20 rounded-full"/></td>
                       <td className="px-6 py-4"><Skeleton className="h-8 w-24 rounded-lg"/></td>
@@ -927,6 +891,15 @@ export default function HRManagement() {
                     const warningCount = emp.employeeProfile?.warnings?.length || 0;
                     return (
                     <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+                      {/* Checkbox for Attendance */}
+                      {activeTab === 'attendance' && (
+                        <td className="px-4 py-4">
+                          <input type="checkbox" className="rounded border-slate-300"
+                            checked={selectedEmployees.includes(emp.id)}
+                            onChange={e => setSelectedEmployees(prev => e.target.checked ? [...prev, emp.id] : prev.filter(id => id !== emp.id))}
+                          />
+                        </td>
+                      )}
                       {/* Employee info */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate(`/dashboard/hr/${emp.id}`)}>
@@ -964,21 +937,29 @@ export default function HRManagement() {
                       {activeTab === 'attendance' && (
                         <td className="px-6 py-4">
                           {empStatus === 'ACTIVE' ? (
-                            <div className="flex gap-1.5 flex-wrap">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {markedToday[emp.id] && (
+                                <span className={`mr-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                  markedToday[emp.id] === 'PRESENT' ? 'bg-emerald-100 text-emerald-700' :
+                                  markedToday[emp.id] === 'ABSENT' ? 'bg-red-100 text-red-700' :
+                                  markedToday[emp.id] === 'LEAVE' ? 'bg-blue-100 text-blue-700' :
+                                  'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {markedToday[emp.id].replace('_', ' ')}
+                                </span>
+                              )}
                               {['PRESENT','ABSENT','HALF_DAY','LEAVE'].map(s => {
-                                const cls = { PRESENT:'text-emerald-600 border-emerald-200 hover:bg-emerald-50', ABSENT:'text-red-600 border-red-200 hover:bg-red-50', HALF_DAY:'text-amber-600 border-amber-200 hover:bg-amber-50', LEAVE:'text-blue-600 border-blue-200 hover:bg-blue-50' };
+                                const isMarked = markedToday[emp.id] === s;
+                                const cls = { 
+                                  PRESENT: isMarked ? 'bg-emerald-500 text-white border-emerald-500' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50', 
+                                  ABSENT: isMarked ? 'bg-red-500 text-white border-red-500' : 'text-red-600 border-red-200 hover:bg-red-50', 
+                                  HALF_DAY: isMarked ? 'bg-amber-500 text-white border-amber-500' : 'text-amber-600 border-amber-200 hover:bg-amber-50', 
+                                  LEAVE: isMarked ? 'bg-blue-500 text-white border-blue-500' : 'text-blue-600 border-blue-200 hover:bg-blue-50' 
+                                };
                                 return (
-                                  <Button key={s} size="sm" variant="outline" disabled={!isSuperAdmin} className={`text-xs h-7 ${cls[s]} ${!isSuperAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    onClick={async () => {
-                                      if (!isSuperAdmin) return;
-                                      const r = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${emp.id}/attendance`, {
-                                        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                        body: JSON.stringify({ status: s, date: new Date().toISOString() })
-                                      });
-                                      if (r.ok) toast.success(`Marked ${s.replace('_',' ')}`);
-                                      else toast.error('Failed');
-                                    }}>
-                                    {s.replace('_',' ')}
+                                  <Button key={s} size="sm" variant={isMarked ? "solid" : "outline"} disabled={!isSuperAdmin || attendanceLoading[emp.id]} className={`text-[10px] sm:text-xs h-7 px-2 ${cls[s]} ${(!isSuperAdmin || attendanceLoading[emp.id]) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    onClick={() => markAttendance(emp.id, s)}>
+                                    {attendanceLoading[emp.id] ? <span className="animate-pulse">...</span> : s.replace('_',' ')}
                                   </Button>
                                 );
                               })}
@@ -998,7 +979,7 @@ export default function HRManagement() {
                           <td className="px-6 py-4 text-slate-500">{emp.employeeProfile?.pfRate || 12}%</td>
                           <td className="px-6 py-4">
                             {isSuperAdmin && (
-                              <Button size="sm" variant="outline" onClick={() => setSalaryTarget(emp)}>
+                              <Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/hr/payroll-config/${emp.id}`)}>
                                 <Settings size={13} className="mr-1.5" /> Configure
                               </Button>
                             )}
@@ -1012,31 +993,32 @@ export default function HRManagement() {
                           <div className="flex gap-2 flex-wrap">
                             {isSuperAdmin && (
                               <>
-                                <Button size="sm" variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50"
-                                  onClick={() => setWarnTarget(emp)}>
+                                <Button size="sm" variant="outline" className={`text-amber-600 border-amber-200 hover:bg-amber-50 ${emp.id === user.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  disabled={emp.id === user.id} onClick={() => setWarnTarget(emp)}>
                                   <ShieldAlert size={13} className="mr-1.5" /> Issue Warning
                                 </Button>
                                 {empStatus === 'ACTIVE' && (
-                                  <Button size="sm" variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                                    onClick={() => setSuspendTarget(emp)}>
+                                  <Button size="sm" variant="outline" className={`text-orange-600 border-orange-200 hover:bg-orange-50 ${emp.id === user.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={emp.id === user.id} onClick={() => setSuspendTarget(emp)}>
                                     <Clock size={13} className="mr-1.5" /> Suspend
                                   </Button>
                                 )}
                                 {empStatus === 'SUSPENDED' && (
-                                  <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                                    onClick={() => handleReinstate(emp)}>
+                                  <Button size="sm" variant="outline" className={`text-emerald-600 border-emerald-200 hover:bg-emerald-50 ${emp.id === user.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={emp.id === user.id} onClick={() => handleReinstate(emp)}>
                                     <UserCheck size={13} className="mr-1.5" /> Reinstate
                                   </Button>
                                 )}
                                 {empStatus !== 'TERMINATED' && (
-                                  <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50"
-                                    onClick={() => setTerminateTarget(emp)}>
+                                  <Button size="sm" variant="outline" className={`text-red-600 border-red-200 hover:bg-red-50 ${emp.id === user.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={emp.id === user.id} onClick={() => setTerminateTarget(emp)}>
                                     <UserX size={13} className="mr-1.5" /> Terminate
                                   </Button>
                                 )}
                               </>
                             )}
                             {!isSuperAdmin && <span className="text-xs text-muted-foreground italic">Actions restricted to Super Admin</span>}
+                            {emp.id === user.id && <span className="text-xs text-red-500 italic ml-2">Self action restricted</span>}
                           </div>
                         </td>
                       )}
@@ -1075,12 +1057,54 @@ export default function HRManagement() {
       {/* ── Leave Requests Tab ── */}
       {activeTab === 'leaves' && (
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <h3 className="font-semibold text-foreground">Pending Leave Requests</h3>
-            <button onClick={fetchLeaves} className="flex items-center gap-1.5 text-sm text-primary hover:underline">
-              <RefreshCw size={13} /> Refresh
-            </button>
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h3 className="font-semibold text-foreground">Leave Requests</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setShowFilters(v => !v)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm border transition-all ${
+                  leaveStatusFilter !== 'all'
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-white dark:bg-slate-900 border-border hover:border-primary text-foreground'
+                }`}
+              >
+                <Filter size={14} /> Filters
+                {leaveStatusFilter !== 'all' && <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5">1</span>}
+              </button>
+              <button onClick={fetchLeaves} className="p-2 rounded-lg border border-input hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+                <RefreshCw size={14} />
+              </button>
+            </div>
           </div>
+
+          {showFilters && (
+            <div className="border-b border-border bg-muted/20 px-6 py-4 flex flex-wrap gap-4 items-end">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Leave Status</label>
+                <select
+                  value={leaveStatusFilter}
+                  onChange={e => setLeaveStatusFilter(e.target.value)}
+                  className="w-full sm:w-48 text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="all">All Status</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Sort Order</label>
+                <select
+                  value={leaveSortOrder}
+                  onChange={e => setLeaveSortOrder(e.target.value)}
+                  className="w-full sm:w-48 text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="desc">Newest First</option>
+                  <option value="asc">Oldest First</option>
+                </select>
+              </div>
+            </div>
+          )}
           {leavesLoading ? (
             <div className="p-8 text-center text-muted-foreground">Loading...</div>
           ) : leaveRequests.length === 0 ? (
@@ -1093,13 +1117,16 @@ export default function HRManagement() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    {['Employee','Date','Type','Reason','Submitted','Actions'].map(h => (
-                      <th key={h} className={`px-6 py-3 ${h === 'Actions' ? 'text-right' : ''}`}>{h}</th>
+                    {['Employee','Date','Type','Reason','Submitted','Status',''].map(h => (
+                      <th key={h} className={`px-6 py-3 ${h === 'Status' ? 'text-right' : ''}`}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {leaveRequests.map(lr => (
+                  {[...leaveRequests].sort((a, b) => {
+                    const diff = new Date(b.createdAt) - new Date(a.createdAt);
+                    return leaveSortOrder === 'desc' ? diff : -diff;
+                  }).map(lr => (
                     <tr key={lr.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -1117,21 +1144,33 @@ export default function HRManagement() {
                       <td className="px-6 py-4 text-muted-foreground max-w-[180px] truncate">{lr.reason}</td>
                       <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(lr.createdAt).toLocaleDateString('en-IN')}</td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          {isSuperAdmin ? (
-                            <>
-                              <button onClick={() => handleLeaveReview(lr.id, 'APPROVED')}
-                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-semibold transition-colors dark:bg-emerald-900/30 dark:text-emerald-400">
-                                <CheckCircle2 size={12} /> Approve
-                              </button>
-                              <button onClick={() => handleLeaveReview(lr.id, 'REJECTED')}
-                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-xs font-semibold transition-colors dark:bg-red-900/30 dark:text-red-400">
-                                <XCircle size={12} /> Reject
-                              </button>
-                            </>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">Restricted</span>
+                        <div className="flex justify-end items-center gap-2">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider ${
+                              lr.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                              lr.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                              'bg-amber-100 text-amber-700'
+                            }`}>
+                            {lr.status}
+                          </span>
+                          {isSuperAdmin && (
+                            <div className="flex gap-1 ml-2">
+                              {lr.status === 'PENDING' && (
+                                <>
+                                  <button onClick={() => handleLeaveReview(lr.id, 'APPROVED')} className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg" title="Approve"><CheckCircle2 size={14} /></button>
+                                  <button onClick={() => handleLeaveReview(lr.id, 'REJECTED')} className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg" title="Reject"><XCircle size={14} /></button>
+                                </>
+                              )}
+                              {lr.status === 'APPROVED' && (
+                                <button onClick={() => handleLeaveReview(lr.id, 'PENDING')} className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg" title="Revoke to Pending"><RefreshCw size={14} /></button>
+                              )}
+                              {lr.status === 'REJECTED' && (
+                                <button onClick={() => handleLeaveReview(lr.id, 'PENDING')} className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg" title="Reset to Pending"><RefreshCw size={14} /></button>
+                              )}
+                            </div>
                           )}
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDetailsModal({ type: 'leave', data: lr }); }} className="ml-2 h-8 w-8 p-0 shrink-0">
+                            <Eye size={15} className="text-muted-foreground" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -1183,11 +1222,23 @@ export default function HRManagement() {
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Date *</label>
-                  <Input type="date" value={otForm.date} onChange={e => setOtForm(f => ({ ...f, date: e.target.value }))} />
+                  <Input type="date" max={new Date().toISOString().split('T')[0]} value={otForm.date} onChange={e => setOtForm(f => ({ ...f, date: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Hours *</label>
-                  <Input type="number" min="0.5" max="12" step="0.5" placeholder="e.g. 2.5" value={otForm.hours} onChange={e => setOtForm(f => ({ ...f, hours: e.target.value }))} />
+                  <Input 
+                    type="number" 
+                    min="0.5" 
+                    max="12" 
+                    step="0.5" 
+                    placeholder="e.g. 2.5" 
+                    value={otForm.hours} 
+                    onChange={e => setOtForm(f => ({ ...f, hours: e.target.value }))} 
+                    onWheel={e => e.target.blur()}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '-', '+'].includes(e.key)) e.preventDefault();
+                    }}
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Reason</label>
@@ -1246,24 +1297,27 @@ export default function HRManagement() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {ot.status === 'PENDING' && isSuperAdmin && (
-                          <div className="flex gap-1.5 justify-end">
-                            <button
-                              onClick={() => handleOtApprove(ot.id, 'APPROVE')}
-                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 rounded-lg transition-colors"
-                              title="Approve"
-                            >
-                              <CheckCircle2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleOtApprove(ot.id, 'REJECT')}
-                              className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg transition-colors"
-                              title="Reject"
-                            >
-                              <XCircle size={14} />
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex gap-1.5 justify-end">
+                          {isSuperAdmin && (
+                            <>
+                              {ot.status === 'PENDING' && (
+                                <>
+                                  <button onClick={() => handleOtApprove(ot.id, 'APPROVE')} className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg" title="Approve"><CheckCircle2 size={14} /></button>
+                                  <button onClick={() => handleOtApprove(ot.id, 'REJECT')} className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg" title="Reject"><XCircle size={14} /></button>
+                                </>
+                              )}
+                              {ot.status === 'APPROVED' && (
+                                <button onClick={() => handleOtApprove(ot.id, 'CANCEL')} className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg" title="Revoke/Cancel"><XCircle size={14} /></button>
+                              )}
+                              {(ot.status === 'REJECTED' || ot.status === 'CANCELLED') && (
+                                <button onClick={() => handleOtApprove(ot.id, 'PENDING')} className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg" title="Reset to Pending"><RefreshCw size={14} /></button>
+                              )}
+                            </>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDetailsModal({ type: 'overtime', data: ot }); }} className="h-8 w-8 p-0 shrink-0">
+                            <Eye size={15} className="text-muted-foreground" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1314,13 +1368,24 @@ export default function HRManagement() {
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Month *</label>
                   <Input
                     type="month"
+                    max={new Date().toISOString().slice(0, 7)}
                     value={incForm.month}
                     onChange={e => setIncForm(f => ({ ...f, month: e.target.value }))}
                   />
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Amount (₹) *</label>
-                  <Input type="number" placeholder="e.g. 5000" value={incForm.incentiveAmount} onChange={e => setIncForm(f => ({ ...f, incentiveAmount: e.target.value }))} />
+                  <Input 
+                    type="number" 
+                    min="0"
+                    placeholder="e.g. 5000" 
+                    value={incForm.incentiveAmount} 
+                    onChange={e => setIncForm(f => ({ ...f, incentiveAmount: e.target.value }))}
+                    onWheel={e => e.target.blur()}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '-', '+'].includes(e.key)) e.preventDefault();
+                    }}
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Notes</label>
@@ -1352,7 +1417,7 @@ export default function HRManagement() {
                     <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Achieved</th>
                     <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Incentive</th>
                     <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3"></th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -1378,24 +1443,27 @@ export default function HRManagement() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {inc.status === 'PENDING' && isSuperAdmin && (
-                          <div className="flex gap-1.5 justify-end">
-                            <button
-                              onClick={() => handleIncApprove(inc.id, 'APPROVE')}
-                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 rounded-lg transition-colors"
-                              title="Approve"
-                            >
-                              <CheckCircle2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleIncApprove(inc.id, 'REJECT')}
-                              className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg transition-colors"
-                              title="Reject"
-                            >
-                              <XCircle size={14} />
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex gap-1.5 justify-end">
+                          {isSuperAdmin && (
+                            <>
+                              {inc.status === 'PENDING' && (
+                                <>
+                                  <button onClick={() => handleIncApprove(inc.id, 'APPROVE')} className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg" title="Approve"><CheckCircle2 size={14} /></button>
+                                  <button onClick={() => handleIncApprove(inc.id, 'REJECT')} className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg" title="Reject"><XCircle size={14} /></button>
+                                </>
+                              )}
+                              {inc.status === 'APPROVED' && (
+                                <button onClick={() => handleIncApprove(inc.id, 'CANCEL')} className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg" title="Revoke/Cancel"><XCircle size={14} /></button>
+                              )}
+                              {(inc.status === 'REJECTED' || inc.status === 'CANCELLED') && (
+                                <button onClick={() => handleIncApprove(inc.id, 'PENDING')} className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg" title="Reset to Pending"><RefreshCw size={14} /></button>
+                              )}
+                            </>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDetailsModal({ type: 'incentive', data: inc }); }} className="h-8 w-8 p-0 shrink-0 ml-2">
+                            <Eye size={15} className="text-muted-foreground" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1421,11 +1489,6 @@ export default function HRManagement() {
         <SuspendModal employee={suspendTarget} token={token}
           onClose={() => setSuspendTarget(null)}
           onSuccess={() => { setSuspendTarget(null); fetchEmployees(); }} />
-      )}
-      {salaryTarget && (
-        <ConfigureModal employee={salaryTarget} token={token}
-          onClose={() => setSalaryTarget(null)}
-          onSuccess={() => { setSalaryTarget(null); fetchEmployees(); }} />
       )}
     </div>
   );

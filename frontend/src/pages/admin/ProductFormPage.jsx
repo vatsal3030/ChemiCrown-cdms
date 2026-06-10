@@ -372,7 +372,7 @@ export default function ProductFormPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs font-medium mb-1 text-slate-500">Size Volume/Weight</label>
-                        <Input type="number" step="0.01" required value={formData.packageSize} onChange={e=>setFormData({...formData, packageSize: e.target.value})} placeholder="e.g. 50" />
+                        <Input type="number" min="0" step="0.01" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} required value={formData.packageSize} onChange={e=>setFormData({...formData, packageSize: e.target.value})} placeholder="e.g. 50" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1 text-slate-500">Base Unit (Kg, L)</label>
@@ -502,7 +502,7 @@ export default function ProductFormPage() {
                   <Input 
                     min="0" 
                     required 
-                    type="number" 
+                    type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                     step="0.01" 
                     value={formData.price} 
                     onChange={e=>setFormData({...formData, price: e.target.value})} 
