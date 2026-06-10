@@ -399,17 +399,6 @@ export default function Orders() {
             />
           </div>
           <div className="flex gap-2 shrink-0">
-            {/* Quick status dropdown */}
-            <select
-              value={statusFilter}
-              onChange={e => setParam('status', e.target.value)}
-              className="text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-            >
-              <option value="all">All Statuses</option>
-              {['REQUESTED','PENDING','PROCESSING','PACKAGED','DISPATCHED','DELIVERED','CANCELLED'].map(s => (
-                <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
-              ))}
-            </select>
             {/* Advanced filter toggle */}
             <button
               onClick={() => { setShowFilters(v => !v); setTempFilters({ status: statusFilter, from: dateFrom, to: dateTo, minAmt: minAmount, maxAmt: maxAmount }); }}

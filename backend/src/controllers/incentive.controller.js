@@ -154,8 +154,8 @@ exports.approveIncentive = async (req, res, next) => {
     const { id } = req.params;
     const { action, notes } = req.body;
 
-    if (!['APPROVE', 'REJECT'].includes(action)) {
-      return res.status(400).json({ success: false, message: 'action must be APPROVE or REJECT' });
+    if (!['APPROVE', 'REJECT', 'PENDING'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'action must be APPROVE, REJECT, or PENDING' });
     }
 
     const incentive = await prisma.salesIncentive.findUnique({
@@ -163,9 +163,9 @@ exports.approveIncentive = async (req, res, next) => {
       include: { employee: { include: { user: true } } }
     });
     if (!incentive) return res.status(404).json({ success: false, message: 'Incentive not found' });
-    if (incentive.status !== 'PENDING') return res.status(400).json({ success: false, message: 'Incentive is not PENDING' });
+    if (incentive.status === 'PAID') return res.status(400).json({ success: false, message: 'Cannot change status of a PAID incentive' });
 
-    const newStatus = action === 'APPROVE' ? 'APPROVED' : 'REJECTED';
+    const newStatus = action === 'APPROVE' ? 'APPROVED' : (action === 'REJECT' ? 'REJECTED' : 'PENDING');
     await prisma.salesIncentive.update({
       where: { id },
       data: { status: newStatus, ...(notes && { notes }) }

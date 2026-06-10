@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Bug, Lightbulb, Database, AlertTriangle, CheckCircle2, Clock, RefreshCw, X, ChevronDown, Search, Filter } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,11 +25,25 @@ export default function TicketDashboard() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [priorityFilter, setPriorityFilter] = useState('ALL');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Filters from URL
+  const searchTerm = searchParams.get('q') || '';
+  const typeFilter = searchParams.get('type') || 'ALL';
+  const statusFilter = searchParams.get('status') || 'ALL';
+  const priorityFilter = searchParams.get('priority') || 'ALL';
+  const dateFrom = searchParams.get('dateFrom') || '';
+  const dateTo = searchParams.get('dateTo') || '';
+  
+  const [showFilters, setShowFilters] = useState(false);
+
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      if (!value || value === 'ALL') prev.delete(key);
+      else prev.set(key, value);
+      return prev;
+    }, { replace: true });
+  };
 
   const navigate = useNavigate();
 
@@ -69,16 +83,33 @@ export default function TicketDashboard() {
       const matchType = typeFilter === 'ALL' || t.type === typeFilter;
       const matchStatus = statusFilter === 'ALL' || t.status === statusFilter;
       const matchPriority = priorityFilter === 'ALL' || t.priority === priorityFilter;
-      return matchSearch && matchType && matchStatus && matchPriority;
-    });
-  }, [tickets, searchTerm, typeFilter, statusFilter, priorityFilter]);
+      
+      let matchDate = true;
+      if (dateFrom || dateTo) {
+        const ticketDate = new Date(t.createdAt);
+        ticketDate.setHours(0, 0, 0, 0);
+        if (dateFrom) {
+          const from = new Date(dateFrom);
+          from.setHours(0, 0, 0, 0);
+          if (ticketDate < from) matchDate = false;
+        }
+        if (dateTo) {
+          const to = new Date(dateTo);
+          to.setHours(0, 0, 0, 0);
+          if (ticketDate > to) matchDate = false;
+        }
+      }
 
-  const hasFilters = searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL' || priorityFilter !== 'ALL';
+      return matchSearch && matchType && matchStatus && matchPriority && matchDate;
+    });
+  }, [tickets, searchTerm, typeFilter, statusFilter, priorityFilter, dateFrom, dateTo]);
+
+  const hasFilters = searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL' || priorityFilter !== 'ALL' || dateFrom || dateTo;
   const clearFilters = () => {
-    setSearchTerm('');
-    setTypeFilter('ALL');
-    setStatusFilter('ALL');
-    setPriorityFilter('ALL');
+    setSearchParams(prev => {
+      ['q', 'type', 'status', 'priority', 'dateFrom', 'dateTo'].forEach(k => prev.delete(k));
+      return prev;
+    }, { replace: true });
   };
 
   return (
@@ -108,42 +139,63 @@ export default function TicketDashboard() {
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
           <Input 
-            className="w-full pl-9 h-9 text-sm" 
+            className="w-full pl-9 h-10 text-sm" 
             placeholder="Search tickets by title or user..." 
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={e => setParam('q', e.target.value)}
           />
         </div>
-        <select 
-          value={typeFilter} 
-          onChange={e => setTypeFilter(e.target.value)}
-          className="w-full md:w-36 h-9 text-sm bg-background border border-input rounded-md px-3"
+        
+        <Button 
+          variant={hasFilters ? 'default' : (showFilters ? 'secondary' : 'outline')} 
+          className={`h-10 gap-2 shrink-0 w-full md:w-auto ${hasFilters ? 'bg-primary text-white border-primary' : ''}`}
+          onClick={() => setShowFilters(!showFilters)}
         >
-          <option value="ALL">All Types</option>
-          {Object.keys(TYPE_ICONS).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
-        </select>
-        <select 
-          value={statusFilter} 
-          onChange={e => setStatusFilter(e.target.value)}
-          className="w-full md:w-36 h-9 text-sm bg-background border border-input rounded-md px-3"
-        >
-          <option value="ALL">All Statuses</option>
-          {Object.keys(STATUS_STYLES).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
-        </select>
-        <select 
-          value={priorityFilter} 
-          onChange={e => setPriorityFilter(e.target.value)}
-          className="w-full md:w-36 h-9 text-sm bg-background border border-input rounded-md px-3"
-        >
-          <option value="ALL">All Priorities</option>
-          {Object.keys(PRIORITY_STYLES).map(k => <option key={k} value={k}>{k}</option>)}
-        </select>
-        {hasFilters && (
-          <Button variant="outline" size="sm" onClick={clearFilters} className="w-full md:w-auto h-9 text-muted-foreground">
-            <X size={14} className="mr-1" /> Clear
-          </Button>
-        )}
+          <Filter size={16} /> Advanced Filters <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+        </Button>
       </div>
+
+      {showFilters && (
+        <div className="bg-card border border-border p-5 rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 animate-in slide-in-from-top-2">
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Type</label>
+            <select value={typeFilter} onChange={e => setParam('type', e.target.value)} className="w-full h-9 text-sm bg-background border border-input rounded-md px-3">
+              <option value="ALL">All Types</option>
+              {Object.keys(TYPE_ICONS).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Status</label>
+            <select value={statusFilter} onChange={e => setParam('status', e.target.value)} className="w-full h-9 text-sm bg-background border border-input rounded-md px-3">
+              <option value="ALL">All Statuses</option>
+              {Object.keys(STATUS_STYLES).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Priority</label>
+            <select value={priorityFilter} onChange={e => setParam('priority', e.target.value)} className="w-full h-9 text-sm bg-background border border-input rounded-md px-3">
+              <option value="ALL">All Priorities</option>
+              {Object.keys(PRIORITY_STYLES).map(k => <option key={k} value={k}>{k}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">From Date</label>
+            <Input type="date" className="h-9 text-sm" value={dateFrom} onChange={e => setParam('dateFrom', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">To Date</label>
+            <Input type="date" className="h-9 text-sm" value={dateTo} onChange={e => setParam('dateTo', e.target.value)} />
+          </div>
+          
+          {hasFilters && (
+            <div className="md:col-span-5 flex justify-end mt-2">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
+                <X size={14} className="mr-1.5" /> Clear All Filters
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="data-table-wrapper">
         <div className="overflow-x-auto">

@@ -116,8 +116,8 @@ exports.approveOvertime = async (req, res, next) => {
     const { id } = req.params;
     const { action, reason } = req.body; // action: 'APPROVE' | 'REJECT' | 'CANCEL'
 
-    if (!['APPROVE', 'REJECT', 'CANCEL'].includes(action)) {
-      return res.status(400).json({ success: false, message: 'action must be APPROVE, REJECT, or CANCEL' });
+    if (!['APPROVE', 'REJECT', 'CANCEL', 'PENDING'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'action must be APPROVE, REJECT, CANCEL, or PENDING' });
     }
 
     const ot = await prisma.overtime.findUnique({
@@ -132,11 +132,11 @@ exports.approveOvertime = async (req, res, next) => {
       if (ot.status === 'PAID') return res.status(400).json({ success: false, message: 'Cannot cancel PAID overtime' });
     }
 
-    const newStatus = action === 'APPROVE' ? 'APPROVED' : (action === 'REJECT' ? 'REJECTED' : 'CANCELLED');
+    const newStatus = action === 'APPROVE' ? 'APPROVED' : (action === 'REJECT' ? 'REJECTED' : (action === 'PENDING' ? 'PENDING' : 'CANCELLED'));
 
     await prisma.overtime.update({
       where: { id },
-      data: { status: newStatus, approvedById: req.user.id }
+      data: { status: newStatus, approvedById: action === 'PENDING' ? null : req.user.id }
     });
 
     await prisma.notification.create({

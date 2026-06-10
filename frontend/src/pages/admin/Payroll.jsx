@@ -14,6 +14,8 @@ import toast from 'react-hot-toast';
 function SalaryStatusBadge({ status, confirmed }) {
   if (status === 'PAID' && confirmed) return <span className="badge badge-success"><ShieldCheck size={11} /> Paid &amp; Confirmed</span>;
   if (status === 'PAID') return <span className="badge badge-success"><CheckCircle2 size={11} /> Paid</span>;
+  if (status === 'PROCESSING') return <span className="badge bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"><Clock size={11} /> Processing</span>;
+  if (status === 'FAILED') return <span className="badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"><X size={11} /> Failed</span>;
   return <span className="badge badge-warning"><Clock size={11} /> Pending</span>;
 }
 
@@ -226,16 +228,6 @@ export default function Payroll() {
             />
           </div>
           <div className="flex gap-2">
-            {/* Quick status filter */}
-            <select
-              value={statusFilter}
-              onChange={e => setParam('status', e.target.value)}
-              className="px-3 py-2 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-            >
-              <option value="ALL">All Status</option>
-              <option value="PENDING">Pending</option>
-              <option value="PAID">Paid</option>
-            </select>
             {/* Advanced filters toggle */}
             <button
               onClick={() => { setShowFilters(v => !v); setTemp({ status: statusFilter, minNet, maxNet }); }}
@@ -265,12 +257,17 @@ export default function Payroll() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Payment Status</label>
-                <select value={temp.status} onChange={e => setTemp(t => ({ ...t, status: e.target.value }))}
-                  className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option value="ALL">All</option>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Status</label>
+                <select
+                  value={temp.status}
+                  onChange={e => setTemp({ ...temp, status: e.target.value })}
+                  className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                >
+                  <option value="ALL">All Status</option>
                   <option value="PENDING">Pending</option>
+                  <option value="PROCESSING">Processing</option>
                   <option value="PAID">Paid</option>
+                  <option value="FAILED">Failed</option>
                 </select>
               </div>
               <div>
@@ -379,6 +376,11 @@ export default function Payroll() {
                     <div className="flex items-center justify-end gap-1.5">
                       {slip.status === 'PENDING' ? (
                         <>
+                          <Link to={`/dashboard/payroll/${slip.id}`}>
+                            <Button size="sm" variant="outline" className="text-xs">
+                              View
+                            </Button>
+                          </Link>
                           <Link to={`/dashboard/payroll/pay/${slip.id}`}>
                             <Button size="sm" className="text-xs">
                               <CreditCard size={13} className="mr-1" /> Pay
@@ -391,12 +393,17 @@ export default function Payroll() {
                         </>
                       ) : (
                         <div className="text-right">
-                          <span className="text-xs text-muted-foreground block">
+                          <span className="text-xs text-muted-foreground block mb-1">
                             {slip.paidAt ? new Date(slip.paidAt).toLocaleDateString('en-IN') : ''}
                           </span>
                           {!slip.confirmedByEmployee && (
-                            <span className="text-xs text-amber-600">Awaiting confirmation</span>
+                            <span className="text-xs text-amber-600 block mb-1">Awaiting confirmation</span>
                           )}
+                          <Link to={`/dashboard/payroll/${slip.id}`}>
+                            <Button size="sm" variant="outline" className="text-xs mt-1">
+                              View Details
+                            </Button>
+                          </Link>
                         </div>
                       )}
                     </div>

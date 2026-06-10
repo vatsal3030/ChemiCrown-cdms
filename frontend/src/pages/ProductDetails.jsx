@@ -260,16 +260,8 @@ export default function ProductDetails() {
               </table>
             </div>
 
-            <div className="pt-4">
-              <h3 className="font-bold text-foreground mb-2">About this item</h3>
-              <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                {product.description?.split('\n').filter(l => l.trim()).map((line, i) => (
-                  <li key={i}>{line}</li>
-                )) || <li>No description available.</li>}
-              </ul>
             </div>
           </div>
-        </div>
 
         {/* Right Column: Buy Box */}
         <div className="lg:col-span-3 space-y-4 border border-border rounded-2xl p-5 bg-card shadow-sm sticky top-6">

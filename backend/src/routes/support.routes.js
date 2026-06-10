@@ -14,6 +14,7 @@ router.delete('/:id', requireRole(['SUPER_ADMIN', 'OWNER']), supportController.d
 
 // Audit Logs — Read-only for all admins, delete for SUPER_ADMIN/OWNER only (industry standard: immutable by default)
 router.get('/audit-logs', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), supportController.getAuditLogs);
+router.get('/audit-logs/:id', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), supportController.getAuditLogById);
 router.delete('/audit-logs/:id', requireRole(['SUPER_ADMIN', 'OWNER']), supportController.deleteAuditLog);
 
 module.exports = router;

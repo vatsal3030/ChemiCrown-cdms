@@ -107,9 +107,9 @@ export default function PayrollPaymentPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       <div className="flex items-center gap-4">
-        <Link to="/dashboard/payroll" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors text-muted-foreground">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors text-muted-foreground">
           <ArrowLeft size={20} />
-        </Link>
+        </button>
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">Process Salary Payment</h1>
           <p className="text-muted-foreground mt-1">Record payment details for the selected salary slip</p>

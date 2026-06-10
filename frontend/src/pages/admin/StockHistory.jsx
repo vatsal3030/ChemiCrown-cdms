@@ -1,15 +1,17 @@
 import useSWR from 'swr';
-import { History, ArrowUpRight, ArrowDownRight, User, Search, Filter, X } from 'lucide-react';
+import { History, ArrowUpRight, ArrowDownRight, User, Search, Filter, X, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'react-router-dom';
 import useDebounce from '@/hooks/useDebounce';
+import { useState, useEffect } from 'react';
 
 export default function StockHistory() {
   const { token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showFilters, setShowFilters] = useState(false);
 
   const searchTerm = searchParams.get('q')    || '';
   const typeFilter = searchParams.get('type') || 'all';
@@ -27,6 +29,37 @@ export default function StockHistory() {
       return prev;
     }, { replace: true });
   };
+
+  const [temp, setTemp] = useState({ type: typeFilter, sort: sortOrder, startDate, endDate });
+
+  useEffect(() => {
+    if (showFilters) {
+      setTemp({ type: typeFilter, sort: sortOrder, startDate, endDate });
+    }
+  }, [showFilters, typeFilter, sortOrder, startDate, endDate]);
+
+  const applyFilters = () => {
+    setParam('type', temp.type);
+    setParam('sort', temp.sort);
+    setParam('startDate', temp.startDate);
+    setParam('endDate', temp.endDate);
+  };
+
+  const clearFilters = () => {
+    setParam('q', '');
+    setParam('type', 'all');
+    setParam('sort', 'desc');
+    setParam('startDate', '');
+    setParam('endDate', '');
+    setTemp({ type: 'all', sort: 'desc', startDate: '', endDate: '' });
+  };
+
+  const activeFilterCount = [
+    typeFilter !== 'all',
+    sortOrder !== 'desc',
+    startDate !== '',
+    endDate !== ''
+  ].filter(Boolean).length;
 
   const debouncedSearch = useDebounce(searchTerm, 500);
 
@@ -66,9 +99,9 @@ export default function StockHistory() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
+      {/* Toolbar */}
+      <div className="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="relative flex-1 w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <Input 
             className="w-full pl-10" 
@@ -77,52 +110,90 @@ export default function StockHistory() {
             onChange={(e) => setParam('q', e.target.value)}
           />
         </div>
-        <div className="relative w-full sm:w-auto shrink-0">
-          <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <select 
-            className="w-full sm:w-48 pl-9 pr-8 py-2 bg-transparent border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
-            value={typeFilter}
-            onChange={(e) => setParam('type', e.target.value)}
-          >
-            <option value="all">All Types</option>
-            <option value="in">Stock In</option>
-            <option value="out">Stock Out</option>
-          </select>
-        </div>
-        <div className="relative w-full sm:w-auto shrink-0">
-          <select 
-            className="w-full sm:w-48 px-3 py-2 bg-transparent border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
-            value={sortOrder}
-            onChange={(e) => setParam('sort', e.target.value)}
-          >
-            <option value="desc">Newest First</option>
-            <option value="asc">Oldest First</option>
-          </select>
-        </div>
-        <div className="relative w-full sm:w-auto shrink-0 flex items-center gap-2">
-          <Input 
-            type="date" 
-            className="w-full sm:w-36 text-sm" 
-            value={startDate}
-            onChange={(e) => setParam('startDate', e.target.value)}
-          />
-          <span className="text-slate-400">to</span>
-          <Input 
-            type="date" 
-            className="w-full sm:w-36 text-sm" 
-            value={endDate}
-            onChange={(e) => setParam('endDate', e.target.value)}
-          />
-        </div>
-        {hasFilters && (
+        <div className="flex gap-2 shrink-0">
           <button
-            onClick={() => { setParam('q', ''); setParam('type', 'all'); setParam('sort', 'desc'); setParam('startDate', ''); setParam('endDate', ''); }}
-            className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-destructive transition-colors text-sm shrink-0"
+            onClick={() => setShowFilters(v => !v)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
+              hasFilters
+                ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+            }`}
           >
-            <X size={14} /> Clear
+            <SlidersHorizontal size={15} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5 font-bold leading-none">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
-        )}
+        </div>
       </div>
+
+      {/* Advanced Filters Panel */}
+      {showFilters && (
+        <div className="bg-white dark:bg-slate-950 border border-border rounded-xl shadow-sm px-6 py-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+              <Filter size={15} /> Advanced Filters
+            </h3>
+            <div className="flex gap-3">
+              {hasFilters && (
+                <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                  <X size={12} /> Clear all
+                </button>
+              )}
+              <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Type</label>
+              <select 
+                className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
+                value={temp.type}
+                onChange={(e) => setTemp({ ...temp, type: e.target.value })}
+              >
+                <option value="all">All Types</option>
+                <option value="in">Stock In</option>
+                <option value="out">Stock Out</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Sort</label>
+              <select 
+                className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
+                value={temp.sort}
+                onChange={(e) => setTemp({ ...temp, sort: e.target.value })}
+              >
+                <option value="desc">Newest First</option>
+                <option value="asc">Oldest First</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">From Date</label>
+              <Input 
+                type="date" 
+                className="w-full text-sm" 
+                value={temp.startDate}
+                onChange={(e) => setTemp({ ...temp, startDate: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">To Date</label>
+              <Input 
+                type="date" 
+                className="w-full text-sm" 
+                value={temp.endDate}
+                onChange={(e) => setTemp({ ...temp, endDate: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button size="sm" onClick={applyFilters}>Apply Filters</Button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">

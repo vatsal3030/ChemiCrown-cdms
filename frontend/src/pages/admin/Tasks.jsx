@@ -140,6 +140,7 @@ export default function Tasks() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Drag state
   const [draggingId, setDraggingId] = useState(null);
@@ -249,39 +250,48 @@ export default function Tasks() {
               className="pl-9 w-48 h-9 text-sm"
             />
           </div>
-          {/* Assignee filter */}
-          <select
-            value={assigneeFilter}
-            onChange={e => setParam('assignee', e.target.value)}
-            className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer h-9"
+          {/* Filters Toggle */}
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm border transition-all h-9 ${
+              assigneeFilter !== 'all'
+                ? 'bg-primary text-white border-primary'
+                : 'bg-background border-border hover:border-primary text-foreground'
+            }`}
           >
-            <option value="all">All Assignees</option>
-            {uniqueAssignees.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
-          {(searchQ || assigneeFilter !== 'all') && (
-            <button
-              onClick={() => { setParam('q', ''); setParam('assignee', 'all'); }}
-              className="p-1.5 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
-              title="Clear filters"
-            >
-              <X size={14} />
-            </button>
-          )}
+            <Filter size={14} /> Filters
+            {assigneeFilter !== 'all' && <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5">1</span>}
+          </button>
           {canManage && (
-            <Button onClick={() => navigate('/dashboard/tasks/assign')}>
+            <Button onClick={() => navigate('/dashboard/tasks/assign')} className="h-9">
               <Plus size={16} className="mr-2" /> Assign Task
             </Button>
           )}
         </div>
       </div>
 
-      {/* Active filter indicator */}
-      {(searchQ || assigneeFilter !== 'all') && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Filter size={12} />
-          <span>Showing filtered results</span>
-          {searchQ && <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium">"{searchQ}"</span>}
-          {assigneeFilter !== 'all' && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full font-medium">{uniqueAssignees.find(a => a.id === assigneeFilter)?.name}</span>}
+      {/* Advanced Filters Panel */}
+      {showFilters && (
+        <div className="border border-border bg-card rounded-xl px-6 py-4 flex flex-wrap gap-4 items-end shadow-sm">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Assignee</label>
+            <select
+              value={assigneeFilter}
+              onChange={e => setParam('assignee', e.target.value)}
+              className="w-full sm:w-48 text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            >
+              <option value="all">All Assignees</option>
+              {uniqueAssignees.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </div>
+          {(searchQ || assigneeFilter !== 'all') && (
+            <button
+              onClick={() => { setParam('q', ''); setParam('assignee', 'all'); setShowFilters(false); }}
+              className="px-3 py-2 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
       )}
 

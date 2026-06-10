@@ -4,7 +4,7 @@ import {
   AlertCircle, Eye, Users, CalendarCheck, TrendingUp, CheckCircle2,
   XCircle, Clock, ShieldAlert, UserX, UserCheck, AlertTriangle,
   ChevronDown, Filter, X, RefreshCw, Settings, SlidersHorizontal,
-  Building2, CreditCard, Smartphone, Target, Award, Timer, IndianRupee, PiggyBank
+  Building2, CreditCard, Smartphone, Target, Award, Timer, IndianRupee, PiggyBank, Trophy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -275,7 +275,7 @@ function SuspendModal({ employee, token, onClose, onSuccess }) {
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
-const TABS = ['dashboard', 'directory', 'attendance', 'payroll', 'leaves', 'warnings', 'overtime', 'incentives'];
+const TABS = ['dashboard', 'directory', 'payroll', 'leaves', 'warnings', 'overtime', 'incentives'];
 
 export default function HRManagement() {
   const { user, token } = useAuth();
@@ -287,7 +287,7 @@ export default function HRManagement() {
   // Derive active tab from URL hash (e.g. #attendance)
   const hash = location.hash.replace('#', '') || 'dashboard';
   const activeTab = TABS.includes(hash) ? hash : 'dashboard';
-  const setActiveTab = (tab) => navigate(`${location.pathname}#${tab}`, { replace: true });
+  const setActiveTab = (tab) => navigate({ pathname: location.pathname, search: location.search, hash: tab }, { replace: true });
 
   // All directory filters live in URL searchParams
   const statusFilter = searchParams.get('status') || 'all';
@@ -326,66 +326,12 @@ export default function HRManagement() {
   const [suspendTarget, setSuspendTarget] = useState(null);
   const [detailsModal, setDetailsModal] = useState({ type: null, data: null });
 
-  // Attendance state
-  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedEmployees, setSelectedEmployees] = useState([]);
-  const [attendanceLoading, setAttendanceLoading] = useState({});
-  const [markedToday, setMarkedToday] = useState({});
-
   // Overtime & Incentive state
   const [overtimes, setOvertimes] = useState([]);
   const [incentives, setIncentives] = useState([]);
   const [otLoading, setOtLoading] = useState(false);
-  const markAttendance = async (empId, status) => {
-    if (!isSuperAdmin) return;
-    setAttendanceLoading(prev => ({ ...prev, [empId]: true }));
-    try {
-      const r = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${empId}/attendance`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status, date: new Date(attendanceDate).toISOString() })
-      });
-      if (r.ok) {
-        toast.success(`Marked ${status.replace('_', ' ')}`);
-        setMarkedToday(prev => ({ ...prev, [empId]: status }));
-      } else toast.error('Failed');
-    } catch { toast.error('Network error'); }
-    finally { setAttendanceLoading(prev => ({ ...prev, [empId]: false })); }
-  };
-
-  const handleBulkAttendance = async (status) => {
-    if (!isSuperAdmin || selectedEmployees.length === 0) return;
-    
-    // Set loading for all selected
-    const loadingState = {};
-    selectedEmployees.forEach(id => loadingState[id] = true);
-    setAttendanceLoading(prev => ({ ...prev, ...loadingState }));
-    
-    let successCount = 0;
-    try {
-      // Execute concurrently
-      await Promise.all(selectedEmployees.map(async (empId) => {
-        const r = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${empId}/attendance`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ status, date: new Date(attendanceDate).toISOString() })
-        });
-        if (r.ok) {
-          successCount++;
-          setMarkedToday(prev => ({ ...prev, [empId]: status }));
-        }
-      }));
-      toast.success(`Marked ${status.replace('_',' ')} for ${successCount} employees`);
-      setSelectedEmployees([]);
-    } catch {
-      toast.error('Network error during bulk action');
-    } finally {
-      // Unset loading
-      setAttendanceLoading(prev => {
-        const next = { ...prev };
-        selectedEmployees.forEach(id => delete next[id]);
-        return next;
-      });
-    }
-  };
+  const [incLoading, setIncLoading] = useState(false);
+  
   const [otForm, setOtForm] = useState({ employeeId: '', date: '', hours: '', reason: '' });
   const [incForm, setIncForm] = useState({ employeeId: '', month: '', incentiveAmount: '', notes: '' });
   const [otFormOpen, setOtFormOpen] = useState(false);
@@ -483,10 +429,26 @@ export default function HRManagement() {
       if (deptFilter   !== 'all') params.set('department', deptFilter);
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/hr?${params}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { 
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store' 
+        }
       );
       const json = await res.json();
-      if (json.success) setEmployees(json.data);
+      if (json.success) {
+        setEmployees(json.data);
+        const targetDateStr = attendanceDate;
+        const newMarked = {};
+        json.data.forEach(emp => {
+          if (emp.employeeProfile?.attendances) {
+            const todayRecord = emp.employeeProfile.attendances.find(a => a.date.startsWith(targetDateStr));
+            if (todayRecord) {
+              newMarked[emp.id] = todayRecord.status;
+            }
+          }
+        });
+        setMarkedToday(newMarked);
+      }
     } catch { toast.error('Failed to fetch employees'); }
     finally { setLoading(false); }
   };
@@ -654,14 +616,18 @@ export default function HRManagement() {
               ))
             ) : (
               [
-                { label: 'Total Employees', value: employees.length, icon: Users, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
-                { label: 'Active Personnel', value: activeCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
-                { label: 'Pending Leaves', value: leaveRequests.filter(l => l.status === 'PENDING').length, icon: Clock, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
-                { label: 'Pending Overtimes', value: overtimes.filter(o => o.status === 'PENDING').length, icon: AlertCircle, color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' },
-                { label: 'Terminated', value: terminatedCount, icon: UserX, color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
-                { label: 'Pending Incentives', value: incentives.filter(i => i.status === 'PENDING').length, icon: PiggyBank, color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' },
+                { label: 'Total Employees', value: employees.length, icon: Users, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400', tab: 'directory' },
+                { label: 'Active Personnel', value: activeCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400', tab: 'directory' },
+                { label: 'Pending Leaves', value: leaveRequests.filter(l => l.status === 'PENDING').length, icon: Clock, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400', tab: 'leaves' },
+                { label: 'Pending Overtimes', value: overtimes.filter(o => o.status === 'PENDING').length, icon: AlertCircle, color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400', tab: 'overtime' },
+                { label: 'Terminated', value: terminatedCount, icon: UserX, color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400', tab: 'directory' },
+                { label: 'Pending Incentives', value: incentives.filter(i => i.status === 'PENDING').length, icon: PiggyBank, color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400', tab: 'incentives' },
               ].map(kpi => (
-                <div key={kpi.label} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm">
+                <button 
+                  key={kpi.label} 
+                  onClick={() => setActiveTab(kpi.tab)}
+                  className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm hover:border-primary/50 transition-colors text-left"
+                >
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${kpi.color}`}>
                     <kpi.icon size={22} />
                   </div>
@@ -669,7 +635,7 @@ export default function HRManagement() {
                     <p className="text-xs font-medium text-slate-500">{kpi.label}</p>
                     <p className="text-2xl font-bold text-slate-900 dark:text-white">{kpi.value}</p>
                   </div>
-                </div>
+                </button>
               ))
             )}
           </div>
@@ -730,25 +696,11 @@ export default function HRManagement() {
         </div>
       )}
 
-      {/* ── Directory / Attendance / Payroll / Warnings Tabs (shared table) ── */}
-      {['directory','attendance','payroll','warnings'].includes(activeTab) && (
+      {/* ── Directory / Payroll / Warnings Tabs (shared table) ── */}
+      {['directory','payroll','warnings'].includes(activeTab) && (
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
           
-          {/* Attendance Toolbar */}
-          {activeTab === 'attendance' && (
-            <div className="bg-slate-50 dark:bg-slate-900 border-b border-border p-3 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold">Date:</label>
-                <Input type="date" value={attendanceDate} max={new Date().toISOString().split('T')[0]} onChange={e => setAttendanceDate(e.target.value)} className="w-auto h-8 text-sm" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{selectedEmployees.length} selected</span>
-                <Button size="sm" variant="outline" className="h-8 text-emerald-600 border-emerald-200 hover:bg-emerald-50" disabled={selectedEmployees.length === 0} onClick={() => handleBulkAttendance('PRESENT')}>Present</Button>
-                <Button size="sm" variant="outline" className="h-8 text-red-600 border-red-200 hover:bg-red-50" disabled={selectedEmployees.length === 0} onClick={() => handleBulkAttendance('ABSENT')}>Absent</Button>
-                <Button size="sm" variant="outline" className="h-8 text-blue-600 border-blue-200 hover:bg-blue-50" disabled={selectedEmployees.length === 0} onClick={() => handleBulkAttendance('LEAVE')}>Leave</Button>
-              </div>
-            </div>
-          )}
+
 
           {/* Toolbar */}
           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
@@ -850,20 +802,14 @@ export default function HRManagement() {
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  {activeTab === 'attendance' && (
-                    <th className="px-4 py-3 w-10">
-                      <input type="checkbox" className="rounded border-slate-300"
-                        checked={filteredEmployees.length > 0 && selectedEmployees.length === filteredEmployees.length}
-                        onChange={e => setSelectedEmployees(e.target.checked ? filteredEmployees.map(emp => emp.id) : [])}
-                      />
-                    </th>
-                  )}
                   <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors text-left" onClick={() => toggleSort('firstName')}>
                     <div className="flex items-center gap-1">Employee <ArrowUpDown size={12} /></div>
                   </th>
                   <th className="px-6 py-3 text-left">Role / Status</th>
                   {activeTab === 'directory'   && <th className="px-6 py-3">Department / Joined</th>}
-                  {activeTab === 'attendance'  && <th className="px-6 py-3">Mark Attendance</th>}
+                  {activeTab === 'directory'   && <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('score')}>
+                    <div className="flex items-center gap-1"><Trophy size={14} className="text-yellow-500" /> Performance <ArrowUpDown size={12} /></div>
+                  </th>}
                   {activeTab === 'payroll'     && <><th className="px-6 py-3">Base Salary</th><th className="px-6 py-3">PF Rate</th><th className="px-6 py-3">Configure</th></>}
                   {activeTab === 'warnings'    && <th className="px-6 py-3">Actions</th>}
                   {activeTab === 'directory'   && <th className="px-6 py-3 text-right">Actions</th>}
@@ -873,7 +819,6 @@ export default function HRManagement() {
                 {loading ? (
                   [1,2,3,4].map(i => (
                     <tr key={i}>
-                      {activeTab === 'attendance' && <td className="px-4 py-4"><Skeleton className="w-4 h-4 rounded" /></td>}
                       <td className="px-6 py-4"><div className="flex items-center gap-3"><Skeleton className="w-8 h-8 rounded-full" /><div><Skeleton className="h-4 w-28 mb-1"/><Skeleton className="h-3 w-40"/></div></div></td>
                       <td className="px-6 py-4"><Skeleton className="h-5 w-20 rounded-full"/></td>
                       <td className="px-6 py-4"><Skeleton className="h-8 w-24 rounded-lg"/></td>
@@ -891,16 +836,6 @@ export default function HRManagement() {
                     const warningCount = emp.employeeProfile?.warnings?.length || 0;
                     return (
                     <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
-                      {/* Checkbox for Attendance */}
-                      {activeTab === 'attendance' && (
-                        <td className="px-4 py-4">
-                          <input type="checkbox" className="rounded border-slate-300"
-                            checked={selectedEmployees.includes(emp.id)}
-                            onChange={e => setSelectedEmployees(prev => e.target.checked ? [...prev, emp.id] : prev.filter(id => id !== emp.id))}
-                          />
-                        </td>
-                      )}
-                      {/* Employee info */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate(`/dashboard/hr/${emp.id}`)}>
                           <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors text-sm">
@@ -915,7 +850,6 @@ export default function HRManagement() {
                           </div>
                         </div>
                       </td>
-                      {/* Role + Status */}
                       <td className="px-6 py-4">
                         <div className="space-y-1">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">{emp.role}</span>
@@ -925,49 +859,39 @@ export default function HRManagement() {
 
                       {/* Directory columns */}
                       {activeTab === 'directory' && (
-                        <td className="px-6 py-4 text-slate-500">
-                          <div className="font-medium text-slate-700 dark:text-slate-300">{emp.employeeProfile?.department || 'Unassigned'}</div>
-                          <div className="text-xs">
-                            Joined: {emp.employeeProfile?.joiningDate ? new Date(emp.employeeProfile.joiningDate).toLocaleDateString('en-IN') : 'Unknown'}
-                          </div>
-                        </td>
-                      )}
-
-                      {/* Attendance tab */}
-                      {activeTab === 'attendance' && (
-                        <td className="px-6 py-4">
-                          {empStatus === 'ACTIVE' ? (
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {markedToday[emp.id] && (
-                                <span className={`mr-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                                  markedToday[emp.id] === 'PRESENT' ? 'bg-emerald-100 text-emerald-700' :
-                                  markedToday[emp.id] === 'ABSENT' ? 'bg-red-100 text-red-700' :
-                                  markedToday[emp.id] === 'LEAVE' ? 'bg-blue-100 text-blue-700' :
-                                  'bg-amber-100 text-amber-700'
-                                }`}>
-                                  {markedToday[emp.id].replace('_', ' ')}
-                                </span>
-                              )}
-                              {['PRESENT','ABSENT','HALF_DAY','LEAVE'].map(s => {
-                                const isMarked = markedToday[emp.id] === s;
-                                const cls = { 
-                                  PRESENT: isMarked ? 'bg-emerald-500 text-white border-emerald-500' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50', 
-                                  ABSENT: isMarked ? 'bg-red-500 text-white border-red-500' : 'text-red-600 border-red-200 hover:bg-red-50', 
-                                  HALF_DAY: isMarked ? 'bg-amber-500 text-white border-amber-500' : 'text-amber-600 border-amber-200 hover:bg-amber-50', 
-                                  LEAVE: isMarked ? 'bg-blue-500 text-white border-blue-500' : 'text-blue-600 border-blue-200 hover:bg-blue-50' 
-                                };
-                                return (
-                                  <Button key={s} size="sm" variant={isMarked ? "solid" : "outline"} disabled={!isSuperAdmin || attendanceLoading[emp.id]} className={`text-[10px] sm:text-xs h-7 px-2 ${cls[s]} ${(!isSuperAdmin || attendanceLoading[emp.id]) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    onClick={() => markAttendance(emp.id, s)}>
-                                    {attendanceLoading[emp.id] ? <span className="animate-pulse">...</span> : s.replace('_',' ')}
-                                  </Button>
-                                );
-                              })}
+                        <>
+                          <td className="px-6 py-4 text-slate-500">
+                            <div className="font-medium text-slate-700 dark:text-slate-300">{emp.employeeProfile?.department || 'Unassigned'}</div>
+                            <div className="text-xs">
+                              Joined: {emp.employeeProfile?.joiningDate ? new Date(emp.employeeProfile.joiningDate).toLocaleDateString('en-IN') : 'Unknown'}
                             </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">{empStatus} — no attendance</span>
-                          )}
-                        </td>
+                          </td>
+                          <td className="px-6 py-4">
+                            {(() => {
+                              const atts = emp.employeeProfile?.attendances || [];
+                              const totalDays = atts.length;
+                              let score = 85; // Default score
+                              if (totalDays > 0) {
+                                const present = atts.filter(a => a.status === 'PRESENT').length * 10;
+                                const half = atts.filter(a => a.status === 'HALF_DAY').length * 5;
+                                const absent = atts.filter(a => a.status === 'ABSENT').length * -5;
+                                const max = totalDays * 10;
+                                score = Math.max(0, Math.min(100, Math.round(((present + half + absent) / max) * 100)));
+                              }
+                              const scoreColor = score >= 80 ? 'text-emerald-600 bg-emerald-100 border-emerald-200' : score >= 50 ? 'text-amber-600 bg-amber-100 border-amber-200' : 'text-rose-600 bg-rose-100 border-rose-200';
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <div className={`px-2 py-1 rounded-lg border font-bold text-sm ${scoreColor}`}>
+                                    {score}/100
+                                  </div>
+                                  <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div className={`h-full ${score >= 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${score}%` }}></div>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </td>
+                        </>
                       )}
 
                       {/* Payroll tab */}
@@ -1168,7 +1092,7 @@ export default function HRManagement() {
                               )}
                             </div>
                           )}
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDetailsModal({ type: 'leave', data: lr }); }} className="ml-2 h-8 w-8 p-0 shrink-0">
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/hr/leaves/${lr.id}`); }} className="ml-2 h-8 w-8 p-0 shrink-0">
                             <Eye size={15} className="text-muted-foreground" />
                           </Button>
                         </div>
@@ -1314,7 +1238,7 @@ export default function HRManagement() {
                               )}
                             </>
                           )}
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDetailsModal({ type: 'overtime', data: ot }); }} className="h-8 w-8 p-0 shrink-0">
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/hr/overtime/${ot.id}`); }} className="h-8 w-8 p-0 shrink-0">
                             <Eye size={15} className="text-muted-foreground" />
                           </Button>
                         </div>
@@ -1460,7 +1384,7 @@ export default function HRManagement() {
                               )}
                             </>
                           )}
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDetailsModal({ type: 'incentive', data: inc }); }} className="h-8 w-8 p-0 shrink-0 ml-2">
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/hr/incentive/${inc.id}`); }} className="h-8 w-8 p-0 shrink-0 ml-2">
                             <Eye size={15} className="text-muted-foreground" />
                           </Button>
                         </div>

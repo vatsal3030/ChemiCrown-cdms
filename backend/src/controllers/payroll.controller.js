@@ -31,6 +31,29 @@ exports.getAllSalaries = async (req, res, next) => {
 };
 
 /**
+ * GET /api/payroll/:id
+ * Get a single salary slip by ID
+ */
+exports.getSlipById = async (req, res, next) => {
+  try {
+    const slip = await prisma.salary.findUnique({
+      where: { id: req.params.id },
+      include: {
+        employee: {
+          include: {
+            user: { select: { firstName: true, lastName: true, email: true, phone: true, profileImageUrl: true } }
+          }
+        }
+      }
+    });
+    if (!slip) return res.status(404).json({ success: false, message: 'Slip not found' });
+    res.json({ success: true, data: slip });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Helper: count Sundays in a month
  */
 function countSundaysInMonth(year, monthNum) {

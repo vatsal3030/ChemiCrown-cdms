@@ -12,6 +12,7 @@ router.get('/overview', fc.getOverview);
 
 // Full ledger log with pagination + filters
 router.get('/ledger', fc.getLedger);
+router.get('/ledger/:id', fc.getLedgerById);
 
 // Expenses CRUD
 router.get('/expenses',       fc.getExpenses);

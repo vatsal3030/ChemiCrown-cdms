@@ -116,7 +116,7 @@ export default function PayrollConfig() {
     return (
       <div className="p-8 text-center text-slate-500">
         <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50 mb-2">Employee Not Found</h2>
-        <Button onClick={() => navigate('/dashboard/hr')}>Back to HR</Button>
+        <Button onClick={() => navigate(-1)}>Go Back</Button>
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function PayrollConfig() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => navigate('/dashboard/hr')}
+            onClick={() => navigate(-1)}
             className="p-2 -ml-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
           >
             <ArrowLeft size={20} />
@@ -244,6 +244,23 @@ export default function PayrollConfig() {
                 <div className="p-4 rounded-xl border border-border bg-muted/10">
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">UPI ID</label>
                   <Input value={upiId} onChange={e => setUpiId(e.target.value)} placeholder="e.g. name@okbank" />
+                </div>
+              )}
+
+              {paymentPreference === 'CHEQUE' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl border border-border bg-muted/10">
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Payee Name</label>
+                    <Input value={bankAccountName} onChange={e => setBankAccountName(e.target.value)} placeholder="Name on the Cheque" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Bank Name</label>
+                    <Input value={bankName} onChange={e => setBankName(e.target.value)} placeholder="e.g. HDFC Bank" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Account Number (Optional)</label>
+                    <Input type="text" value={bankAccountNumber} onChange={e => setBankAccountNumber(e.target.value)} placeholder="For Account Payee only checks" />
+                  </div>
                 </div>
               )}
 

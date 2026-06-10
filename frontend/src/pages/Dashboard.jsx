@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, Area, AreaChart, Legend
+  BarChart, Bar, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { formatINR, formatINRFull, formatCompact } from '@/lib/utils';
 
@@ -240,30 +240,25 @@ export default function Dashboard() {
           {revenueData.length === 0 ? (
             <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">No revenue data yet</div>
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1F2E54" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#1F2E54" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+            <ResponsiveContainer width="100%" minHeight={260} height={260}>
+              <BarChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={8} />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: '#94A3B8', fontSize: 12 }}
-                  tickFormatter={v => formatINR(v)}
-                  width={65}
+                  tickFormatter={v => formatCompact(v)}
+                  width={55}
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
                   formatter={v => [formatINRFull(v), 'Revenue']}
+                  cursor={{ fill: 'var(--muted)', radius: 4 }}
                   labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
                 />
-                <Area type="monotone" dataKey="value" stroke="#1F2E54" strokeWidth={3} fill="url(#revenueGradient)" dot={false} activeDot={{ r: 6, strokeWidth: 2, fill: '#1F2E54' }} />
-              </AreaChart>
+                <Bar dataKey="value" fill="#1F2E54" radius={[6, 6, 0, 0]} barSize={40} />
+              </BarChart>
             </ResponsiveContainer>
           )}
         </div>

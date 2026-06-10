@@ -243,7 +243,15 @@ export default function HolidayManagement() {
             >
               <ChevronLeft size={16} />
             </button>
-            <h3 className="font-bold text-foreground text-sm">{MONTH_NAMES[viewMonth]} {year}</h3>
+            <select
+              value={viewMonth}
+              onChange={(e) => setViewMonth(parseInt(e.target.value))}
+              className="font-bold text-foreground text-sm bg-transparent border-none focus:outline-none cursor-pointer text-center"
+            >
+              {MONTH_NAMES.map((m, i) => (
+                <option key={m} value={i}>{m} {year}</option>
+              ))}
+            </select>
             <button
               onClick={() => setViewMonth(m => m === 11 ? (setYear(y => y + 1), 0) : m + 1)}
               className="p-1.5 rounded-lg hover:bg-muted transition-colors"

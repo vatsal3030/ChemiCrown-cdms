@@ -171,6 +171,25 @@ exports.getAuditLogs = async (req, res, next) => {
 };
 
 /**
+ * GET /api/audit-logs/:id
+ */
+exports.getAuditLogById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const log = await prisma.auditLog.findUnique({
+      where: { id },
+      include: {
+        user: { select: { firstName: true, lastName: true, email: true, role: true } }
+      }
+    });
+    if (!log) return res.status(404).json({ success: false, message: 'Audit log not found' });
+    res.json({ success: true, data: log });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * DELETE /api/audit-logs/:id
  * Admin can delete a single log entry (for compliance cleanup — industry standard)
  */

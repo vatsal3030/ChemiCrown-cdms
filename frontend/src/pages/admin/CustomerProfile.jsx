@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
-import { ArrowLeft, Building2, Mail, Phone, MapPin, User, FileText, Ban, CheckCircle, Package, Clock, DollarSign, Activity } from 'lucide-react';
+import { ArrowLeft, Building2, Mail, Phone, MapPin, User, FileText, Ban, CheckCircle, Package, Clock, DollarSign, Activity, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -100,14 +100,27 @@ export default function CustomerProfile() {
           )}
           
           {['SUPER_ADMIN', 'OWNER'].includes(currentUser?.role) && (isVerified || isBlocked) && (
-            <Button 
-              variant={isBlocked ? "outline" : "destructive"} 
-              size="sm" 
-              onClick={() => toggleCustomerStatus(isBlocked ? 'unblock' : 'block')}
-              disabled={processing}
-            >
-              {isBlocked ? <><CheckCircle size={14} className="mr-2" /> Unblock</> : <><Ban size={14} className="mr-2" /> Block</>}
-            </Button>
+            <div className="flex items-center gap-2">
+              {!isBlocked && (
+                <Button 
+                  variant="outline" 
+                  className="bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 border-amber-200"
+                  size="sm" 
+                  onClick={() => toggleCustomerStatus('warn')}
+                  disabled={processing}
+                >
+                  <AlertTriangle size={14} className="mr-2" /> Warn
+                </Button>
+              )}
+              <Button 
+                variant={isBlocked ? "outline" : "destructive"} 
+                size="sm" 
+                onClick={() => toggleCustomerStatus(isBlocked ? 'unblock' : 'block')}
+                disabled={processing}
+              >
+                {isBlocked ? <><CheckCircle size={14} className="mr-2" /> Unblock</> : <><Ban size={14} className="mr-2" /> Block</>}
+              </Button>
+            </div>
           )}
         </div>
       </div>

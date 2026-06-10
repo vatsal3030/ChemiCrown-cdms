@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, XCircle, Search, UserCheck, Building2, Clock, Users, AlertTriangle, Ban, CheckCircle } from 'lucide-react';
+import { ShieldCheck, XCircle, Search, UserCheck, Building2, Clock, Users, AlertTriangle, Ban, CheckCircle, Filter, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 
 export default function CustomerManagement() {
@@ -10,6 +12,12 @@ export default function CustomerManagement() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('pending'); // pending, active, blocked
   const [processing, setProcessing] = useState(null);
+  
+  // Advanced filters state
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortOrder, setSortOrder] = useState('newest'); // newest, oldest, name-asc, name-desc
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const fetchCustomers = async () => {
     try {
@@ -93,7 +101,7 @@ export default function CustomerManagement() {
     }
   };
 
-  const filtered = customers.filter(c => {
+  let filtered = customers.filter(c => {
     const matchesSearch = !search ||
       c.company?.toLowerCase().includes(search.toLowerCase()) ||
       c.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -101,12 +109,36 @@ export default function CustomerManagement() {
       
     if (!matchesSearch) return false;
     
-    if (activeTab === 'pending') return !c.isVerified && !c.isBlocked;
-    if (activeTab === 'active') return c.isVerified && !c.isBlocked;
-    if (activeTab === 'blocked') return c.isBlocked;
+    if (activeTab === 'pending') { if (c.isVerified || c.isBlocked) return false; }
+    if (activeTab === 'active') { if (!c.isVerified || c.isBlocked) return false; }
+    if (activeTab === 'blocked') { if (!c.isBlocked) return false; }
+
+    if (dateFrom && new Date(c.appliedAt || c.createdAt) < new Date(dateFrom)) return false;
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      if (new Date(c.appliedAt || c.createdAt) > to) return false;
+    }
     
     return true;
   });
+
+  // Sorting
+  filtered.sort((a, b) => {
+    if (sortOrder === 'newest') return new Date(b.appliedAt || b.createdAt) - new Date(a.appliedAt || a.createdAt);
+    if (sortOrder === 'oldest') return new Date(a.appliedAt || a.createdAt) - new Date(b.appliedAt || b.createdAt);
+    if (sortOrder === 'name-asc') return (a.company || '').localeCompare(b.company || '');
+    if (sortOrder === 'name-desc') return (b.company || '').localeCompare(a.company || '');
+    return 0;
+  });
+
+  const clearFilters = () => {
+    setSortOrder('newest');
+    setDateFrom('');
+    setDateTo('');
+  };
+
+  const activeFilterCount = [sortOrder !== 'newest', !!dateFrom, !!dateTo].filter(Boolean).length;
 
   const pendingCount = customers.filter(c => !c.isVerified && !c.isBlocked).length;
   const activeCount = customers.filter(c => c.isVerified && !c.isBlocked).length;
@@ -155,21 +187,75 @@ export default function CustomerManagement() {
 
       {/* Table */}
       <div className="data-table-wrapper">
-        <div className="data-table-header">
-          <h3 className="font-bold text-foreground">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <h3 className="font-bold text-foreground shrink-0">
             {activeTab === 'pending' ? 'Pending Verifications' : activeTab === 'active' ? 'Active Customers' : 'Blocked Customers'}
           </h3>
-          <div className="relative w-full sm:w-72">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search by company, GST or email..."
-              className="w-full pl-9 pr-4 py-2 text-sm bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+          <div className="flex gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-72">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search company, GST or email..."
+                className="w-full pl-9 pr-4 py-2 text-sm bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(v => !v)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm border transition-all ${
+                activeFilterCount > 0
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-card border-border hover:border-primary text-foreground'
+              }`}
+            >
+              <SlidersHorizontal size={14} />
+              Filters
+              {activeFilterCount > 0 && <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{activeFilterCount}</span>}
+            </button>
           </div>
         </div>
+
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <div className="bg-muted/30 border-b border-border px-6 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+                <Filter size={15} /> Advanced Filters & Sorting
+              </h3>
+              <div className="flex gap-3">
+                {activeFilterCount > 0 && (
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline">Clear all</button>
+                )}
+                <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Sort By</label>
+                <select
+                  value={sortOrder}
+                  onChange={e => setSortOrder(e.target.value)}
+                  className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                >
+                  <option value="newest">Newest Registered</option>
+                  <option value="oldest">Oldest Registered</option>
+                  <option value="name-asc">Company Name (A-Z)</option>
+                  <option value="name-desc">Company Name (Z-A)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Joined After</label>
+                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 text-sm rounded-xl" />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Joined Before</label>
+                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 text-sm rounded-xl" />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -246,6 +332,13 @@ export default function CustomerManagement() {
                       )}
                       {activeTab === 'active' && (
                         <>
+                          <button
+                            onClick={() => toggleCustomerStatus(customer.id, 'warn')}
+                            disabled={processing === customer.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-xl text-xs font-semibold hover:bg-amber-100 transition-colors border border-amber-200 disabled:opacity-50"
+                          >
+                            <AlertTriangle size={13} /> Warn
+                          </button>
                           <button
                             onClick={() => toggleCustomerStatus(customer.id, 'block')}
                             disabled={processing === customer.id}

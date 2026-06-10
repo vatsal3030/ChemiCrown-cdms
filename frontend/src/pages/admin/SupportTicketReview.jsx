@@ -138,13 +138,13 @@ export default function SupportTicketReview() {
               value={resolution}
               onChange={e => setResolution(e.target.value)}
               rows={5}
-              disabled={ticket.status === 'RESOLVED' || ticket.status === 'CLOSED'}
+              disabled={ticket.status === 'CLOSED'}
               placeholder="Describe the resolution, workaround, or answer..."
               className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:opacity-50"
             />
           </div>
 
-          {ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (
+          {ticket.status !== 'CLOSED' && (
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
               <Button
                 variant="outline"
@@ -153,12 +153,23 @@ export default function SupportTicketReview() {
               >
                 <Save size={16} className="mr-2" /> Mark In Progress
               </Button>
-              <Button
-                onClick={() => handleResolve('RESOLVED')}
-                disabled={resolving}
-              >
-                <CheckCircle2 size={16} className="mr-2" /> Resolve Ticket
-              </Button>
+              {ticket.status !== 'RESOLVED' && (
+                <Button
+                  onClick={() => handleResolve('RESOLVED')}
+                  disabled={resolving}
+                >
+                  <CheckCircle2 size={16} className="mr-2" /> Resolve Ticket
+                </Button>
+              )}
+              {ticket.status === 'RESOLVED' && (
+                <Button
+                  onClick={() => handleResolve('CLOSED')}
+                  disabled={resolving}
+                  className="bg-slate-700 hover:bg-slate-800"
+                >
+                  <CheckCircle2 size={16} className="mr-2" /> Close Ticket
+                </Button>
+              )}
             </div>
           )}
         </div>

@@ -35,6 +35,7 @@ import HRManagement from './pages/admin/HRManagement';
 import AddEmployeePage from './pages/admin/AddEmployeePage';
 import EmployeeDetails from './pages/admin/EmployeeDetails';
 import PayrollConfig from './pages/admin/PayrollConfig';
+import AttendanceCalendar from './pages/admin/AttendanceCalendar';
 import StockHistory from './pages/admin/StockHistory';
 import RecycleBin from './pages/admin/RecycleBin';
 import Tasks from './pages/admin/Tasks';
@@ -49,15 +50,22 @@ import ProductDetails from './pages/ProductDetails';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import Payroll from './pages/admin/Payroll';
+import PayrollDetails from './pages/admin/PayrollDetails';
 import PayrollPaymentPage from './pages/admin/PayrollPaymentPage';
+import OvertimeDetails from './pages/admin/OvertimeDetails';
+import LeaveDetails from './pages/admin/LeaveDetails';
+import IncentiveDetails from './pages/admin/IncentiveDetails';
 import HolidayManagement from './pages/admin/HolidayManagement';
 import Finance from './pages/admin/Finance';
+import LogExpense from './pages/admin/LogExpense';
+import LedgerDetails from './pages/admin/LedgerDetails';
 import MyPayroll from './pages/employee/MyPayroll';
 import TaskDetails from './pages/admin/TaskDetails';
 import CustomerProfile from './pages/admin/CustomerProfile';
 import Support from './pages/Support';
 import ReportIssue from './pages/ReportIssue';
 import AuditLog from './pages/admin/AuditLog';
+import AuditLogDetails from './pages/admin/AuditLogDetails';
 import TicketDashboard from './pages/admin/TicketDashboard';
 import SupportTicketReview from './pages/admin/SupportTicketReview';
 import NotFound from './pages/NotFound';
@@ -203,15 +211,22 @@ function App() {
                     <Route path="hr" element={<HRManagement />} />
                     <Route path="hr/add-employee" element={<AddEmployeePage />} />
                     <Route path="hr/:id" element={<EmployeeDetails />} />
+                    <Route path="hr/attendance" element={<AttendanceCalendar />} />
                     <Route path="hr/payroll-config/:id" element={<PayrollConfig />} />
                     <Route path="payroll" element={<Payroll />} />
+                    <Route path="payroll/:id" element={<PayrollDetails />} />
                     <Route path="payroll/pay/:id" element={<PayrollPaymentPage />} />
+                    <Route path="hr/overtime/:id" element={<OvertimeDetails />} />
+                    <Route path="hr/incentive/:id" element={<IncentiveDetails />} />
+                    <Route path="hr/leaves/:id" element={<LeaveDetails />} />
                     <Route path="holidays" element={<HolidayManagement />} />
                   </Route>
 
                   {/* Finance — Owner & Super Admin Only */}
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']} />}>
                     <Route path="finance" element={<Finance />} />
+                    <Route path="finance/log-expense" element={<LogExpense />} />
+                    <Route path="finance/ledger/:id" element={<LedgerDetails />} />
                   </Route>
                   
                   {/* Employees + Owner self-service */}
@@ -231,6 +246,7 @@ function App() {
                   </Route>
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']} />}>
                     <Route path="audit-log" element={<AuditLog />} />
+                    <Route path="audit-log/:id" element={<AuditLogDetails />} />
                   </Route>
                 </Route>
               </Route>

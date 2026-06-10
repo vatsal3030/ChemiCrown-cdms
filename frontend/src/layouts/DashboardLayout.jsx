@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
-import NavbarSearch from '@/components/layout/NavbarSearch';
+import GlobalSearchModal from '@/components/GlobalSearchModal';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { Search } from 'lucide-react';
 
 // Navigation structure with sections for role-based grouping
 const buildNavSections = (role) => {
@@ -62,6 +64,7 @@ const buildNavSections = (role) => {
   const people = { label: 'People', items: [] };
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(role)) {
     people.items.push({ name: 'HR Management', path: '/dashboard/hr', icon: Users });
+    people.items.push({ name: 'Attendance Register', path: '/dashboard/hr/attendance', icon: ClipboardCheck });
     people.items.push({ name: 'Payroll', path: '/dashboard/payroll', icon: Wallet });
     people.items.push({ name: 'Holiday Calendar', path: '/dashboard/holidays', icon: CalendarDays });
   }
@@ -158,7 +161,10 @@ export default function DashboardLayout() {
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const switcherRef = useRef(null);
+
+  useKeyboardShortcuts(setSearchModalOpen);
 
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', collapsed);
@@ -343,8 +349,8 @@ export default function DashboardLayout() {
           <div className="flex items-center gap-3">
             {/* Mobile menu */}
             <button
-              className="md:hidden p-2 rounded-xl hover:bg-muted transition-colors"
               onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-2 text-muted-foreground hover:bg-muted rounded-xl transition-colors"
             >
               <Menu size={20} className="text-muted-foreground" />
             </button>
@@ -355,7 +361,15 @@ export default function DashboardLayout() {
             >
               <Menu size={20} className="text-muted-foreground" />
             </button>
-            <NavbarSearch />
+            <div className="hidden sm:block" onClick={() => setSearchModalOpen(true)}>
+              <div className="relative w-64 cursor-text group">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div className="w-full pl-9 pr-4 py-2 text-sm text-muted-foreground bg-muted/50 border border-border rounded-xl transition-all shadow-sm flex justify-between items-center group-hover:border-primary/50 cursor-pointer">
+                  <span>Search globally...</span>
+                  <span className="px-1.5 py-0.5 rounded-md bg-background text-xs font-mono text-muted-foreground border border-border">Ctrl K</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -370,6 +384,8 @@ export default function DashboardLayout() {
           </div>
         </main>
       </div>
+      
+      <GlobalSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
     </div>
   );
 }

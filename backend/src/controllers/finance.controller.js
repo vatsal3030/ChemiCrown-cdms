@@ -142,6 +142,20 @@ exports.getLedger = async (req, res, next) => {
 };
 
 /**
+ * GET /api/finance/ledger/:id
+ * Get single ledger entry
+ */
+exports.getLedgerById = async (req, res, next) => {
+  try {
+    const entry = await prisma.financeLedger.findUnique({
+      where: { id: req.params.id }
+    });
+    if (!entry) return res.status(404).json({ success: false, error: 'Ledger entry not found' });
+    res.json({ success: true, data: entry });
+  } catch (error) { next(error); }
+};
+
+/**
  * GET /api/finance/expenses
  * List manual expenses
  */

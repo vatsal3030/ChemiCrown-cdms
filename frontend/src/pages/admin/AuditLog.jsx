@@ -234,7 +234,7 @@ export default function AuditLog() {
                   <div className="flex items-center gap-1">Entity <ArrowUpDown size={12} className={sortField === 'entity' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="data-table-cell text-left">Entity ID</th>
-                <th className="data-table-cell text-right">Delete</th>
+                <th className="data-table-cell text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -275,13 +275,18 @@ export default function AuditLog() {
                     <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{log.entityId?.substring(0, 8)}…</code>
                   </td>
                   <td className="data-table-cell text-right">
-                    <button
-                      onClick={() => handleDelete(log.id)}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      title="Delete log entry"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={() => window.location.href = `/dashboard/audit-log/${log.id}`}>
+                        View Details
+                      </Button>
+                      <button
+                        onClick={() => handleDelete(log.id)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Delete log entry"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

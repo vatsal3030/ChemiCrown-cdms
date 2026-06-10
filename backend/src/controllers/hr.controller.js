@@ -4,7 +4,13 @@ const bcrypt = require('bcryptjs');
 
 exports.getEmployees = async (req, res, next) => {
   try {
-    const { search, sortField = 'firstName', sortOrder = 'asc', showTerminated = 'true', status, role, dept } = req.query;
+    const { search, sortField = 'firstName', sortOrder = 'asc', showTerminated = 'true', status, role, dept, attendanceDate } = req.query;
+
+    const queryDate = attendanceDate ? new Date(attendanceDate) : new Date();
+    const targetYear = queryDate.getUTCFullYear();
+    const targetMonth = queryDate.getUTCMonth();
+    const startOfMonth = new Date(Date.UTC(targetYear, targetMonth, 1));
+    const endOfMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 1));
 
     // By default show all including terminated (HR needs to see them), unless explicitly filtered
     const where = {};
@@ -39,8 +45,8 @@ exports.getEmployees = async (req, res, next) => {
             attendances: {
               where: {
                 date: {
-                  gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-                  lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
+                  gte: startOfMonth,
+                  lt: endOfMonth
                 }
               }
             },
@@ -319,10 +325,10 @@ exports.markAttendance = async (req, res, next) => {
       });
     }
 
-    const targetDate = date ? new Date(date) : new Date();
-    targetDate.setHours(0, 0, 0, 0);
-    const nextDay = new Date(targetDate);
-    nextDay.setDate(targetDate.getDate() + 1);
+    const targetDateStr = date || new Date().toISOString().split('T')[0];
+    const targetDate = new Date(`${targetDateStr}T00:00:00.000Z`);
+    const nextDay = new Date(`${targetDateStr}T00:00:00.000Z`);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
     const existing = await prisma.attendance.findFirst({
       where: {
@@ -332,6 +338,13 @@ exports.markAttendance = async (req, res, next) => {
     });
 
     let attendance;
+    if (status === 'REMOVE') {
+      if (existing) {
+        await prisma.attendance.delete({ where: { id: existing.id } });
+      }
+      return res.status(200).json({ success: true, message: 'Attendance removed' });
+    }
+
     if (existing) {
       attendance = await prisma.attendance.update({
         where: { id: existing.id },

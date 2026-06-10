@@ -6,10 +6,10 @@ import {
   Receipt, ArrowUpRight, ArrowDownRight, BookOpen
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell
+  ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell, ComposedChart
 } from 'recharts';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -50,102 +50,16 @@ function KPI({ label, value, sub, icon: Icon, trend, color, size = 'normal' }) {
   );
 }
 
-// ── Add Expense Modal ─────────────────────────────────────────────────────────
-const EXPENSE_CATS = ['UTILITIES','MAINTENANCE','RENT','MARKETING','TRAVEL','SALARIES','SHIPPING','EQUIPMENT','TAX','INSURANCE','OTHER'];
 
-function ExpenseModal({ expense, token, onClose, onSuccess }) {
-  const isEdit = !!expense?.id;
-  const [form, setForm] = useState({
-    category: expense?.category || 'UTILITIES',
-    amount: expense?.amount || '',
-    description: expense?.description || '',
-    date: expense?.date ? expense.date.substring(0, 10) : new Date().toISOString().substring(0, 10),
-    receiptUrl: expense?.receiptUrl || ''
-  });
-  const [loading, setLoading] = useState(false);
-
-  const submit = async () => {
-    if (!form.category || !form.amount || !form.description || !form.date) {
-      return toast.error('Please fill all required fields');
-    }
-    if (parseFloat(form.amount) <= 0) return toast.error('Amount must be positive');
-    setLoading(true);
-    try {
-      const url = isEdit
-        ? `${import.meta.env.VITE_API_URL}/api/finance/expenses/${expense.id}`
-        : `${import.meta.env.VITE_API_URL}/api/finance/expenses`;
-      const res = await fetch(url, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form)
-      });
-      const json = await res.json();
-      if (json.success) { toast.success(isEdit ? 'Expense updated' : 'Expense recorded'); onSuccess(); }
-      else toast.error(json.message || 'Failed');
-    } catch { toast.error('Network error'); }
-    setLoading(false);
-  };
-
-  const upd = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-bold flex items-center gap-2">
-            <Receipt size={20} className="text-primary" />
-            {isEdit ? 'Edit Expense' : 'Log Expense'}
-          </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X size={16} /></button>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Category *</label>
-              <select value={form.category} onChange={e => upd('category', e.target.value)}
-                className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
-                {EXPENSE_CATS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Amount (₹) *</label>
-              <Input type="number" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={form.amount} onChange={e => upd('amount', e.target.value)} placeholder="0.00" min="0" />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Description *</label>
-            <textarea value={form.description} onChange={e => upd('description', e.target.value)} rows={2}
-              className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              placeholder="Brief description of this expense..." />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Date *</label>
-              <Input type="date" value={form.date} onChange={e => upd('date', e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">Receipt URL</label>
-              <Input value={form.receiptUrl} onChange={e => upd('receiptUrl', e.target.value)} placeholder="https://..." />
-            </div>
-          </div>
-        </div>
-        <div className="px-6 pb-6 flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} disabled={loading}>
-            {loading ? 'Saving...' : isEdit ? 'Update Expense' : 'Record Expense'}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Main Finance Page ─────────────────────────────────────────────────────────
 const TABS = ['overview', 'ledger', 'expenses'];
+const EXPENSE_CATS = ['UTILITIES','MAINTENANCE','RENT','MARKETING','TRAVEL','SALARIES','SHIPPING','EQUIPMENT','TAX','INSURANCE','OTHER'];
 
 export default function Finance() {
   const { token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // All filterable state lives in URL
   const activeTab      = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
@@ -181,7 +95,7 @@ export default function Finance() {
   const [loading, setLoading] = useState(true);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [expensesLoading, setExpensesLoading] = useState(false);
-  const [expenseModal, setExpenseModal] = useState(null);
+  const [syncing, setSyncing] = useState(false);
 
   const headers = { Authorization: `Bearer ${token}` };
   const dateQ = () => `${dateFrom ? `&from=${dateFrom}` : ''}${dateTo ? `&to=${dateTo}` : ''}`;
@@ -232,6 +146,7 @@ export default function Finance() {
   };
 
   const syncLedger = async () => {
+    setSyncing(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/finance/sync-ledger`, {
         method: 'POST', headers
@@ -239,6 +154,7 @@ export default function Finance() {
       const json = await res.json();
       if (json.success) { toast.success(json.message); fetchLedger(); fetchOverview(); }
     } catch { toast.error('Sync failed'); }
+    setSyncing(false);
   };
 
   useEffect(() => { fetchOverview(); }, [fetchOverview]);
@@ -266,24 +182,58 @@ export default function Finance() {
           {/* Date filter */}
           <div className="relative">
             <button onClick={() => setShowDateFilter(v => !v)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${(dateFrom || dateTo) ? 'bg-primary text-white border-primary' : 'bg-background border-input hover:border-primary text-foreground'}`}>
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
+                (dateFrom || dateTo || ledgerType || ledgerCat || expenseCatFilter !== 'all')
+                ? 'bg-primary text-white border-primary shadow-md shadow-primary/20' 
+                : 'bg-background border-input hover:border-primary text-foreground'
+              }`}>
               <Filter size={15} />
-              {dateFrom || dateTo ? `${dateFrom || 'Start'} → ${dateTo || 'Now'}` : 'All Time'}
+              Advanced Filters
               <ChevronDown size={14} />
             </button>
           {showDateFilter && (
-              <div className="absolute right-0 top-full mt-2 z-20 bg-card border border-border rounded-xl shadow-xl p-4 min-w-[280px]">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Date Range</p>
-                <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="absolute right-0 top-full mt-2 z-20 bg-card border border-border rounded-xl shadow-xl p-5 min-w-[320px]">
+                <h4 className="font-bold mb-4 text-foreground text-sm flex items-center gap-2 border-b pb-2">
+                  <Filter size={14} /> Global Filters
+                </h4>
+                
+                <div className="space-y-4 mb-4">
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">From</label>
-                    <Input type="date" value={tempFrom} onChange={e => setTempFrom(e.target.value)} className="text-xs" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Date Range</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input type="date" value={tempFrom} onChange={e => setTempFrom(e.target.value)} className="text-xs" />
+                      <Input type="date" value={tempTo} onChange={e => setTempTo(e.target.value)} className="text-xs" />
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">To</label>
-                    <Input type="date" value={tempTo} onChange={e => setTempTo(e.target.value)} className="text-xs" />
-                  </div>
+                  
+                  {activeTab === 'ledger' && (
+                    <>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Ledger Type</label>
+                        <select value={ledgerType} onChange={e => setParam('ltype', e.target.value)} className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2">
+                          <option value="">All Types</option>
+                          <option value="CREDIT">Credit (Income)</option>
+                          <option value="DEBIT">Debit (Expense)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Ledger Category</label>
+                        <Input placeholder="Filter by category..." value={ledgerCat} onChange={e => setParam('lcat', e.target.value)} className="text-sm" />
+                      </div>
+                    </>
+                  )}
+                  
+                  {activeTab === 'expenses' && (
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Expense Category</label>
+                      <select value={expenseCatFilter} onChange={e => setParam('ecat', e.target.value)} className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2">
+                        <option value="all">All Categories</option>
+                        {EXPENSE_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
+
                 <div className="flex gap-2">
                   <Button size="sm" className="flex-1" onClick={() => {
                     setSearchParams(prev => {
@@ -292,23 +242,26 @@ export default function Finance() {
                       return prev;
                     }, { replace: true });
                     setShowDateFilter(false);
-                  }}>Apply</Button>
+                  }}>Apply Filters</Button>
                   <Button size="sm" variant="outline" onClick={() => {
                     setTempFrom(''); setTempTo('');
-                    setSearchParams(prev => { prev.delete('from'); prev.delete('to'); return prev; }, { replace: true });
+                    setSearchParams(prev => { 
+                      ['from','to','ltype','lcat','ecat'].forEach(k => prev.delete(k)); 
+                      return prev; 
+                    }, { replace: true });
                     setShowDateFilter(false);
                   }}>Clear</Button>
                 </div>
               </div>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={fetchOverview} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={fetchOverview} className="gap-1.5 h-10">
             <RefreshCw size={14} /> Refresh
           </Button>
-          <Button variant="outline" size="sm" onClick={syncLedger} className="gap-1.5">
-            <BookOpen size={14} /> Sync Ledger
+          <Button variant="outline" size="sm" onClick={syncLedger} disabled={syncing} className="gap-1.5 h-10">
+            <BookOpen size={14} /> {syncing ? 'Syncing...' : 'Sync Ledger'}
           </Button>
-          <Button size="sm" onClick={() => setExpenseModal({})} className="gap-1.5">
+          <Button size="sm" onClick={() => navigate('/dashboard/finance/log-expense')} className="gap-1.5 h-10">
             <Plus size={14} /> Log Expense
           </Button>
         </div>
@@ -352,26 +305,16 @@ export default function Finance() {
               <div className="lg:col-span-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                 <h3 className="font-bold text-foreground mb-1">Revenue vs Payroll — Monthly Trend</h3>
                 <p className="text-xs text-muted-foreground mb-4">All-time data from first recorded order</p>
-                <ResponsiveContainer width="100%" height={240}>
-                  <AreaChart data={d.monthlyRevenue || []} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <defs>
-                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="payGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={v => fmtShort(v)} />
-                    <Tooltip formatter={(v, n) => [fmt(v), n]} />
+                <ResponsiveContainer width="100%" height={240} minWidth={0} minHeight={0}>
+                  <BarChart data={d.monthlyRevenue || []} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={v => fmtShort(v)} axisLine={false} tickLine={false} />
+                    <Tooltip formatter={(v, n) => [fmt(v), n]} cursor={{fill: 'var(--muted)'}} />
                     <Legend />
-                    <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#10B981" strokeWidth={2.5} fill="url(#revGrad)" dot={false} />
-                    <Area type="monotone" dataKey="payroll" name="Payroll" stroke="#EF4444" strokeWidth={2} fill="url(#payGrad)" dot={false} />
-                  </AreaChart>
+                    <Bar dataKey="revenue" name="Revenue" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Bar dataKey="payroll" name="Payroll" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
 
@@ -466,13 +409,7 @@ export default function Finance() {
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-2 flex-wrap">
-              <select value={ledgerType} onChange={e => setParam('ltype', e.target.value)}
-                className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                <option value="">All Types</option>
-                <option value="CREDIT">Credit (Income)</option>
-                <option value="DEBIT">Debit (Expense)</option>
-              </select>
-              <Input placeholder="Filter by category..." value={ledgerCat} onChange={e => setParam('lcat', e.target.value)} className="w-40 h-9 text-sm" />
+              {/* Filters are now inside Advanced Filters globally */}
             </div>
             <div className="flex gap-2 items-center">
               <span className="text-xs text-muted-foreground">{ledgerPagination.total} entries</span>
@@ -501,7 +438,7 @@ export default function Finance() {
                     <p>No ledger entries found. Click "Sync Ledger" to import historical data.</p>
                   </td></tr>
                 ) : ledger.map(entry => (
-                  <tr key={entry.id} className={`hover:bg-slate-50 dark:hover:bg-slate-900/40 ${entry.type === 'DEBIT' ? 'border-l-2 border-l-red-300 dark:border-l-red-800' : 'border-l-2 border-l-emerald-300 dark:border-l-emerald-800'}`}>
+                  <tr key={entry.id} onClick={() => navigate(`/dashboard/finance/ledger/${entry.id}`)} className={`hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors ${entry.type === 'DEBIT' ? 'border-l-2 border-l-red-300 dark:border-l-red-800' : 'border-l-2 border-l-emerald-300 dark:border-l-emerald-800'}`}>
                     <td className="px-5 py-3 text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString('en-IN')}</td>
                     <td className="px-5 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${entry.type === 'CREDIT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
@@ -541,15 +478,11 @@ export default function Finance() {
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-2 flex-wrap">
-              <select value={expenseCatFilter} onChange={e => setParam('ecat', e.target.value)}
-                className="text-sm bg-background border border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                <option value="all">All Categories</option>
-                {EXPENSE_CATS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              {/* Category filter moved to Advanced Filters */}
             </div>
             <div className="flex gap-2 items-center">
               <span className="text-xs text-muted-foreground">{expensePagination.total} records</span>
-              <Button size="sm" onClick={() => setExpenseModal({})}>
+              <Button size="sm" onClick={() => navigate('/dashboard/finance/log-expense')}>
                 <Plus size={14} className="mr-1.5" /> Log Expense
               </Button>
             </div>
@@ -570,7 +503,7 @@ export default function Finance() {
                   <tr><td colSpan="5" className="p-10 text-center text-muted-foreground">
                     <Receipt size={32} className="mx-auto mb-2 opacity-30" />
                     <p>No expenses recorded yet.</p>
-                    <Button size="sm" className="mt-3" onClick={() => setExpenseModal({})}>Log First Expense</Button>
+                    <Button size="sm" className="mt-3" onClick={() => navigate('/dashboard/finance/log-expense')}>Log First Expense</Button>
                   </td></tr>
                 ) : expenses.map(exp => (
                   <tr key={exp.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
@@ -580,7 +513,6 @@ export default function Finance() {
                     <td className="px-5 py-3 text-right font-bold text-rose-600">-{fmt(exp.amount)}</td>
                     <td className="px-5 py-3 text-right">
                       <div className="flex justify-end gap-1.5">
-                        <button onClick={() => setExpenseModal(exp)} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors"><Edit3 size={13} /></button>
                         <button onClick={() => deleteExpense(exp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors"><Trash2 size={13} /></button>
                       </div>
                     </td>
@@ -601,15 +533,7 @@ export default function Finance() {
         </div>
       )}
 
-      {/* Expense Modal */}
-      {expenseModal !== null && (
-        <ExpenseModal
-          expense={Object.keys(expenseModal).length > 0 ? expenseModal : null}
-          token={token}
-          onClose={() => setExpenseModal(null)}
-          onSuccess={() => { setExpenseModal(null); fetchExpenses(); fetchOverview(); }}
-        />
-      )}
+
     </div>
   );
 }
