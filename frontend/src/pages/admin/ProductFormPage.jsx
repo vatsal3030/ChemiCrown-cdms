@@ -235,12 +235,12 @@ export default function ProductFormPage() {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-12 space-y-6 animate-in fade-in duration-500 pb-12">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Link to="/dashboard/inventory" className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500">
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 flex flex-wrap items-center gap-3">
             {isEditing ? 'Edit Product' : 'Add New Product'}
           </h1>
           <p className="text-slate-500 mt-1">
@@ -299,7 +299,7 @@ export default function ProductFormPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Section 1: Basic Info */}
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+              <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                 <Info className="text-primary" size={20} />
                 Basic Details
               </h2>
@@ -339,7 +339,7 @@ export default function ProductFormPage() {
 
             {/* Section 2: Packaging */}
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col">
-              <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+              <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                 <Package className="text-blue-500" size={20} />
                 Packaging & Categorization
               </h2>
@@ -410,7 +410,7 @@ export default function ProductFormPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Section 4: Specifications (moved before safety for better layout flow) */}
               <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-                <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+                <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                   <Beaker className="text-purple-500" size={20} />
                   Product Specifications
                 </h2>
@@ -458,7 +458,7 @@ export default function ProductFormPage() {
 
               {/* Section 3: Safety */}
               <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-                <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+                <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                   <ShieldAlert className="text-red-500" size={20} />
                   Safety & Storage
                 </h2>
@@ -491,7 +491,7 @@ export default function ProductFormPage() {
             
             {/* Action Card */}
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+              <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                 <Save className="text-primary" size={20} />
                 Publish Details
               </h2>
@@ -524,7 +524,7 @@ export default function ProductFormPage() {
                   <p className="text-xs text-amber-600 dark:text-amber-600 mt-2">Alerts will trigger when inventory drops below this number.</p>
                 </div>
                 
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
                   <div>
                     <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200">Active & Available</label>
                     <p className="text-xs text-slate-500 mt-1">If disabled, this product cannot be ordered by customers.</p>

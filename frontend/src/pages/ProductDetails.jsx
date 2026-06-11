@@ -108,7 +108,7 @@ export default function ProductDetails() {
           {/* Left Column Skeleton */}
           <div className="md:col-span-5 lg:col-span-4 space-y-4">
             <div className="aspect-square bg-slate-200 dark:bg-slate-800 rounded-2xl w-full border border-slate-100 dark:border-slate-800"></div>
-            <div className="flex gap-2 overflow-hidden pb-2">
+            <div className="flex flex-wrap gap-2 overflow-hidden pb-2">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0 border-2 border-slate-100 dark:border-slate-800"></div>
               ))}
@@ -121,7 +121,7 @@ export default function ProductDetails() {
               <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20 mb-2"></div>
               <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded w-full mb-2"></div>
               <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded w-2/3"></div>
-              <div className="flex gap-4 mt-3">
+              <div className="flex flex-wrap gap-4 mt-3">
                 <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
                 <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
               </div>
@@ -202,7 +202,7 @@ export default function ProductDetails() {
           </div>
           
           {images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
               {images.map((img, i) => (
                 <button
                   key={i}
@@ -227,7 +227,7 @@ export default function ProductDetails() {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-foreground leading-tight">
               {product.name}
             </h1>
-            <div className="flex items-center gap-4 mt-3">
+            <div className="flex flex-wrap items-center gap-4 mt-3">
               <div className="flex items-center text-yellow-500 text-sm">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className={`w-4 h-4 ${i < Math.round(avgRating) ? 'fill-current' : 'text-slate-300'}`} />
@@ -269,7 +269,7 @@ export default function ProductDetails() {
           
           {inStock && (
             <div className="space-y-1">
-              <div className="flex gap-2 text-sm text-muted-foreground">
+              <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                 <span className="text-green-600 font-bold">FREE Delivery</span>
                 <span>by Tomorrow</span>
               </div>
@@ -284,12 +284,12 @@ export default function ProductDetails() {
             )}
           </div>
           
-          <div className="text-sm text-muted-foreground flex items-center gap-2 pt-1 mb-4">
+          <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2 pt-1 mb-4">
             <Shield size={14} className="text-green-600" /> Secure transaction
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <label className="text-sm font-medium">Qty:</label>
               <div className="flex items-center border border-input rounded-md bg-background overflow-hidden h-9 w-24">
                 <button 
@@ -394,11 +394,11 @@ export default function ProductDetails() {
           {activeTab === 'safety' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="glass p-6 rounded-2xl border-l-4 border-l-orange-500">
-                <h3 className="font-bold flex items-center gap-2 mb-3"><Shield className="text-orange-500" /> Safety Notes</h3>
+                <h3 className="font-bold flex flex-wrap items-center gap-2 mb-3"><Shield className="text-orange-500" /> Safety Notes</h3>
                 <p className="text-slate-600 dark:text-slate-300">{product.safetyNotes || 'Please refer to standard MSDS for safety instructions.'}</p>
               </div>
               <div className="glass p-6 rounded-2xl border-l-4 border-l-blue-500">
-                <h3 className="font-bold flex items-center gap-2 mb-3"><Archive className="text-blue-500" /> Storage Instructions</h3>
+                <h3 className="font-bold flex flex-wrap items-center gap-2 mb-3"><Archive className="text-blue-500" /> Storage Instructions</h3>
                 <p className="text-slate-600 dark:text-slate-300">{product.storageInstructions || 'Store in a cool, dry place away from direct sunlight.'}</p>
               </div>
             </div>
@@ -409,8 +409,8 @@ export default function ProductDetails() {
               {product.reviews && product.reviews.length > 0 ? (
                 product.reviews.map(review => (
                   <div key={review.id} className="p-6 rounded-2xl bg-card border border-border">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                      <div className="flex flex-wrap items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
                           {review.customer?.user?.firstName?.charAt(0) || 'C'}
                         </div>
@@ -490,7 +490,7 @@ export default function ProductDetails() {
           />
 
           {images.length > 1 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 p-3 bg-black/50 backdrop-blur-md rounded-2xl">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-wrap gap-3 p-3 bg-black/50 backdrop-blur-md rounded-2xl">
               {images.map((img, i) => (
                 <button
                   key={i}

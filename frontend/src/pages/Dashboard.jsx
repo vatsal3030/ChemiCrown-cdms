@@ -47,7 +47,7 @@ function StatCard({ label, value, sub, icon: Icon, color, trend, trendValue, tit
           <Icon size={20} />
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-2">
+      <div className="flex flex-wrap items-center gap-2 mt-2">
         {trend === 'up' && <span className="badge badge-success"><ArrowUpRight size={12} />{trendValue}</span>}
         {trend === 'down' && <span className="badge badge-error"><ArrowDownRight size={12} />{trendValue}</span>}
         {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
@@ -116,7 +116,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-2">
             <Skeleton className="h-7 w-56" />
             <Skeleton className="h-4 w-40" />
@@ -157,9 +157,9 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex flex-wrap items-center gap-2">
             <Zap size={22} className="text-primary" />
             Welcome back, {user.firstName || 'User'}!
           </h1>
@@ -170,7 +170,7 @@ export default function Dashboard() {
         <button
           onClick={() => fetchData(true)}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted text-muted-foreground hover:bg-muted/80 text-sm font-medium transition-colors disabled:opacity-50"
+          className="flex flex-wrap items-center gap-2 px-4 py-2 rounded-xl bg-muted text-muted-foreground hover:bg-muted/80 text-sm font-medium transition-colors disabled:opacity-50"
         >
           <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
           Refresh
@@ -230,7 +230,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Trend */}
         <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <h3 className="font-bold text-foreground">Revenue Trend</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Monthly revenue year-to-date</p>
@@ -291,7 +291,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {attendanceData.map((item, i) => (
-                  <div key={item.name} className="flex items-center gap-2">
+                  <div key={item.name} className="flex flex-wrap items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
                     <span className="text-xs text-muted-foreground truncate">{item.name}: <strong className="text-foreground">{item.value}</strong></span>
                   </div>
@@ -310,9 +310,9 @@ export default function Dashboard() {
         {/* Low Stock Items List */}
         {stats.lowStockProducts?.length > 0 && (
           <div className="bg-card rounded-2xl border border-rose-200 dark:border-rose-900/50 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div>
-                <h3 className="font-bold text-foreground flex items-center gap-2">
+                <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2">
                   <AlertTriangle size={18} className="text-rose-500" /> Action Required: Low Stock
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Click an item to view in inventory</p>
@@ -326,7 +326,7 @@ export default function Dashboard() {
                 <Link
                   key={p.id}
                   to={`/dashboard/inventory?search=${encodeURIComponent(p.name)}`}
-                  className="flex items-center justify-between p-3 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/30 transition-colors group"
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/30 transition-colors group"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">{p.name}</p>
@@ -342,7 +342,7 @@ export default function Dashboard() {
         )}
         {/* Inventory Bar Chart */}
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <h3 className="font-bold text-foreground">Top Products – Stock Level</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Current inventory quantities</p>
@@ -368,12 +368,12 @@ export default function Dashboard() {
 
         {/* Recent Orders */}
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div>
               <h3 className="font-bold text-foreground">Recent Orders</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Latest customer transactions</p>
             </div>
-            <Link to="/dashboard/orders" className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
+            <Link to="/dashboard/orders" className="text-xs text-primary font-semibold flex flex-wrap items-center gap-1 hover:underline">
               View all <ExternalLink size={11} />
             </Link>
           </div>
@@ -382,7 +382,7 @@ export default function Dashboard() {
               <div className="text-center py-8 text-sm text-muted-foreground">No recent orders.</div>
             )}
             {data?.recentOrders?.map((order) => (
-              <div key={order.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition-colors group">
+              <div key={order.id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition-colors group">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <ShoppingCart size={15} className="text-primary" />
                 </div>

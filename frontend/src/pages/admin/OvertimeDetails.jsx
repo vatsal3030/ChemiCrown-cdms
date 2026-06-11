@@ -100,12 +100,12 @@ export default function OvertimeDetails() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900 flex flex-wrap items-center gap-2">
             <Timer className="text-primary" /> Overtime Details
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">Full view of overtime record and actions</p>
@@ -114,7 +114,7 @@ export default function OvertimeDetails() {
 
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
               {empUser?.firstName?.[0]}{empUser?.lastName?.[0]}
             </div>

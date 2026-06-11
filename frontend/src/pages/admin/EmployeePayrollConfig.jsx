@@ -113,7 +113,7 @@ export default function EmployeePayrollConfig() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/hr#payroll')}>
           <ArrowLeft size={20} />
         </Button>
@@ -128,7 +128,7 @@ export default function EmployeePayrollConfig() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Salary Configuration */}
         <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
+          <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
             <IndianRupee className="text-emerald-600" />
             <h2 className="text-lg font-semibold">Salary Details</h2>
           </div>
@@ -158,7 +158,7 @@ export default function EmployeePayrollConfig() {
 
         {/* Bank Details */}
         <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
-          <div className="flex items-center gap-2 border-b border-border pb-4">
+          <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
             <CreditCard className="text-blue-600" />
             <h2 className="text-lg font-semibold">Bank & Payment Details</h2>
           </div>

@@ -121,11 +121,11 @@ export default function EmployeeDetails() {
           </p>
           
           <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-6 text-sm text-slate-300 font-medium">
-            <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Mail size={14} className="text-indigo-400"/> {employee.email}</div>
-            {employee.phone && <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Phone size={14} className="text-indigo-400"/> {employee.phone}</div>}
-            <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Building size={14} className="text-indigo-400"/> {employee.employeeProfile?.department || 'No Dept'}</div>
-            <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Briefcase size={14} className="text-indigo-400"/> {employee.employeeProfile?.jobTitle || 'No Title'}</div>
-            <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><CalendarIcon size={14} className="text-indigo-400"/> Joined: {employee.employeeProfile?.joiningDate ? new Date(employee.employeeProfile.joiningDate).toLocaleDateString() : 'N/A'}</div>
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Mail size={14} className="text-indigo-400"/> {employee.email}</div>
+            {employee.phone && <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Phone size={14} className="text-indigo-400"/> {employee.phone}</div>}
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Building size={14} className="text-indigo-400"/> {employee.employeeProfile?.department || 'No Dept'}</div>
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Briefcase size={14} className="text-indigo-400"/> {employee.employeeProfile?.jobTitle || 'No Title'}</div>
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><CalendarIcon size={14} className="text-indigo-400"/> Joined: {employee.employeeProfile?.joiningDate ? new Date(employee.employeeProfile.joiningDate).toLocaleDateString() : 'N/A'}</div>
           </div>
         </div>
         <div className="relative z-10 flex flex-col items-center bg-black/40 backdrop-blur-md border border-white/10 p-6 rounded-2xl min-w-[160px]">
@@ -144,9 +144,9 @@ export default function EmployeeDetails() {
         {/* Attendance Stats & Calendar */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <h2 className="text-xl font-bold">Attendance Overview</h2>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <button disabled={isPrevDisabled} onClick={handlePrevMonth} className="p-1 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-600"><ChevronLeft size={16} /></button>
                 <span className="text-sm font-semibold w-24 text-center">{viewDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</span>
                 <button disabled={isNextDisabled} onClick={handleNextMonth} className="p-1 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-600"><ChevronRight size={16} /></button>
@@ -201,11 +201,11 @@ export default function EmployeeDetails() {
               })}
             </div>
             <div className="flex flex-wrap gap-4 mt-6 text-xs text-slate-500 justify-center font-medium">
-              <span className="flex items-center gap-1.5 px-2 py-1 bg-green-50 rounded-md"><div className="w-3 h-3 rounded bg-green-400 border border-green-500 shadow-inner"></div> Present</span>
-              <span className="flex items-center gap-1.5 px-2 py-1 bg-red-50 rounded-md"><div className="w-3 h-3 rounded bg-red-400 border border-red-500 shadow-inner"></div> Absent</span>
-              <span className="flex items-center gap-1.5 px-2 py-1 bg-orange-50 rounded-md"><div className="w-3 h-3 rounded bg-orange-400 border border-orange-500 shadow-inner"></div> Leave</span>
-              <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-md"><div className="w-3 h-3 rounded bg-blue-400 border border-blue-500 shadow-inner"></div> Half Day</span>
-              <span className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-md"><div className="w-3 h-3 rounded bg-slate-200 border border-slate-300"></div> No Data</span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-green-50 rounded-md"><div className="w-3 h-3 rounded bg-green-400 border border-green-500 shadow-inner"></div> Present</span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-red-50 rounded-md"><div className="w-3 h-3 rounded bg-red-400 border border-red-500 shadow-inner"></div> Absent</span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-orange-50 rounded-md"><div className="w-3 h-3 rounded bg-orange-400 border border-orange-500 shadow-inner"></div> Leave</span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-md"><div className="w-3 h-3 rounded bg-blue-400 border border-blue-500 shadow-inner"></div> Half Day</span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-md"><div className="w-3 h-3 rounded bg-slate-200 border border-slate-300"></div> No Data</span>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function EmployeeDetails() {
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Recent Transactions</h3>
                   {salaries.slice(0, 5).map(salary => (
-                    <div key={salary.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div key={salary.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
                       <div>
                         <p className="font-medium">{salary.month}</p>
                         <p className="text-xs text-slate-500">{new Date(salary.paidAt || Date.now()).toLocaleDateString()}</p>

@@ -197,7 +197,7 @@ export default function Catalog() {
           <p className="mt-2 sm:mt-4 text-base sm:text-xl text-muted-foreground mx-auto max-w-5xl">
             Industrial &amp; laboratory chemicals — direct from manufacturer.
           </p>
-          <div className="mt-5 sm:mt-8 max-w-5xl mx-auto flex gap-2">
+          <div className="mt-5 sm:mt-8 max-w-5xl mx-auto flex flex-wrap gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               <input
@@ -232,13 +232,13 @@ export default function Catalog() {
       {showFilters && (
         <div className="bg-white dark:bg-slate-900 border-b border-border shadow-md">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-foreground flex items-center gap-2 text-sm sm:text-base">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h2 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm sm:text-base">
                 <Filter size={15} /> Refine Results
               </h2>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {hasActiveFilters && (
-                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex flex-wrap items-center gap-1">
                     <X size={12} /> Clear all
                   </button>
                 )}
@@ -301,7 +301,7 @@ export default function Catalog() {
                     </span>
                   )}
                 </label>
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   <input
                     type="number"
                     min="0"
@@ -324,7 +324,7 @@ export default function Catalog() {
               {/* In Stock */}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">Availability</label>
-                <label className="flex items-center gap-2.5 cursor-pointer mt-1">
+                <label className="flex flex-wrap items-center gap-2.5 cursor-pointer mt-1">
                   <div
                     onClick={() => setPendingFilters(f => ({ ...f, inStockOnly: !f.inStockOnly }))}
                     className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${pendingFilters.inStockOnly ? 'bg-primary' : 'bg-muted'}`}
@@ -336,7 +336,7 @@ export default function Catalog() {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-5 justify-end">
+            <div className="flex flex-wrap gap-3 mt-5 justify-end">
               <Button variant="outline" size="sm" onClick={() => { setPendingFilters({ ...EMPTY_FILTERS }); }}>Reset</Button>
               <Button size="sm" onClick={applyFilters}>Apply Filters</Button>
             </div>
@@ -408,7 +408,7 @@ export default function Catalog() {
             <Search className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-3 opacity-40" />
             <h3 className="text-lg sm:text-xl font-medium text-foreground">No products found</h3>
             <p className="text-muted-foreground mt-1 text-sm">Try adjusting your search or filters.</p>
-            <div className="flex gap-3 justify-center mt-5">
+            <div className="flex flex-wrap gap-3 justify-center mt-5">
               <Button variant="outline" size="sm" onClick={() => setSearchTerm('')}>Clear Search</Button>
               {hasActiveFilters && <Button variant="outline" size="sm" onClick={clearFilters}>Clear Filters</Button>}
             </div>
@@ -461,15 +461,15 @@ export default function Catalog() {
 
                       {/* Stock badge — 3 states */}
                       {lowStock ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-700 shadow-sm">
+                        <span className="inline-flex flex-wrap items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-700 shadow-sm">
                           <Package size={10} /> Low Stock
                         </span>
                       ) : inStock ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 shadow-sm">
+                        <span className="inline-flex flex-wrap items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 shadow-sm">
                           <CheckCircle2 size={10} /> In Stock
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-sm">
+                        <span className="inline-flex flex-wrap items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-sm">
                           <XCircle size={10} /> Out of Stock
                         </span>
                       )}
@@ -588,7 +588,7 @@ function useMemo_safe(products) {
 
 function FilterChip({ label, onRemove }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+    <span className="inline-flex flex-wrap items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
       {label}
       <button onClick={onRemove} className="hover:text-primary/70 transition-colors">
         <X size={11} />

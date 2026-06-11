@@ -66,7 +66,7 @@ export default function PayrollDetails() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto pb-20">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <button
             onClick={() => navigate('/dashboard/payroll')}
             className="p-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl transition-colors print:hidden"
@@ -74,14 +74,14 @@ export default function PayrollDetails() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground flex flex-wrap items-center gap-2">
               Payslip Details
             </h1>
             <p className="text-muted-foreground text-sm mt-0.5">ID: {slip.id}</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-3 print:hidden">
+        <div className="flex flex-wrap items-center gap-3 print:hidden">
           <SalaryStatusBadge status={slip.status} confirmed={slip.confirmedByEmployee} />
           <Button variant="outline" onClick={handlePrint} className="gap-2">
             <Receipt size={16} /> Print Payslip
@@ -99,7 +99,7 @@ export default function PayrollDetails() {
         {/* Header section (Company & Emp) */}
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
           <div className="p-6 md:p-8 space-y-4">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
                 <Building2 size={24} />
               </div>
@@ -109,14 +109,14 @@ export default function PayrollDetails() {
               </div>
             </div>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><Calendar size={14} /> <strong>Month:</strong> {slip.month}</div>
-              <div className="flex items-center gap-2"><Calendar size={14} /> <strong>Generated:</strong> {new Date(slip.createdAt).toLocaleDateString()}</div>
-              {slip.paidAt && <div className="flex items-center gap-2"><CheckCircle2 size={14} /> <strong>Paid On:</strong> {new Date(slip.paidAt).toLocaleDateString()}</div>}
+              <div className="flex flex-wrap items-center gap-2"><Calendar size={14} /> <strong>Month:</strong> {slip.month}</div>
+              <div className="flex flex-wrap items-center gap-2"><Calendar size={14} /> <strong>Generated:</strong> {new Date(slip.createdAt).toLocaleDateString()}</div>
+              {slip.paidAt && <div className="flex flex-wrap items-center gap-2"><CheckCircle2 size={14} /> <strong>Paid On:</strong> {new Date(slip.paidAt).toLocaleDateString()}</div>}
             </div>
           </div>
 
           <div className="p-6 md:p-8 space-y-4">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                 {slip.employee?.user?.profileImageUrl ? (
                   <img src={slip.employee.user.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
@@ -130,9 +130,9 @@ export default function PayrollDetails() {
               </div>
             </div>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><Mail size={14} /> {slip.employee?.user?.email}</div>
-              {slip.employee?.user?.phone && <div className="flex items-center gap-2"><Phone size={14} /> {slip.employee?.user?.phone}</div>}
-              <div className="flex items-center gap-2"><Calendar size={14} /> <strong>Working Days:</strong> {slip.workingDays} 
+              <div className="flex flex-wrap items-center gap-2"><Mail size={14} /> {slip.employee?.user?.email}</div>
+              {slip.employee?.user?.phone && <div className="flex flex-wrap items-center gap-2"><Phone size={14} /> {slip.employee?.user?.phone}</div>}
+              <div className="flex flex-wrap items-center gap-2"><Calendar size={14} /> <strong>Working Days:</strong> {slip.workingDays} 
                 <span className="ml-2 px-1.5 py-0.5 rounded bg-muted text-xs">Absent: {slip.absentDays}</span>
               </div>
             </div>
@@ -147,35 +147,35 @@ export default function PayrollDetails() {
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 border-b border-border pb-2">Earnings</h3>
               <div className="space-y-3">
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                   <span className="text-slate-600 dark:text-slate-400">Basic Salary</span>
                   <span className="font-medium text-foreground">{formatINR(slip.amount)}</span>
                 </div>
                 {slip.overtime > 0 && (
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Overtime Pay</span>
                     <span className="font-medium text-emerald-600">+{formatINR(slip.overtime)}</span>
                   </div>
                 )}
                 {slip.incentive > 0 && (
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Sales Incentive</span>
                     <span className="font-medium text-emerald-600">+{formatINR(slip.incentive)}</span>
                   </div>
                 )}
                 {slip.bonus > 0 && (
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Bonus</span>
                     <span className="font-medium text-emerald-600">+{formatINR(slip.bonus)}</span>
                   </div>
                 )}
                 {slip.allowances > 0 && (
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Allowances</span>
                     <span className="font-medium text-emerald-600">+{formatINR(slip.allowances)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center text-sm font-semibold pt-3 border-t border-border mt-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm font-semibold pt-3 border-t border-border mt-3">
                   <span>Gross Earnings</span>
                   <span>{formatINR(slip.amount + (slip.overtime||0) + (slip.incentive||0) + (slip.bonus||0) + (slip.allowances||0))}</span>
                 </div>
@@ -187,30 +187,30 @@ export default function PayrollDetails() {
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 border-b border-border pb-2">Deductions</h3>
               <div className="space-y-3">
                 {slip.absentDeduction > 0 && (
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Absent Deduction ({slip.absentDays} days)</span>
                     <span className="font-medium text-rose-600">-{formatINR(slip.absentDeduction)}</span>
                   </div>
                 )}
                 {slip.pfContribution > 0 && (
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                     <span className="text-slate-600 dark:text-slate-400">PF Contribution</span>
                     <span className="font-medium text-rose-600">-{formatINR(slip.pfContribution)}</span>
                   </div>
                 )}
                 {slip.tds > 0 && (
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                     <span className="text-slate-600 dark:text-slate-400">TDS / Taxes</span>
                     <span className="font-medium text-rose-600">-{formatINR(slip.tds)}</span>
                   </div>
                 )}
                 {slip.deductions > slip.absentDeduction && (
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Other Deductions</span>
                     <span className="font-medium text-rose-600">-{formatINR(slip.deductions - slip.absentDeduction)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center text-sm font-semibold pt-3 border-t border-border mt-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm font-semibold pt-3 border-t border-border mt-3">
                   <span>Total Deductions</span>
                   <span className="text-rose-600">-{formatINR((slip.absentDeduction||0) + (slip.pfContribution||0) + (slip.tds||0) + ((slip.deductions||0) - (slip.absentDeduction||0)))}</span>
                 </div>
@@ -251,7 +251,7 @@ export default function PayrollDetails() {
         {slip.remarks && (
           <div className="px-6 md:px-8 pb-8">
             <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl">
-              <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-500 mb-1 flex items-center gap-2">
+              <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-500 mb-1 flex flex-wrap items-center gap-2">
                 <FileText size={14} /> Remarks
               </h4>
               <p className="text-sm text-amber-700 dark:text-amber-400/80">{slip.remarks}</p>

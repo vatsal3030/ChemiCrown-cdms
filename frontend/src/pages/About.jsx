@@ -48,7 +48,7 @@ export default function About() {
                 <div className="h-full w-px bg-border my-2 min-h-[100px]"></div>
               </div>
               <div className="bg-muted/50 p-6 rounded-xl border border-border flex-1">
-                <div className="flex items-center gap-4 mb-2 md:hidden">
+                <div className="flex flex-wrap items-center gap-4 mb-2 md:hidden">
                   <div className="px-4 py-1.5 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs whitespace-nowrap">Est. 1995</div>
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-foreground">Foundation</h3>
@@ -62,7 +62,7 @@ export default function About() {
                 <div className="h-full w-px bg-border my-2 min-h-[100px]"></div>
               </div>
               <div className="bg-muted/50 p-6 rounded-xl border border-border flex-1">
-                <div className="flex items-center gap-4 mb-2 md:hidden">
+                <div className="flex flex-wrap items-center gap-4 mb-2 md:hidden">
                   <div className="px-4 py-1.5 rounded-full bg-secondary flex items-center justify-center text-primary-foreground font-bold text-xs whitespace-nowrap">Year 2010</div>
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-foreground">National Expansion</h3>
@@ -75,7 +75,7 @@ export default function About() {
                 <div className="px-4 py-2 rounded-full bg-success flex items-center justify-center text-primary-foreground font-bold text-xs shrink-0 whitespace-nowrap">Year 2026</div>
               </div>
               <div className="bg-muted/50 p-6 rounded-xl border border-border flex-1">
-                <div className="flex items-center gap-4 mb-2 md:hidden">
+                <div className="flex flex-wrap items-center gap-4 mb-2 md:hidden">
                   <div className="px-4 py-1.5 rounded-full bg-success flex items-center justify-center text-primary-foreground font-bold text-xs whitespace-nowrap">Year 2026</div>
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-foreground">Digital Transformation</h3>

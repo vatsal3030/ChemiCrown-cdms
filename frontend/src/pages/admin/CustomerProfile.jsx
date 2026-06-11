@@ -80,8 +80,8 @@ export default function CustomerProfile() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto pb-20">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <button 
             onClick={() => navigate('/dashboard/verify')}
             className="p-2 -ml-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
@@ -90,7 +90,7 @@ export default function CustomerProfile() {
           </button>
           <h1 className="text-2xl font-bold tracking-tight">Customer Profile</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isBlocked ? (
             <span className="px-3 py-1 rounded-full text-sm font-semibold bg-rose-100 text-rose-700">Blocked</span>
           ) : isVerified ? (
@@ -100,7 +100,7 @@ export default function CustomerProfile() {
           )}
           
           {['SUPER_ADMIN', 'OWNER'].includes(currentUser?.role) && (isVerified || isBlocked) && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {!isBlocked && (
                 <Button 
                   variant="outline" 
@@ -130,7 +130,7 @@ export default function CustomerProfile() {
         <div className="space-y-6 lg:col-span-1">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-primary"></div>
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex flex-wrap items-center gap-4 mb-6">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl">
                 {customer.companyName?.[0] || user.firstName[0]}
               </div>
@@ -141,35 +141,35 @@ export default function CustomerProfile() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><User size={14} /></div>
                 <div>
                   <p className="text-xs text-muted-foreground">Contact Person</p>
                   <p className="font-medium text-foreground">{user.firstName} {user.lastName}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><Mail size={14} /></div>
                 <div>
                   <p className="text-xs text-muted-foreground">Email</p>
                   <p className="font-medium text-foreground">{user.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><Phone size={14} /></div>
                 <div>
                   <p className="text-xs text-muted-foreground">Phone</p>
                   <p className="font-medium text-foreground">{user.phone || 'N/A'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><FileText size={14} /></div>
                 <div>
                   <p className="text-xs text-muted-foreground">GST Number</p>
                   <p className="font-medium text-foreground font-mono">{customer.gstNumber || 'N/A'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><MapPin size={14} /></div>
                 <div>
                   <p className="text-xs text-muted-foreground">Billing Address</p>
@@ -182,20 +182,20 @@ export default function CustomerProfile() {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
              <h3 className="text-sm font-bold text-foreground mb-4">Customer Stats</h3>
              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-muted-foreground"><Package size={16} /> Total Orders</div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-center gap-2 text-muted-foreground"><Package size={16} /> Total Orders</div>
                   <div className="font-bold">{totalOrders}</div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-emerald-600"><CheckCircle size={16} /> Completed</div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-center gap-2 text-emerald-600"><CheckCircle size={16} /> Completed</div>
                   <div className="font-bold">{completedOrders}</div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-primary"><DollarSign size={16} /> Total Spent</div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-center gap-2 text-primary"><DollarSign size={16} /> Total Spent</div>
                   <div className="font-bold">₹{totalSpent.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-muted-foreground"><Clock size={16} /> Joined</div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-center gap-2 text-muted-foreground"><Clock size={16} /> Joined</div>
                   <div className="font-medium text-sm">{new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</div>
                 </div>
              </div>
@@ -205,7 +205,7 @@ export default function CustomerProfile() {
         {/* Right Column: Order History */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-foreground mb-4 flex flex-wrap items-center gap-2">
               <Activity size={18} className="text-primary" /> Order History
             </h3>
             

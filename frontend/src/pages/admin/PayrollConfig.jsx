@@ -132,8 +132,8 @@ export default function PayrollConfig() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <button 
             onClick={() => navigate(-1)}
             className="p-2 -ml-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
@@ -141,7 +141,7 @@ export default function PayrollConfig() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight flex flex-wrap items-center gap-2">
               <Settings className="text-primary" size={24} /> Payroll Configuration
             </h1>
             <p className="text-muted-foreground text-sm">{employee.firstName} {employee.lastName} • {employee.role.replace('_', ' ')}</p>

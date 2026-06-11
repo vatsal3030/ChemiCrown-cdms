@@ -158,7 +158,7 @@ export default function CustomerManagement() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 p-1 bg-muted/50 rounded-xl w-fit">
+      <div className="flex flex-wrap items-center gap-2 p-1 bg-muted/50 rounded-xl w-fit">
         <button
           onClick={() => setActiveTab('pending')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
@@ -191,7 +191,7 @@ export default function CustomerManagement() {
           <h3 className="font-bold text-foreground shrink-0">
             {activeTab === 'pending' ? 'Pending Verifications' : activeTab === 'active' ? 'Active Customers' : 'Blocked Customers'}
           </h3>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <div className="relative w-full sm:w-72">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -220,11 +220,11 @@ export default function CustomerManagement() {
         {/* Advanced Filters Panel */}
         {showFilters && (
           <div className="bg-muted/30 border-b border-border px-6 py-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm">
                 <Filter size={15} /> Advanced Filters & Sorting
               </h3>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {activeFilterCount > 0 && (
                   <button onClick={clearFilters} className="text-xs text-destructive hover:underline">Clear all</button>
                 )}
@@ -292,7 +292,7 @@ export default function CustomerManagement() {
               ) : filtered.map((customer) => (
                 <tr key={customer.id} className="data-table-row">
                   <td className="data-table-cell">
-                    <a href={`/dashboard/customers/${customer.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                    <a href={`/dashboard/customers/${customer.id}`} className="flex flex-wrap items-center gap-3 hover:opacity-80 transition-opacity">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${customer.isBlocked ? 'bg-rose-100 text-rose-700' : 'bg-primary/10 text-primary'}`}>
                         {customer.company?.[0] || '?'}
                       </div>
@@ -317,14 +317,14 @@ export default function CustomerManagement() {
                           <button
                             onClick={() => verifyCustomer(customer.id)}
                             disabled={processing === customer.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-semibold hover:bg-emerald-100 transition-colors border border-emerald-200"
+                            className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-semibold hover:bg-emerald-100 transition-colors border border-emerald-200"
                           >
                             <ShieldCheck size={13} /> Approve
                           </button>
                           <button
                             onClick={() => rejectCustomer(customer.id)}
                             disabled={processing === customer.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-xl text-xs font-semibold hover:bg-red-100 transition-colors border border-red-200 disabled:opacity-50"
+                            className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-xl text-xs font-semibold hover:bg-red-100 transition-colors border border-red-200 disabled:opacity-50"
                           >
                             <XCircle size={13} /> Reject
                           </button>
@@ -335,14 +335,14 @@ export default function CustomerManagement() {
                           <button
                             onClick={() => toggleCustomerStatus(customer.id, 'warn')}
                             disabled={processing === customer.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-xl text-xs font-semibold hover:bg-amber-100 transition-colors border border-amber-200 disabled:opacity-50"
+                            className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-xl text-xs font-semibold hover:bg-amber-100 transition-colors border border-amber-200 disabled:opacity-50"
                           >
                             <AlertTriangle size={13} /> Warn
                           </button>
                           <button
                             onClick={() => toggleCustomerStatus(customer.id, 'block')}
                             disabled={processing === customer.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-xl text-xs font-semibold hover:bg-rose-100 transition-colors border border-rose-200 disabled:opacity-50"
+                            className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-xl text-xs font-semibold hover:bg-rose-100 transition-colors border border-rose-200 disabled:opacity-50"
                           >
                             <Ban size={13} /> Block
                           </button>
@@ -352,7 +352,7 @@ export default function CustomerManagement() {
                         <button
                           onClick={() => toggleCustomerStatus(customer.id, 'unblock')}
                           disabled={processing === customer.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-semibold hover:bg-emerald-100 transition-colors border border-emerald-200 disabled:opacity-50"
+                          className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-semibold hover:bg-emerald-100 transition-colors border border-emerald-200 disabled:opacity-50"
                         >
                           <CheckCircle size={13} /> Unblock
                         </button>

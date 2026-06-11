@@ -60,7 +60,7 @@ export default function Wishlist() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground flex flex-wrap items-center gap-3">
           <Heart className="w-8 h-8 text-red-500 fill-red-500" /> My Wishlist
         </h1>
         <p className="text-muted-foreground mt-2">Manage your saved items and favorite chemicals for later.</p>
@@ -77,7 +77,7 @@ export default function Wishlist() {
             className="pl-9 w-full"
           />
         </div>
-        <div className="flex gap-2 w-full sm:w-auto shrink-0">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto shrink-0">
           <button
             onClick={() => setShowFilters(v => !v)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border transition-all ${
@@ -100,11 +100,11 @@ export default function Wishlist() {
       {/* Advanced Filters */}
       {showFilters && (
         <div className="bg-muted/30 border border-border rounded-xl px-6 py-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm">
               <Filter size={15} /> Sort & Filter
             </h3>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               {(sortOrder !== 'newest' || stockFilter !== 'all') && (
                 <button onClick={() => { setSortOrder('newest'); setStockFilter('all'); }} className="text-xs text-destructive hover:underline">
                   Clear all
@@ -147,7 +147,7 @@ export default function Wishlist() {
         {loading ? (
           <div className="p-8 space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center gap-4 animate-pulse">
+              <div key={i} className="flex flex-wrap items-center gap-4 animate-pulse">
                 <Skeleton className="w-20 h-20 rounded-xl" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-5 w-48" />

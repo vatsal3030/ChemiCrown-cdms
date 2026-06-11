@@ -106,12 +106,12 @@ export default function PayrollPaymentPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors text-muted-foreground">
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">Process Salary Payment</h1>
+          <h1 className="text-3xl font-bold text-foreground flex flex-wrap items-center gap-3">Process Salary Payment</h1>
           <p className="text-muted-foreground mt-1">Record payment details for the selected salary slip</p>
         </div>
       </div>
@@ -141,7 +141,7 @@ export default function PayrollPaymentPage() {
             <h2 className="text-lg font-semibold mb-4 text-foreground">Payment Details</h2>
             {method === 'CASH' && (
               <div className={`rounded-xl p-4 space-y-2 ${selectedMethod.bg} border ${selectedMethod.border}`}>
-                <p className="text-sm font-semibold flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                <p className="text-sm font-semibold flex flex-wrap items-center gap-1.5 text-amber-700 dark:text-amber-400">
                   <AlertCircle size={15} /> Cash Payment Instructions
                 </p>
                 <ul className="text-xs text-amber-700 dark:text-amber-400 space-y-1 list-disc pl-4">
@@ -161,12 +161,12 @@ export default function PayrollPaymentPage() {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-foreground">
                       <p className="text-muted-foreground text-xs">Bank</p><p className="font-medium">{emp.bankName || '—'}</p>
                       <p className="text-muted-foreground text-xs">Account</p>
-                      <p className="font-mono font-medium flex items-center gap-2">
+                      <p className="font-mono font-medium flex flex-wrap items-center gap-2">
                         {emp.bankAccountNumber}
                         <button onClick={() => { navigator.clipboard.writeText(emp.bankAccountNumber); toast.success('Copied!'); }}><Copy size={13} className="text-muted-foreground hover:text-primary" /></button>
                       </p>
                       <p className="text-muted-foreground text-xs">IFSC</p>
-                      <p className="font-mono font-medium flex items-center gap-2">
+                      <p className="font-mono font-medium flex flex-wrap items-center gap-2">
                         {emp.bankIFSC}
                         <button onClick={() => { navigator.clipboard.writeText(emp.bankIFSC); toast.success('Copied!'); }}><Copy size={13} className="text-muted-foreground hover:text-primary" /></button>
                       </p>
@@ -199,7 +199,7 @@ export default function PayrollPaymentPage() {
                   <>
                     <div className={`rounded-xl p-4 ${selectedMethod.bg} border ${selectedMethod.border}`}>
                       <p className="text-xs font-semibold text-violet-700 dark:text-violet-400 mb-2 uppercase tracking-wider">Employee UPI Details</p>
-                      <p className="font-mono text-lg font-bold text-foreground flex items-center gap-2">
+                      <p className="font-mono text-lg font-bold text-foreground flex flex-wrap items-center gap-2">
                         {emp.upiId}
                         <button onClick={() => { navigator.clipboard.writeText(emp.upiId); toast.success('UPI ID copied!'); }}><Copy size={16} className="text-muted-foreground hover:text-primary" /></button>
                       </p>
@@ -258,7 +258,7 @@ export default function PayrollPaymentPage() {
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 sticky top-24">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Payment Summary</h2>
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary overflow-hidden">
                   {empUser?.profileImageUrl ? <img src={empUser.profileImageUrl} alt="Profile" className="w-full h-full object-cover" /> : empUser?.firstName?.[0]}
                 </div>

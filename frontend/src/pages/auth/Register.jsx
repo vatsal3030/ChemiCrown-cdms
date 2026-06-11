@@ -129,7 +129,7 @@ export default function Register() {
           <p className="text-xs text-muted-foreground mb-8">
             This usually takes 1–2 business days. You'll be able to log in once an administrator approves your account.
           </p>
-          <Link to="/login" className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors">
+          <Link to="/login" className="inline-flex flex-wrap items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors">
             Go to Login
           </Link>
         </div>
@@ -288,7 +288,7 @@ export default function Register() {
                     placeholder="29ABCDE1234F1Z5"
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                <p className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1">
                   <Info size={10} />Optional — needed for B2B tax invoices
                 </p>
               </Field>

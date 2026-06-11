@@ -147,7 +147,7 @@ export default function TicketDashboard() {
               onChange={e => setParam('q', e.target.value)}
             />
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex flex-wrap gap-2 shrink-0">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
@@ -177,13 +177,13 @@ export default function TicketDashboard() {
         {/* Advanced Filters Panel */}
         {showFilters && (
           <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900/50">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm">
                 <Filter size={15} /> Advanced Filters
               </h3>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {hasFilters && (
-                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex flex-wrap items-center gap-1">
                     <X size={12} /> Clear all
                   </button>
                 )}

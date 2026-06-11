@@ -146,7 +146,7 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold tracking-tight">Chemical Inventory</h1>
           <p className="text-slate-500 mt-1">Manage and track all your chemical products.</p>
         </div>
-        <Button className="flex items-center gap-2" onClick={() => navigate('/dashboard/inventory/product/new')}>
+        <Button className="flex flex-wrap items-center gap-2" onClick={() => navigate('/dashboard/inventory/product/new')}>
           <Plus size={16} /> Add Product
         </Button>
       </div>
@@ -164,7 +164,7 @@ export default function Inventory() {
               className="pl-9"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
 
             {/* Advanced filter toggle */}
             <button
@@ -192,13 +192,13 @@ export default function Inventory() {
         {/* ── Expanded Filter Panel ── */}
         {showFilters && (
           <div className="border-b border-border bg-muted/20 px-6 py-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm">
                 <Filter size={15} /> Advanced Filters
               </h3>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {hasActiveFilters && (
-                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex flex-wrap items-center gap-1">
                     <X size={12} /> Clear all
                   </button>
                 )}
@@ -287,30 +287,30 @@ export default function Inventory() {
         {hasActiveFilters && (
           <div className="px-4 py-2 border-b border-border flex flex-wrap gap-2 items-center">
             {categoryFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 Category: {categories.find(c => c.id === categoryFilter)?.name || categoryFilter}
                 <button onClick={() => setParam('cat', 'all')}><X size={10} /></button>
               </span>
             )}
             {stockFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs font-semibold">
                 Stock: {stockFilter}
                 <button onClick={() => setParam('stock', 'all')}><X size={10} /></button>
               </span>
             )}
             {statusFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
                 {statusFilter}
                 <button onClick={() => setParam('status', 'all')}><X size={10} /></button>
               </span>
             )}
             {minPrice && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold">
                 Min: ₹{minPrice} <button onClick={() => setParam('minPrice', '')}><X size={10} /></button>
               </span>
             )}
             {maxPrice && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold">
                 Max: ₹{maxPrice} <button onClick={() => setParam('maxPrice', '')}><X size={10} /></button>
               </span>
             )}
@@ -324,15 +324,15 @@ export default function Inventory() {
             <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('name')}>
-                  <div className="flex items-center gap-1">Product <ArrowUpDown size={12} /></div>
+                  <div className="flex flex-wrap items-center gap-1">Product <ArrowUpDown size={12} /></div>
                 </th>
                 <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('casNumber')}>
-                  <div className="flex items-center gap-1">CAS Number <ArrowUpDown size={12} /></div>
+                  <div className="flex flex-wrap items-center gap-1">CAS Number <ArrowUpDown size={12} /></div>
                 </th>
                 <th className="px-6 py-3">Stock Level</th>
                 <th className="px-6 py-3 text-center">Status</th>
                 <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('price')}>
-                  <div className="flex items-center gap-1">Price <ArrowUpDown size={12} /></div>
+                  <div className="flex flex-wrap items-center gap-1">Price <ArrowUpDown size={12} /></div>
                 </th>
                 <th className="px-6 py-3 text-right">Actions</th>
               </tr>
@@ -370,7 +370,7 @@ export default function Inventory() {
                       </td>
                       <td className="data-table-cell font-mono text-xs text-muted-foreground">{product.casNumber || 'N/A'}</td>
                       <td className="data-table-cell">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span
                             className={`w-2 h-2 rounded-full shrink-0 ${
                               quantity === 0 ? 'bg-red-500' : quantity <= 50 ? 'bg-amber-500' : 'bg-emerald-500'
@@ -429,7 +429,7 @@ export default function Inventory() {
               Page {page} of {totalPages || 1}
               {data?.pagination?.total ? ` · ${data.pagination.total} products` : ''}
             </span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
                 Previous
               </Button>

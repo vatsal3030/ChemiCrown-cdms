@@ -137,18 +137,18 @@ export default function AttendanceCalendar() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-12">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-900 flex flex-wrap items-center gap-2">
               <CalendarIcon className="text-blue-600" /> Attendance Register
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">Month view for all employees</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
             <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600"><ChevronLeft size={18} /></button>
             <input 
               type="month" 
@@ -185,7 +185,7 @@ export default function AttendanceCalendar() {
             <table className="w-full text-sm border-collapse min-w-max">
               <thead className="bg-slate-50 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left font-bold text-slate-700 border-b border-r border-slate-200 sticky left-0 bg-slate-50 z-20 min-w-[200px]">
+                  <th className="px-3 sm:px-4 py-3 text-left font-bold text-slate-700 border-b border-r border-slate-200 sticky left-0 bg-slate-50 z-20 min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
                     Employee
                   </th>
                   {daysArray.map(day => (
@@ -199,9 +199,9 @@ export default function AttendanceCalendar() {
               <tbody>
                 {employees?.filter(e => e.employeeProfile).map(emp => (
                   <tr key={emp.id} className="border-b border-slate-100 hover:bg-slate-50/50 group">
-                    <td className="px-4 py-2 border-r border-slate-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10 transition-colors">
-                      <div className="font-semibold text-slate-800">{emp.firstName} {emp.lastName}</div>
-                      <div className="text-xs text-slate-500 truncate max-w-[180px]">{emp.employeeProfile?.department || 'No Dept'} • {emp.employeeProfile?.jobTitle}</div>
+                    <td className="px-3 sm:px-4 py-2 border-r border-slate-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10 transition-colors min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
+                      <div className="font-semibold text-slate-800 truncate text-xs sm:text-sm">{emp.firstName} {emp.lastName}</div>
+                      <div className="text-[10px] sm:text-xs text-slate-500 truncate">{emp.employeeProfile?.department || 'No Dept'} • {emp.employeeProfile?.jobTitle}</div>
                     </td>
                     {daysArray.map(day => {
                       const empId = emp.id;
@@ -240,11 +240,11 @@ export default function AttendanceCalendar() {
       </div>
       
       <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-600 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center">P</div> Present</div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-100 text-red-700 flex items-center justify-center">A</div> Absent</div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-blue-100 text-blue-700 flex items-center justify-center">H</div> Half Day</div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-orange-100 text-orange-700 flex items-center justify-center">L</div> Leave</div>
-        <div className="flex items-center gap-2 ml-auto text-slate-400">Click cells to cycle through statuses (Super Admin only)</div>
+        <div className="flex flex-wrap items-center gap-2"><div className="w-4 h-4 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center">P</div> Present</div>
+        <div className="flex flex-wrap items-center gap-2"><div className="w-4 h-4 rounded bg-red-100 text-red-700 flex items-center justify-center">A</div> Absent</div>
+        <div className="flex flex-wrap items-center gap-2"><div className="w-4 h-4 rounded bg-blue-100 text-blue-700 flex items-center justify-center">H</div> Half Day</div>
+        <div className="flex flex-wrap items-center gap-2"><div className="w-4 h-4 rounded bg-orange-100 text-orange-700 flex items-center justify-center">L</div> Leave</div>
+        <div className="flex flex-wrap items-center gap-2 ml-auto text-slate-400">Click cells to cycle through statuses (Super Admin only)</div>
       </div>
     </div>
   );

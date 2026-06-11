@@ -112,7 +112,7 @@ export default function StockHistory() {
               onChange={(e) => setParam('q', e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowFilters(v => !v)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
@@ -142,13 +142,13 @@ export default function StockHistory() {
         {/* Advanced Filters Panel */}
         {showFilters && (
           <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900/50">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm">
                 <Filter size={15} /> Advanced Filters
               </h3>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {hasFilters && (
-                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex flex-wrap items-center gap-1">
                     <X size={12} /> Clear all
                   </button>
                 )}
@@ -258,7 +258,7 @@ export default function StockHistory() {
                         <span className="text-xs font-normal text-slate-500 ml-1">{product?.unit}</span>
                       </td>
                       <td className="data-table-cell">
-                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <div className="flex flex-wrap items-center gap-2 text-slate-700 dark:text-slate-300">
                           <User size={14} className="text-slate-400" />
                           {log.user?.employeeProfile?.id ? (
                             <a href={`/dashboard/hr/${log.user.employeeProfile.id}`} className="text-primary hover:underline hover:text-primary/80">
@@ -303,7 +303,7 @@ export default function StockHistory() {
             <span className="text-sm text-slate-500">
               Showing page {pagination.page} of {pagination.totalPages || 1} ({pagination.total} records)
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 

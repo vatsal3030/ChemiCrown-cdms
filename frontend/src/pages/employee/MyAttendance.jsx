@@ -144,7 +144,7 @@ export default function MyAttendance() {
           <h1 className="page-title">My Dashboard</h1>
           <p className="page-subtitle">Welcome back, {user?.firstName}. Your attendance is managed by HR.</p>
         </div>
-        <Button onClick={() => setShowLeaveForm(!showLeaveForm)} variant="outline" className="flex items-center gap-2">
+        <Button onClick={() => setShowLeaveForm(!showLeaveForm)} variant="outline" className="flex flex-wrap items-center gap-2">
           <Send size={16} /> Request Leave
         </Button>
       </div>
@@ -152,14 +152,14 @@ export default function MyAttendance() {
       {/* Leave Request Form */}
       {showLeaveForm && (
         <div className="form-card border-l-4 border-primary">
-          <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
+          <h2 className="font-bold text-foreground mb-4 flex flex-wrap items-center gap-2">
             <Send size={16} className="text-primary" /> Submit Leave Request
           </h2>
           <form onSubmit={handleLeaveRequest} className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col justify-end">
                 <div className="flex items-center justify-between mb-1 min-h-[20px]">
                   <label className="text-sm font-semibold">Start Date</label>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-xs font-normal text-muted-foreground">
+                  <label className="flex flex-wrap items-center gap-1.5 cursor-pointer text-xs font-normal text-muted-foreground">
                     <input 
                       type="checkbox" 
                       checked={leaveForm.isMultiDay} 
@@ -230,7 +230,7 @@ export default function MyAttendance() {
           <h2 className="font-bold text-foreground mb-4">My Leave Requests</h2>
           <div className="space-y-2">
             {leaveRequests.map(lr => (
-              <div key={lr.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
+              <div key={lr.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-xl bg-muted/50">
                 <div>
                   <p className="font-semibold text-sm text-foreground">
                     {new Date(lr.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -289,11 +289,11 @@ export default function MyAttendance() {
         {/* Attendance History — Read Only */}
         <div className="data-table-wrapper">
           <div className="data-table-header bg-muted/30">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Calendar size={16} className="text-muted-foreground" />
               <h3 className="font-semibold text-foreground text-sm">Attendance Calendar</h3>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button disabled={isPrevDisabled} onClick={handlePrevMonth} className="p-1 rounded bg-background border border-border hover:bg-muted disabled:opacity-50"><ChevronLeft size={14} /></button>
               <span className="text-xs font-semibold w-24 text-center">{viewDate.toLocaleDateString('default', { month: 'short', year: 'numeric' })}</span>
               <button disabled={isNextDisabled} onClick={handleNextMonth} className="p-1 rounded bg-background border border-border hover:bg-muted disabled:opacity-50"><ChevronRight size={14} /></button>
@@ -326,11 +326,11 @@ export default function MyAttendance() {
               })}
             </div>
             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground justify-center">
-              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-emerald-100 border border-emerald-200 dark:bg-emerald-900/40 dark:border-emerald-800"></div> Present</span>
-              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-red-100 border border-red-200 dark:bg-red-900/40 dark:border-red-800"></div> Absent</span>
-              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-orange-100 border border-orange-200 dark:bg-orange-900/40 dark:border-orange-800"></div> Half Day</span>
-              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-blue-100 border border-blue-200 dark:bg-blue-900/40 dark:border-blue-800"></div> Leave</span>
-              <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-slate-100 dark:bg-slate-800"></div> No Data</span>
+              <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-emerald-100 border border-emerald-200 dark:bg-emerald-900/40 dark:border-emerald-800"></div> Present</span>
+              <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-red-100 border border-red-200 dark:bg-red-900/40 dark:border-red-800"></div> Absent</span>
+              <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-orange-100 border border-orange-200 dark:bg-orange-900/40 dark:border-orange-800"></div> Half Day</span>
+              <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-blue-100 border border-blue-200 dark:bg-blue-900/40 dark:border-blue-800"></div> Leave</span>
+              <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-slate-100 dark:bg-slate-800"></div> No Data</span>
             </div>
           </div>
 
@@ -367,7 +367,7 @@ export default function MyAttendance() {
         {/* Salary History */}
         <div className="data-table-wrapper">
           <div className="data-table-header bg-muted/30">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <DollarSign size={16} className="text-muted-foreground" />
               <h3 className="font-semibold text-foreground text-sm">Salary History</h3>
             </div>
@@ -448,7 +448,7 @@ function ConfirmReceiptButton({ salaryId, token }) {
     <button
       onClick={handleConfirm}
       disabled={confirming}
-      className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
+      className="text-xs font-semibold text-primary hover:underline flex flex-wrap items-center gap-1 disabled:opacity-50"
     >
       <CheckCircle2 size={12} /> {confirming ? 'Confirming...' : 'Confirm Receipt'}
     </button>

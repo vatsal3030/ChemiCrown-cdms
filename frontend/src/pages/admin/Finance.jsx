@@ -40,7 +40,7 @@ function KPI({ label, value, sub, icon: Icon, trend, color, size = 'normal' }) {
       </div>
       <p className={`font-extrabold text-foreground ${size === 'large' ? 'text-4xl' : 'text-2xl'}`}>{value}</p>
       {sub && (
-        <div className="flex items-center gap-1.5 mt-2">
+        <div className="flex flex-wrap items-center gap-1.5 mt-2">
           {trend === 'up' && <ArrowUpRight size={13} className="text-emerald-500" />}
           {trend === 'down' && <ArrowDownRight size={13} className="text-rose-500" />}
           <span className="text-xs text-muted-foreground">{sub}</span>
@@ -193,7 +193,7 @@ export default function Finance() {
             </button>
           {showDateFilter && (
               <div className="absolute right-0 top-full mt-2 z-20 bg-card border border-border rounded-xl shadow-xl p-5 min-w-[320px]">
-                <h4 className="font-bold mb-4 text-foreground text-sm flex items-center gap-2 border-b pb-2">
+                <h4 className="font-bold mb-4 text-foreground text-sm flex flex-wrap items-center gap-2 border-b pb-2">
                   <Filter size={14} /> Global Filters
                 </h4>
                 
@@ -234,7 +234,7 @@ export default function Finance() {
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button size="sm" className="flex-1" onClick={() => {
                     setSearchParams(prev => {
                       if (tempFrom) prev.set('from', tempFrom); else prev.delete('from');
@@ -334,8 +334,8 @@ export default function Finance() {
                     </ResponsiveContainer>
                     <div className="space-y-1.5 mt-2">
                       {pieData.map((item, i) => (
-                        <div key={item.name} className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1.5">
+                        <div key={item.name} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+                          <div className="flex flex-wrap items-center gap-1.5">
                             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
                             <span className="text-muted-foreground">{item.name}</span>
                           </div>
@@ -411,7 +411,7 @@ export default function Finance() {
             <div className="flex gap-2 flex-wrap">
               {/* Filters are now inside Advanced Filters globally */}
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap gap-2 items-center">
               <span className="text-xs text-muted-foreground">{ledgerPagination.total} entries</span>
               <button onClick={fetchLedger} className="p-2 rounded-lg border border-input hover:bg-muted">
                 <RefreshCw size={13} className={ledgerLoading ? 'animate-spin' : ''} />
@@ -464,7 +464,7 @@ export default function Finance() {
           {ledgerPagination.totalPages > 1 && (
             <div className="p-4 border-t border-border flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Page {ledgerPagination.page} of {ledgerPagination.totalPages}</span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => setParam('lpage', String(Math.max(1, ledgerPage - 1)))} disabled={ledgerPagination.page === 1}>Previous</Button>
                 <Button variant="outline" size="sm" onClick={() => setParam('lpage', String(Math.min(ledgerPagination.totalPages, ledgerPage + 1)))} disabled={ledgerPagination.page >= ledgerPagination.totalPages}>Next</Button>
               </div>
@@ -480,7 +480,7 @@ export default function Finance() {
             <div className="flex gap-2 flex-wrap">
               {/* Category filter moved to Advanced Filters */}
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap gap-2 items-center">
               <span className="text-xs text-muted-foreground">{expensePagination.total} records</span>
               <Button size="sm" onClick={() => navigate('/dashboard/finance/log-expense')}>
                 <Plus size={14} className="mr-1.5" /> Log Expense
@@ -524,7 +524,7 @@ export default function Finance() {
           {expensePagination.totalPages > 1 && (
             <div className="p-4 border-t border-border flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Page {expensePagination.page} of {expensePagination.totalPages}</span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => setParam('epage', String(Math.max(1, expensePage - 1)))} disabled={expensePagination.page === 1}>Previous</Button>
                 <Button variant="outline" size="sm" onClick={() => setParam('epage', String(Math.min(expensePagination.totalPages, expensePage + 1)))} disabled={expensePagination.page >= expensePagination.totalPages}>Next</Button>
               </div>

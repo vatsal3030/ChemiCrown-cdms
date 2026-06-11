@@ -11,7 +11,7 @@ export default function Cart() {
     <div className="flex-1 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
       {/* Header */}
       <div className="mb-5">
-        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex flex-wrap items-center gap-2">
           <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
           My Cart
         </h2>
@@ -47,7 +47,7 @@ export default function Cart() {
                 </h3>
                 <button
                   onClick={clearCart}
-                  className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 px-2.5 py-1.5 rounded-lg transition-colors"
+                  className="flex flex-wrap items-center gap-1.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 px-2.5 py-1.5 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" /> Clear All
                 </button>
@@ -56,7 +56,7 @@ export default function Cart() {
               {/* Items list */}
               <div className="divide-y divide-border">
                 {cartItems.map(item => (
-                  <div key={item.product.id} className="px-4 py-3 sm:px-5 sm:py-4 flex gap-3 sm:gap-4 items-center">
+                  <div key={item.product.id} className="px-4 py-3 sm:px-5 sm:py-4 flex flex-wrap gap-3 sm:gap-4 items-center">
                     {/* Product image */}
                     <div className="w-14 h-14 sm:w-16 sm:h-16 bg-muted rounded-xl overflow-hidden shrink-0 border border-border">
                       {item.product.imageUrls?.length > 0 ? (
@@ -93,7 +93,7 @@ export default function Cart() {
                     </div>
 
                     {/* Qty controls + delete */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <div className="flex items-center border border-border rounded-lg overflow-hidden h-8">
                         <button
                           onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
@@ -143,7 +143,7 @@ export default function Cart() {
               </div>
 
               <div className="border-t border-border mt-4 pt-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <span className="font-bold text-sm text-foreground">Estimated Total</span>
                   <span className="text-xl font-extrabold text-primary">
                     ₹{Math.round(cartTotal * 1.18).toLocaleString('en-IN')}

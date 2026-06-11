@@ -44,7 +44,7 @@ export default function LedgerDetails() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button 
           onClick={() => navigate('/dashboard/finance?tab=ledger')}
           className="p-2 -ml-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
@@ -59,7 +59,7 @@ export default function LedgerDetails() {
         
         <div className="p-8 md:p-10 space-y-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${entry.type === 'CREDIT' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
                 <IndianRupee size={32} />
               </div>
@@ -70,7 +70,7 @@ export default function LedgerDetails() {
                 </h2>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <span className={`px-3 py-1 rounded-full text-sm font-bold uppercase ${entry.type === 'CREDIT' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                 {entry.type}
               </span>
@@ -86,13 +86,13 @@ export default function LedgerDetails() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-border">
             <div className="space-y-6">
               <div>
-                <p className="text-sm font-bold text-muted-foreground flex items-center gap-2 mb-2"><FileText size={16} /> Description</p>
+                <p className="text-sm font-bold text-muted-foreground flex flex-wrap items-center gap-2 mb-2"><FileText size={16} /> Description</p>
                 <p className="text-foreground font-medium text-lg leading-snug">{entry.description}</p>
               </div>
               
               {entry.referenceId && (
                 <div>
-                  <p className="text-sm font-bold text-muted-foreground flex items-center gap-2 mb-2"><BookOpen size={16} /> Reference ID</p>
+                  <p className="text-sm font-bold text-muted-foreground flex flex-wrap items-center gap-2 mb-2"><BookOpen size={16} /> Reference ID</p>
                   <code className="bg-muted px-3 py-1.5 rounded-lg text-sm font-mono text-foreground break-all">
                     {entry.referenceId}
                   </code>
@@ -103,7 +103,7 @@ export default function LedgerDetails() {
             <div className="space-y-6 bg-muted/30 p-6 rounded-2xl border border-border/50">
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Transaction Date</p>
-                <p className="text-foreground font-medium flex items-center gap-2">
+                <p className="text-foreground font-medium flex flex-wrap items-center gap-2">
                   <Clock size={16} className="text-primary" />
                   {new Date(entry.date).toLocaleString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -111,7 +111,7 @@ export default function LedgerDetails() {
               
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Logged Into System</p>
-                <p className="text-foreground font-medium flex items-center gap-2">
+                <p className="text-foreground font-medium flex flex-wrap items-center gap-2">
                   <Activity size={16} className="text-primary" />
                   {new Date(entry.createdAt).toLocaleString('en-IN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Search, Filter, Trash2, RefreshCw, ChevronLeft, ChevronRight, Clock, X, ArrowUpDown } from 'lucide-react';
+import { Shield, Search, Filter, Trash2, RefreshCw, ChevronLeft, ChevronRight, Clock, X, ArrowUpDown, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -32,6 +33,7 @@ export default function AuditLog() {
 
   // Temp filter state (applied on click)
   const [temp, setTemp] = useState({ action, entity, from, to });
+  const [showFilters, setShowFilters] = useState(false);
 
   const setParam = (key, value) => {
     setSearchParams(prev => {
@@ -128,7 +130,7 @@ export default function AuditLog() {
           <h1 className="page-title">Audit Logs</h1>
           <p className="page-subtitle">Read-only record of all system actions. Logs are written automatically and cannot be created manually.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchLogs} className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={fetchLogs} className="flex flex-wrap items-center gap-2">
           <RefreshCw size={14} /> Refresh
         </Button>
       </div>
@@ -153,7 +155,7 @@ export default function AuditLog() {
               disabled
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowFilters(v => !v)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
@@ -183,13 +185,13 @@ export default function AuditLog() {
         {/* Advanced Filters Panel */}
         {showFilters && (
           <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900/50">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm">
                 <Filter size={15} /> Advanced Filters
               </h3>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {hasActiveFilters && (
-                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex flex-wrap items-center gap-1">
                     <X size={12} /> Clear all
                   </button>
                 )}
@@ -264,14 +266,14 @@ export default function AuditLog() {
             <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="px-4 py-3 text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('createdAt')}>
-                  <div className="flex items-center gap-1">Timestamp <ArrowUpDown size={12} className={sortField === 'createdAt' ? 'text-primary' : ''} /></div>
+                  <div className="flex flex-wrap items-center gap-1">Timestamp <ArrowUpDown size={12} className={sortField === 'createdAt' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="px-4 py-3 text-left">User</th>
                 <th className="px-4 py-3 text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('action')}>
-                  <div className="flex items-center gap-1">Action <ArrowUpDown size={12} className={sortField === 'action' ? 'text-primary' : ''} /></div>
+                  <div className="flex flex-wrap items-center gap-1">Action <ArrowUpDown size={12} className={sortField === 'action' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('entity')}>
-                  <div className="flex items-center gap-1">Entity <ArrowUpDown size={12} className={sortField === 'entity' ? 'text-primary' : ''} /></div>
+                  <div className="flex flex-wrap items-center gap-1">Entity <ArrowUpDown size={12} className={sortField === 'entity' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="data-table-cell text-left">Entity ID</th>
                 <th className="data-table-cell text-right">Actions</th>
@@ -336,11 +338,11 @@ export default function AuditLog() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-t border-border">
             <p className="text-xs text-muted-foreground">
               Page {page} of {totalPages} ({total} total entries)
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setParam('page', String(Math.max(1, page - 1)))} disabled={page === 1}>
                 <ChevronLeft size={14} />
               </Button>

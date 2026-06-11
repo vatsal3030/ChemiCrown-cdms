@@ -215,7 +215,7 @@ export default function OrderDetails() {
       {/* ── Admin Advance Panel ── */}
       {isAdmin && canAdvance && (
         <div className="bg-primary/5 border-2 border-primary/20 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
             <ChevronRight size={15} className="text-primary shrink-0" />
             <p className="font-bold text-sm text-foreground">Next: {NEXT_ACTION[order.status]?.label}</p>
             <p className="text-xs text-muted-foreground hidden sm:block">— {NEXT_ACTION[order.status]?.note}</p>
@@ -225,7 +225,7 @@ export default function OrderDetails() {
               placeholder="Optional note (e.g. tracking number)..."
               className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
             <Button onClick={handleAdvance} disabled={advancing} size="sm" className="shrink-0">
-              {advancing ? <span className="flex items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Advancing…</span>
+              {advancing ? <span className="flex flex-wrap items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Advancing…</span>
                 : <><ChevronRight size={14} className="mr-1" />{NEXT_ACTION[order.status]?.label}</>}
             </Button>
           </div>
@@ -235,7 +235,7 @@ export default function OrderDetails() {
       {/* ── COD Verify ── */}
       {isAdmin && order.status === 'REQUESTED' && order.payment?.paymentMethod === 'PAY_ON_DELIVERY' && (
         <div className="bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <AlertTriangle size={16} className="text-amber-600 shrink-0" />
             <div>
               <p className="font-semibold text-sm text-amber-900 dark:text-amber-200">Pay on Delivery — Pending Verification</p>
@@ -305,7 +305,7 @@ export default function OrderDetails() {
                   {/* Product name — clickable link */}
                   <Link
                     to={`/dashboard/catalog/${item.productId || item.product?.id}`}
-                    className="font-semibold text-sm text-foreground line-clamp-1 hover:text-primary transition-colors inline-flex items-center gap-1"
+                    className="font-semibold text-sm text-foreground line-clamp-1 hover:text-primary transition-colors inline-flex flex-wrap items-center gap-1"
                   >
                     {item.product?.name}
                     <ExternalLink size={10} className="opacity-40" />
@@ -320,7 +320,7 @@ export default function OrderDetails() {
                   {isDelivered && isCustomer && (
                     <button
                       onClick={() => setReviewModal({ open: true, item })}
-                      className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
+                      className="mt-1.5 inline-flex flex-wrap items-center gap-1 text-xs text-primary font-semibold hover:underline"
                     >
                       <Star size={11} className="fill-current" /> Write / Edit Review
                     </button>
@@ -406,7 +406,7 @@ export default function OrderDetails() {
 
           {/* Shipping Info */}
           <div className="form-card">
-            <h2 className="font-bold text-sm text-foreground mb-2 flex items-center gap-1.5">
+            <h2 className="font-bold text-sm text-foreground mb-2 flex flex-wrap items-center gap-1.5">
               <MapPin size={13} className="text-muted-foreground" /> Shipping Info
             </h2>
             <div className="text-xs space-y-0.5">
@@ -441,36 +441,36 @@ export default function OrderDetails() {
           {/* Admin-only: Customer Business Info */}
           {isAdmin && order.customer && (
             <div className="form-card border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10">
-              <h2 className="font-bold text-sm text-foreground mb-2 flex items-center gap-1.5">
+              <h2 className="font-bold text-sm text-foreground mb-2 flex flex-wrap items-center gap-1.5">
                 <Building2 size={13} className="text-blue-600" /> Customer Info
               </h2>
               <div className="text-xs space-y-1.5">
                 {order.customer.companyName && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <Building2 size={11} className="text-muted-foreground shrink-0" />
                     <span className="font-semibold text-foreground">{order.customer.companyName}</span>
                   </div>
                 )}
                 {order.customer.gstNumber && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <Hash size={11} className="text-muted-foreground shrink-0" />
                     <span className="text-muted-foreground">GST:</span>
                     <span className="font-mono font-semibold text-foreground">{order.customer.gstNumber}</span>
                   </div>
                 )}
                 {order.customer.user?.phone && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <Phone size={11} className="text-muted-foreground shrink-0" />
                     <a href={`tel:${order.customer.user.phone}`} className="text-primary hover:underline">{order.customer.user.phone}</a>
                   </div>
                 )}
                 {order.customer.user?.email && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <Mail size={11} className="text-muted-foreground shrink-0" />
                     <a href={`mailto:${order.customer.user.email}`} className="text-primary hover:underline break-all">{order.customer.user.email}</a>
                   </div>
                 )}
-                <div className="flex items-center gap-1.5 pt-1 border-t border-blue-200 dark:border-blue-800">
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-blue-200 dark:border-blue-800">
                   <span className="text-muted-foreground">Customer ID:</span>
                   <span className="font-mono text-[10px] text-foreground">{order.customerId}</span>
                 </div>
@@ -502,7 +502,7 @@ export default function OrderDetails() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
             <div className="p-5 border-b border-border flex items-center justify-between">
-              <h2 className="font-bold text-foreground flex items-center gap-2">
+              <h2 className="font-bold text-foreground flex flex-wrap items-center gap-2">
                 <RotateCcw size={16} className="text-amber-600" /> Refund Request
               </h2>
               <button onClick={() => setRefundModal(false)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
@@ -532,7 +532,7 @@ export default function OrderDetails() {
                   ⚠ Refund requests are reviewed within 2–3 business days. Valid refunds are processed within 5–7 working days.
                 </p>
               </div>
-              <div className="flex gap-3 pt-1">
+              <div className="flex flex-wrap gap-3 pt-1">
                 <Button variant="outline" onClick={() => setRefundModal(false)} className="flex-1" disabled={refunding}>Cancel</Button>
                 <Button onClick={handleRefundRequest} disabled={refunding || !refundReason.trim()} className="flex-1">
                   {refunding ? 'Submitting…' : 'Submit Request'}

@@ -165,7 +165,7 @@ export default function Payroll() {
               <Users size={15} /> Bulk Pay ({pendingCount})
             </Button>
           )}
-          <Button onClick={handleGenerate} disabled={generating} className="flex items-center gap-2">
+          <Button onClick={handleGenerate} disabled={generating} className="flex flex-wrap items-center gap-2">
             <Plus size={16} /> {generating ? 'Generating...' : `Generate ${month}`}
           </Button>
         </div>
@@ -176,7 +176,7 @@ export default function Payroll() {
         {loading ? (
           [1,2,3].map(i => (
             <div key={i} className="kpi-card animate-pulse">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="h-3 bg-muted rounded w-28" />
                 <div className="w-9 h-9 rounded-xl bg-muted" />
               </div>
@@ -187,7 +187,7 @@ export default function Payroll() {
         ) : (
           <>
             <div className="kpi-card" title={formatINRFull(totalPaid)}>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Paid Out</p>
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center"><CheckCircle2 size={18} /></div>
               </div>
@@ -195,7 +195,7 @@ export default function Payroll() {
               <p className="text-xs text-muted-foreground mt-1">{salaries.filter(s => s.status === 'PAID').length} employees paid</p>
             </div>
             <div className="kpi-card" title={formatINRFull(totalPending)}>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Disbursement</p>
                 <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center"><Clock size={18} /></div>
               </div>
@@ -203,7 +203,7 @@ export default function Payroll() {
               <p className="text-xs text-muted-foreground mt-1">{pendingCount} slips pending</p>
             </div>
             <div className="kpi-card" title={formatINRFull(totalPF)}>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total PF Contributions</p>
                 <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><DollarSign size={18} /></div>
               </div>
@@ -227,7 +227,7 @@ export default function Payroll() {
               className="pl-9 w-full"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {/* Advanced filter toggle */}
             <button
               onClick={() => { setShowFilters(v => !v); setTemp({ status: statusFilter, minNet, maxNet }); }}
@@ -258,9 +258,9 @@ export default function Payroll() {
         {/* Expanded filter panel */}
         {showFilters && (
           <div className="border-b border-border bg-muted/20 px-6 py-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm"><Filter size={15} /> Advanced Filters</h3>
-              <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm"><Filter size={15} /> Advanced Filters</h3>
+              <div className="flex flex-wrap gap-3">
                 {hasActiveFilters && <button onClick={clearFilters} className="text-xs text-destructive hover:underline"><X size={12} className="inline mr-0.5" />Clear all</button>}
                 <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
               </div>
@@ -304,17 +304,17 @@ export default function Payroll() {
         {hasActiveFilters && (
           <div className="px-4 py-2 border-b border-border flex flex-wrap gap-2">
             {statusFilter !== 'ALL' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 {statusFilter} <button onClick={() => setParam('status', 'ALL')}><X size={10} /></button>
               </span>
             )}
             {minNet && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
                 Min ₹{minNet} <button onClick={() => setParam('minNet', '')}><X size={10} /></button>
               </span>
             )}
             {maxNet && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
                 Max ₹{maxNet} <button onClick={() => setParam('maxNet', '')}><X size={10} /></button>
               </span>
             )}
@@ -357,7 +357,7 @@ export default function Payroll() {
               ) : filtered.map(slip => (
                 <tr key={slip.id} className="data-table-row">
                   <td className="data-table-cell">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center overflow-hidden uppercase">
                         {slip.employee?.user?.profileImageUrl
                           ? <img src={slip.employee.user.profileImageUrl} className="w-full h-full object-cover" alt="" />

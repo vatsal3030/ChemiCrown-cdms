@@ -37,12 +37,12 @@ function SalarySlipCard({ slip, token, onConfirmed }) {
 
   return (
     <div className={`form-card hover:shadow-md transition-all ${isPaid ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-amber-200 dark:border-amber-900/40'}`}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <div>
           <p className="font-bold text-foreground text-base">{slip.month}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Salary Slip</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isPaid && slip.confirmedByEmployee && (
             <span className="badge badge-success"><ThumbsUp size={11} /> Confirmed</span>
           )}
@@ -180,7 +180,7 @@ export default function MyPayroll() {
       </div>
 
       {/* Profile Banner */}
-      <div className="bg-linear-to-br from-primary/90 to-primary rounded-2xl p-6 text-white flex items-center gap-5 shadow-lg">
+      <div className="bg-linear-to-br from-primary/90 to-primary rounded-2xl p-6 text-white flex flex-wrap items-center gap-5 shadow-lg">
         <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-bold shrink-0 overflow-hidden uppercase">
           {user?.profileImageUrl
             ? <img src={user.profileImageUrl} className="w-full h-full object-cover" alt="" />
@@ -204,7 +204,7 @@ export default function MyPayroll() {
         {loading ? (
           [1,2,3].map(i => (
             <div key={i} className="kpi-card animate-pulse">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="h-3 bg-muted rounded w-28" />
                 <div className="w-9 h-9 rounded-xl bg-muted" />
               </div>
@@ -215,7 +215,7 @@ export default function MyPayroll() {
         ) : (
           <>
             <div className="kpi-card">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Net Earned</p>
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
                   <DollarSign size={16} />
@@ -225,7 +225,7 @@ export default function MyPayroll() {
               <p className="text-xs text-muted-foreground mt-1">Across all paid months</p>
             </div>
             <div className="kpi-card">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">PF Accumulated</p>
                 <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
                   <Shield size={16} />
@@ -235,7 +235,7 @@ export default function MyPayroll() {
               <p className="text-xs text-muted-foreground mt-1">Redeemable on exit</p>
             </div>
             <div className="kpi-card">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Slips</p>
                 <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                   <FileText size={16} />

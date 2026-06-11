@@ -76,7 +76,7 @@ export default function AuditLogDetails() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <button
             onClick={() => navigate('/dashboard/audit-log')}
             className="p-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl transition-colors"
@@ -84,7 +84,7 @@ export default function AuditLogDetails() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground flex flex-wrap items-center gap-2">
               <Shield className="text-primary" /> Audit Log Details
             </h1>
             <p className="text-muted-foreground text-sm mt-0.5">ID: {log.id}</p>
@@ -94,7 +94,7 @@ export default function AuditLogDetails() {
         {(user?.role === 'SUPER_ADMIN' || user?.role === 'OWNER') && (
           <button 
             onClick={handleDelete}
-            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-colors font-medium text-sm border border-red-200"
+            className="flex flex-wrap items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-colors font-medium text-sm border border-red-200"
           >
             <Trash2 size={16} /> Delete Record
           </button>
@@ -106,7 +106,7 @@ export default function AuditLogDetails() {
         {/* Header summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
           <div className="p-6 md:p-8 space-y-4">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2 flex flex-wrap items-center gap-2">
               <Activity size={14} /> Action Summary
             </h3>
             
@@ -121,7 +121,7 @@ export default function AuditLogDetails() {
               <div className="flex items-start gap-8">
                 <div>
                   <span className="text-xs text-muted-foreground block mb-1">Entity Affected</span>
-                  <span className="font-medium flex items-center gap-1.5"><Database size={14} className="text-muted-foreground" /> {log.entity}</span>
+                  <span className="font-medium flex flex-wrap items-center gap-1.5"><Database size={14} className="text-muted-foreground" /> {log.entity}</span>
                 </div>
                 {log.entityId && (
                   <div>
@@ -133,19 +133,19 @@ export default function AuditLogDetails() {
               
               <div>
                 <span className="text-xs text-muted-foreground block mb-1">Timestamp</span>
-                <span className="font-medium flex items-center gap-1.5"><Clock size={14} className="text-muted-foreground" /> {new Date(log.createdAt).toLocaleString('en-IN', { timeZoneName: 'short' })}</span>
+                <span className="font-medium flex flex-wrap items-center gap-1.5"><Clock size={14} className="text-muted-foreground" /> {new Date(log.createdAt).toLocaleString('en-IN', { timeZoneName: 'short' })}</span>
               </div>
             </div>
           </div>
 
           <div className="p-6 md:p-8 space-y-4">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2 flex flex-wrap items-center gap-2">
               <User size={14} /> Actor Information
             </h3>
             
             {log.user ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
                     {log.user.firstName?.[0] || 'U'}
                   </div>
@@ -178,7 +178,7 @@ export default function AuditLogDetails() {
 
         {/* JSON Details */}
         <div className="p-6 md:p-8 border-t border-border bg-muted/10">
-          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-4 flex flex-wrap items-center gap-2">
             <Key size={14} /> Detailed Payload / Changes
           </h3>
           

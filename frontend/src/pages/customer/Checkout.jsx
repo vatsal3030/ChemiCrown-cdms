@@ -303,7 +303,7 @@ export default function Checkout() {
             
             <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
               {cartItems.map(item => (
-                <div key={item.product.id} className="flex gap-4">
+                <div key={item.product.id} className="flex flex-wrap gap-4">
                   <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-lg overflow-hidden shrink-0">
                     {item.product.imageUrls && item.product.imageUrls.length > 0 ? (
                       <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-full h-full object-cover" />
@@ -314,7 +314,7 @@ export default function Checkout() {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm truncate">{item.product.name}</h4>
                     <p className="text-xs text-muted-foreground">₹{item.product.price} / {item.product.unit}</p>
-                    <div className="flex items-center gap-3 mt-2">
+                    <div className="flex flex-wrap items-center gap-3 mt-2">
                       <div className="flex items-center border border-border rounded-md overflow-hidden bg-background">
                         <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="px-2 py-0.5 hover:bg-muted text-xs">-</button>
                         <span className="px-2 py-0.5 text-xs font-medium border-x border-border min-w-[30px] text-center">{item.quantity}</span>
@@ -359,7 +359,7 @@ export default function Checkout() {
 
         <div className="space-y-6">
           <div className="glass p-6 rounded-2xl border border-border shadow-sm">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Building size={20} /> Company Details (Required)</h2>
+            <h2 className="text-xl font-bold mb-4 flex flex-wrap items-center gap-2"><Building size={20} /> Company Details (Required)</h2>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div id="field-companyName">
@@ -390,7 +390,7 @@ export default function Checkout() {
                     className={fieldErrors.gstNumber ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     required
                   />
-                  {fieldErrors.gstNumber && <p className="text-xs text-red-600 mt-1 flex items-center gap-1">{fieldErrors.gstNumber}</p>}
+                  {fieldErrors.gstNumber && <p className="text-xs text-red-600 mt-1 flex flex-wrap items-center gap-1">{fieldErrors.gstNumber}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -443,7 +443,7 @@ export default function Checkout() {
           </div>
 
           <div className="bg-card border border-border p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold text-lg border-b border-border pb-4 mb-4 text-foreground flex items-center gap-2">
+            <h3 className="font-semibold text-lg border-b border-border pb-4 mb-4 text-foreground flex flex-wrap items-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" /> Payment Method
             </h3>
             
@@ -485,7 +485,7 @@ export default function Checkout() {
                   className="w-4 h-4 text-green-600 focus:ring-green-500 mt-1"
                 />
                 <div className="ml-4 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="block font-semibold text-foreground">UPI / QR Code Payment</span>
                     <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full text-xs font-bold">Instant</span>
                   </div>
@@ -522,7 +522,7 @@ export default function Checkout() {
             {/* UPI QR Inline Payment UI */}
             {paymentMethod === 'UPI_QR' && createdOrderId && (
               <div className="mb-6 border border-green-200 dark:border-green-800 rounded-xl overflow-hidden">
-                <div className="bg-green-50 dark:bg-green-950/50 px-4 py-3 border-b border-green-200 dark:border-green-800 flex items-center gap-2">
+                <div className="bg-green-50 dark:bg-green-950/50 px-4 py-3 border-b border-green-200 dark:border-green-800 flex flex-wrap items-center gap-2">
                   <Smartphone className="w-4 h-4 text-green-600" />
                   <span className="text-sm font-semibold text-green-700 dark:text-green-300">Complete UPI Payment</span>
                 </div>

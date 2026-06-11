@@ -139,7 +139,7 @@ export default function Support() {
         <h2 className="text-xl font-bold text-foreground border-l-4 border-primary pl-4">Frequently Asked Questions</h2>
         {FAQ_ITEMS.map(cat => (
           <div key={cat.category} className="space-y-2">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
               <cat.icon size={16} className="text-primary" />
               <h3 className="font-semibold text-base text-foreground">{cat.category}</h3>
             </div>
@@ -168,7 +168,7 @@ export default function Support() {
 
       {/* Contact Form */}
       <div id="contact" className="form-card">
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex flex-wrap items-center gap-2 mb-6">
           <MessageSquare size={18} className="text-primary" />
           <h2 className="text-lg font-bold text-foreground">Contact Support</h2>
         </div>

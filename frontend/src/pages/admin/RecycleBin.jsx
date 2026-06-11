@@ -103,7 +103,7 @@ export default function RecycleBin() {
           <p className="text-slate-500 mt-1">Restore soft-deleted items. {isSuperAdmin ? 'Super Admins can permanently delete items.' : 'Items older than 30 days are purged automatically.'}</p>
         </div>
         {isSuperAdmin && items.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg px-3 py-2">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-rose-600 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg px-3 py-2">
             <Flame size={13} />
             <span className="font-semibold">Permanent delete available</span>
           </div>

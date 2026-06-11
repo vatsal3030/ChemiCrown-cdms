@@ -132,7 +132,7 @@ export default function AddEmployeePage() {
 
           {/* Personal Information */}
           <div className="form-card space-y-4">
-            <h2 className="text-sm font-bold text-foreground flex items-center gap-2 pb-1 border-b border-border">
+            <h2 className="text-sm font-bold text-foreground flex flex-wrap items-center gap-2 pb-1 border-b border-border">
               <User size={14} className="text-primary" /> Personal Information
             </h2>
 
@@ -211,7 +211,7 @@ export default function AddEmployeePage() {
 
           {/* Work Information */}
           <div className="form-card space-y-4">
-            <h2 className="text-sm font-bold text-foreground flex items-center gap-2 pb-1 border-b border-border">
+            <h2 className="text-sm font-bold text-foreground flex flex-wrap items-center gap-2 pb-1 border-b border-border">
               <Briefcase size={14} className="text-primary" /> Work Information
             </h2>
 
@@ -297,7 +297,7 @@ export default function AddEmployeePage() {
 
           {/* Payroll Details */}
           <div className="form-card space-y-4">
-            <h2 className="text-sm font-bold text-foreground flex items-center gap-2 pb-1 border-b border-border">
+            <h2 className="text-sm font-bold text-foreground flex flex-wrap items-center gap-2 pb-1 border-b border-border">
               <IndianRupee size={14} className="text-primary" /> Payroll & Compensation
             </h2>
 
@@ -360,7 +360,7 @@ export default function AddEmployeePage() {
 
           {/* Bank Details */}
           <div className="form-card space-y-4">
-            <h2 className="text-sm font-bold text-foreground flex items-center gap-2 pb-1 border-b border-border">
+            <h2 className="text-sm font-bold text-foreground flex flex-wrap items-center gap-2 pb-1 border-b border-border">
               <CreditCard size={14} className="text-primary" /> Bank & Payment Details
             </h2>
 
@@ -428,11 +428,11 @@ export default function AddEmployeePage() {
         </div>
 
         {/* Submit */}
-        <div className="flex items-center justify-between form-card">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 form-card">
           <p className="text-xs text-muted-foreground">
             An account will be created with the provided email and password. The employee can change their password after first login.
           </p>
-          <div className="flex gap-3 shrink-0">
+          <div className="flex flex-wrap gap-3 shrink-0">
             <Button type="button" variant="outline" onClick={() => navigate('/dashboard/hr#directory')} disabled={loading}>
               Cancel
             </Button>

@@ -216,7 +216,7 @@ export default function Settings() {
               </div>
 
               {/* Avatar */}
-              <div className="flex items-center gap-5">
+              <div className="flex flex-wrap items-center gap-5">
                 <div
                   className="w-20 h-20 rounded-2xl bg-muted overflow-hidden flex items-center justify-center text-xl font-bold text-primary cursor-pointer group relative border-2 border-dashed border-border hover:border-primary transition-colors"
                   onClick={() => fileInputRef.current?.click()}
@@ -319,7 +319,7 @@ export default function Settings() {
                       </button>
                     </div>
                     {key === 'newPassword' && pwData.newPassword && (
-                      <div className="flex items-center gap-1.5 mt-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                         {pwData.newPassword.length >= 8
                           ? <CheckCircle2 size={13} className="text-emerald-500" />
                           : <AlertTriangle size={13} className="text-amber-500" />}
@@ -329,7 +329,7 @@ export default function Settings() {
                       </div>
                     )}
                     {key === 'confirmPassword' && pwData.confirmPassword && (
-                      <div className="flex items-center gap-1.5 mt-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                         {pwData.newPassword === pwData.confirmPassword
                           ? <CheckCircle2 size={13} className="text-emerald-500" />
                           : <AlertTriangle size={13} className="text-destructive" />}
@@ -352,7 +352,7 @@ export default function Settings() {
               <div className="form-card p-4!">
                 <h3 className="font-bold text-foreground mb-1">Active Session</h3>
                 <p className="text-sm text-muted-foreground mb-4">You are currently logged in on this device.</p>
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
+                <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/50 rounded-xl">
                   <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                     <Globe size={17} />
                   </div>

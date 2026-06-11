@@ -98,8 +98,8 @@ export default function LogExpense() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <button 
             onClick={() => navigate('/dashboard/finance?tab=expenses')}
             className="p-2 -ml-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
@@ -107,13 +107,13 @@ export default function LogExpense() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="text-2xl font-bold flex flex-wrap items-center gap-2">
               <Receipt className="text-primary" size={24} /> Log Expenses
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">Record one or multiple expenses simultaneously.</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" onClick={() => navigate('/dashboard/finance?tab=expenses')}>Cancel</Button>
           <Button onClick={submitAll} disabled={loading} className="gap-2">
             <Save size={16} /> {loading ? 'Saving...' : 'Save All Expenses'}

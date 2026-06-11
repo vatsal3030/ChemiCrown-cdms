@@ -48,13 +48,13 @@ export default function StockHistoryDetails() {
 
   return (
     <div className="space-y-6 max-w-5xl animate-in fade-in duration-500 pb-20">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Link to="/dashboard/stock-history" className="p-2 bg-card border border-border rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
           <ArrowLeft size={20} />
         </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Transaction Details</h1>
-          <p className="text-slate-500 mt-1 flex items-center gap-2">
+          <p className="text-slate-500 mt-1 flex flex-wrap items-center gap-2">
             Record ID: <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded text-foreground">{transaction.id}</span>
           </p>
         </div>
@@ -66,7 +66,7 @@ export default function StockHistoryDetails() {
           <div className="bg-card border border-border rounded-2xl shadow-sm p-6 relative overflow-hidden">
             <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-full -mr-16 -mt-16 opacity-10 ${isStockIn ? 'bg-emerald-500' : 'bg-red-500'}`} />
             
-            <div className="flex items-center justify-between mb-8 relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 relative">
               <div>
                 <h2 className="text-lg font-bold">Transaction Overview</h2>
                 <p className="text-sm text-muted-foreground mt-1">Key details of the inventory movement.</p>
@@ -89,7 +89,7 @@ export default function StockHistoryDetails() {
               </div>
 
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Calendar size={14} /> Date & Time</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex flex-wrap items-center gap-1.5"><Calendar size={14} /> Date & Time</p>
                 <p className="text-base font-semibold text-foreground">{new Date(transaction.createdAt).toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p className="text-sm text-muted-foreground">{new Date(transaction.createdAt).toLocaleTimeString('en-US')}</p>
               </div>
@@ -97,7 +97,7 @@ export default function StockHistoryDetails() {
 
             <div className="mt-8 pt-6 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Package size={14} /> Product</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex flex-wrap items-center gap-1.5"><Package size={14} /> Product</p>
                 <p className="text-lg font-bold text-primary">{product?.name || 'Unknown Product'}</p>
                 <p className="text-sm text-muted-foreground">SKU: {product?.sku || 'N/A'}</p>
                 {product && (
@@ -108,7 +108,7 @@ export default function StockHistoryDetails() {
               </div>
 
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><User size={14} /> Executed By</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex flex-wrap items-center gap-1.5"><User size={14} /> Executed By</p>
                 {user ? (
                   <div>
                     <p className="text-base font-bold text-foreground">{user.firstName} {user.lastName}</p>
@@ -127,7 +127,7 @@ export default function StockHistoryDetails() {
           </div>
 
           <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2"><FileText size={16} /> Remarks & Notes</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex flex-wrap items-center gap-2"><FileText size={16} /> Remarks & Notes</h3>
             {transaction.remarks ? (
               <div className="p-4 bg-muted/50 rounded-xl border border-border text-foreground text-sm leading-relaxed whitespace-pre-wrap">
                 {transaction.remarks}
@@ -142,7 +142,7 @@ export default function StockHistoryDetails() {
         <div className="space-y-6">
           {supplier && (
             <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2"><Building size={16} /> Supplier Info</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex flex-wrap items-center gap-2"><Building size={16} /> Supplier Info</h3>
               <div className="space-y-3">
                 <div>
                   <p className="text-xs text-muted-foreground">Company</p>
@@ -165,7 +165,7 @@ export default function StockHistoryDetails() {
           )}
 
           <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2"><Info size={16} /> Meta Data</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex flex-wrap items-center gap-2"><Info size={16} /> Meta Data</h3>
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-muted-foreground">Transaction ID</p>

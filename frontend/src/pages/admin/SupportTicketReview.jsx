@@ -92,7 +92,7 @@ export default function SupportTicketReview() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button
           onClick={() => navigate('/dashboard/tickets')}
           className="p-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl transition-colors"
@@ -100,7 +100,7 @@ export default function SupportTicketReview() {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex flex-wrap items-center gap-2">
             Ticket Review
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">ID: {ticket.id}</p>
@@ -110,7 +110,7 @@ export default function SupportTicketReview() {
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
         <div className="p-6 md:p-8 space-y-6">
           <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
                 <Icon size={24} />
               </div>
@@ -121,7 +121,7 @@ export default function SupportTicketReview() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className={`badge ${PRIORITY_STYLES[ticket.priority]}`}>{ticket.priority}</span>
               <span className={`badge ${STATUS_STYLES[ticket.status]}`}>{ticket.status.replace('_', ' ')}</span>
             </div>

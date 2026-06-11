@@ -251,7 +251,7 @@ export default function Orders() {
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-xl px-4 py-2.5">
           <span className="font-semibold text-foreground mr-1">Pipeline:</span>
           {STATUS_PIPELINE.map((s, i) => (
-            <span key={s} className="flex items-center gap-1">
+            <span key={s} className="flex flex-wrap items-center gap-1">
               <button
                 onClick={() => { setParam('status', s); setTempFilters(f => ({ ...f, status: s })); }}
                 className={`font-medium px-2 py-0.5 rounded-full transition-all ${statusFilter === s ? 'bg-primary text-white' : 'hover:bg-muted text-foreground'}`}
@@ -263,7 +263,7 @@ export default function Orders() {
             </span>
           ))}
           {statusFilter !== 'all' && (
-            <button onClick={() => setParam('status', 'all')} className="ml-auto text-destructive hover:underline flex items-center gap-1 text-xs">
+            <button onClick={() => setParam('status', 'all')} className="ml-auto text-destructive hover:underline flex flex-wrap items-center gap-1 text-xs">
               <X size={11} /> Clear
             </button>
           )}
@@ -273,7 +273,7 @@ export default function Orders() {
       {/* ── UPI Pending Payment Verification Banner (Admin Only) ── */}
       {isAdmin && pendingUpi.length > 0 && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-3 border-b border-amber-200 dark:border-amber-700 bg-amber-100/50 dark:bg-amber-900/30">
+          <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-amber-200 dark:border-amber-700 bg-amber-100/50 dark:bg-amber-900/30">
             <QrCode size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
             <div className="flex-1">
               <p className="font-bold text-amber-800 dark:text-amber-300 text-sm">
@@ -309,11 +309,11 @@ export default function Orders() {
                       {payment?.upiVpa && <span className="ml-2">UPI: {payment.upiVpa}</span>}
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex flex-wrap gap-2 shrink-0">
                     <button
                       onClick={() => handleVerifyUpi(order.id, 'APPROVE')}
                       disabled={verifyingId === order.id}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                      className="flex flex-wrap items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
                     >
                       <CheckCircle size={13} />
                       {verifyingId === order.id ? 'Verifying...' : 'Approve'}
@@ -321,7 +321,7 @@ export default function Orders() {
                     <button
                       onClick={() => setRejectModal(order)}
                       disabled={verifyingId === order.id}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 text-xs font-semibold rounded-lg border border-red-200 dark:border-red-800 transition-colors"
+                      className="flex flex-wrap items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 text-xs font-semibold rounded-lg border border-red-200 dark:border-red-800 transition-colors"
                     >
                       <XCircle size={13} />
                       Reject
@@ -338,8 +338,8 @@ export default function Orders() {
       {rejectModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-border">
+              <h2 className="text-base font-bold text-foreground flex flex-wrap items-center gap-2">
                 <XCircle size={18} className="text-destructive" /> Reject UPI Payment
               </h2>
               <button onClick={() => { setRejectModal(null); setRejectReason(''); }} className="p-1.5 rounded-lg hover:bg-muted">
@@ -398,7 +398,7 @@ export default function Orders() {
               className="w-full pl-9 pr-4 py-2 text-sm bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex flex-wrap gap-2 shrink-0">
             {/* Advanced filter toggle */}
             <button
               onClick={() => { setShowFilters(v => !v); setTempFilters({ status: statusFilter, from: dateFrom, to: dateTo, minAmt: minAmount, maxAmt: maxAmount }); }}
@@ -429,13 +429,13 @@ export default function Orders() {
         {/* ── Expanded Filter Panel ── */}
         {showFilters && (
           <div className="border-b border-border bg-muted/20 px-6 py-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm">
                 <Filter size={15} /> Advanced Filters
               </h3>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {hasActiveFilters && (
-                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex flex-wrap items-center gap-1">
                     <X size={12} /> Clear all
                   </button>
                 )}
@@ -523,29 +523,29 @@ export default function Orders() {
         {hasActiveFilters && (
           <div className="px-4 py-2 border-b border-border flex flex-wrap gap-2">
             {statusFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 <span className={`w-1.5 h-1.5 rounded-full ${STATUS_COLORS[statusFilter] || 'bg-primary'}`} />
                 {statusFilter}
                 <button onClick={() => setParam('status', 'all')} className="ml-0.5 hover:opacity-70"><X size={10} /></button>
               </span>
             )}
             {dateFrom && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
                 From: {dateFrom} <button onClick={() => setParam('from', '')}><X size={10} /></button>
               </span>
             )}
             {dateTo && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
                 To: {dateTo} <button onClick={() => setParam('to', '')}><X size={10} /></button>
               </span>
             )}
             {minAmount && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold">
                 Min: ₹{minAmount} <button onClick={() => setParam('minAmt', '')}><X size={10} /></button>
               </span>
             )}
             {maxAmount && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold">
+              <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-semibold">
                 Max: ₹{maxAmount} <button onClick={() => setParam('maxAmt', '')}><X size={10} /></button>
               </span>
             )}
@@ -559,14 +559,14 @@ export default function Orders() {
             <thead className="border-b border-border bg-primary/5">
               <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('id')}>
-                  <div className="flex items-center gap-1">Order ID <ArrowUpDown size={12} className={sortField === 'id' ? 'text-primary' : ''} /></div>
+                  <div className="flex flex-wrap items-center gap-1">Order ID <ArrowUpDown size={12} className={sortField === 'id' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('createdAt')}>
-                  <div className="flex items-center gap-1">Date <ArrowUpDown size={12} className={sortField === 'createdAt' ? 'text-primary' : ''} /></div>
+                  <div className="flex flex-wrap items-center gap-1">Date <ArrowUpDown size={12} className={sortField === 'createdAt' ? 'text-primary' : ''} /></div>
                 </th>
                 {isAdmin && <th className="data-table-cell text-left">Customer</th>}
                 <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('total')}>
-                  <div className="flex items-center gap-1">Total <ArrowUpDown size={12} className={sortField === 'total' ? 'text-primary' : ''} /></div>
+                  <div className="flex flex-wrap items-center gap-1">Total <ArrowUpDown size={12} className={sortField === 'total' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="data-table-cell text-left">Status</th>
                 {isAdmin && <th className="data-table-cell text-left">Advance</th>}
@@ -636,10 +636,10 @@ export default function Orders() {
                           <button
                             onClick={() => handleAdvance(order.id)}
                             disabled={advancing === order.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 rounded-xl transition-all disabled:opacity-50 whitespace-nowrap"
+                            className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 rounded-xl transition-all disabled:opacity-50 whitespace-nowrap"
                           >
                             {advancing === order.id ? (
-                              <span className="flex items-center gap-1.5">
+                              <span className="flex flex-wrap items-center gap-1.5">
                                 <span className="w-3 h-3 border-2 border-primary/40 border-t-primary rounded-full animate-spin inline-block" />
                                 Advancing…
                               </span>
@@ -656,7 +656,7 @@ export default function Orders() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => navigate(`/dashboard/orders/${order.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-muted hover:bg-muted/70 rounded-xl transition-colors"
+                          className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-muted hover:bg-muted/70 rounded-xl transition-colors"
                         >
                           <Eye size={13} /> View
                         </button>
@@ -682,9 +682,9 @@ export default function Orders() {
         {orders.length > 0 && (
           <div className="px-6 py-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
             <span>{orders.length} order{orders.length !== 1 ? 's' : ''} shown</span>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               {Object.entries(statusCounts).map(([s, c]) => (
-                <span key={s} className="flex items-center gap-1">
+                <span key={s} className="flex flex-wrap items-center gap-1">
                   <span className={`w-1.5 h-1.5 rounded-full ${STATUS_COLORS[s] || 'bg-muted'}`} />
                   {c} {s.toLowerCase()}
                 </span>

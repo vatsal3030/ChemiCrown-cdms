@@ -183,7 +183,7 @@ export default function Notifications() {
     <div className="space-y-5 animate-in fade-in duration-500 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
             <Bell size={20} className="text-primary" />
           </div>
@@ -194,7 +194,7 @@ export default function Notifications() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button onClick={fetchNotifications} className="p-2 rounded-xl border border-border hover:bg-muted text-muted-foreground transition-colors">
             <RefreshCw size={14} />
           </button>
@@ -212,7 +212,7 @@ export default function Notifications() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-1 bg-muted/50 p-1 rounded-xl w-fit">
+      <div className="flex flex-wrap gap-1 bg-muted/50 p-1 rounded-xl w-fit">
         {[
           { key: 'all', label: 'All', count: notifications.length },
           { key: 'unread', label: 'Unread', count: unreadCount },
@@ -269,7 +269,7 @@ export default function Notifications() {
           Object.entries(groups).map(([dateLabel, items]) => (
             <div key={dateLabel} className="space-y-1">
               {/* Date group label */}
-              <div className="flex items-center gap-3 px-1 mb-2">
+              <div className="flex flex-wrap items-center gap-3 px-1 mb-2">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{dateLabel}</p>
                 <div className="flex-1 h-px bg-border" />
                 <span className="text-xs text-muted-foreground">{items.length}</span>
@@ -318,7 +318,7 @@ export default function Notifications() {
                             }`}>
                               {notif.message}
                             </p>
-                            <div className="flex items-center gap-3 mt-1.5">
+                            <div className="flex flex-wrap items-center gap-3 mt-1.5">
                               <p className="text-xs text-muted-foreground">{relativeTime(notif.createdAt)}</p>
                               <p className="text-xs text-muted-foreground/60">
                                 {new Date(notif.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
@@ -332,7 +332,7 @@ export default function Notifications() {
                           </div>
 
                           {/* Actions */}
-                          <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex flex-wrap items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                             {!notif.isRead && (
                               <button
                                 onClick={(e) => markAsRead(notif.id, e)}

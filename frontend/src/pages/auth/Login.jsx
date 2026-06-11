@@ -81,7 +81,7 @@ export default function Login() {
             { icon: Zap,    text: 'Real-time order & inventory updates' },
             { icon: Package, text: 'Wholesale pricing & bulk ordering' },
           ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center gap-3 text-sm text-primary-foreground/80">
+            <div key={text} className="flex flex-wrap items-center gap-3 text-sm text-primary-foreground/80">
               <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                 <Icon size={15} />
               </div>
@@ -116,7 +116,7 @@ export default function Login() {
                       type="button"
                       className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-border hover:bg-muted/60 transition-colors pr-10 text-left"
                     >
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex flex-wrap items-center gap-2.5">
                         <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
                           {account.profileImageUrl ? (
                             <img src={account.profileImageUrl} alt={account.firstName || 'User'} className="w-full h-full object-cover" />
@@ -221,8 +221,8 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <label className="flex flex-wrap items-center gap-2 cursor-pointer">
                 <input
                   id="remember"
                   type="checkbox"

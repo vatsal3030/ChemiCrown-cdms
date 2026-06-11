@@ -60,7 +60,7 @@ export default function AssignTask() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Link to="/dashboard/tasks" className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors text-muted-foreground">
           <ArrowLeft size={20} />
         </Link>

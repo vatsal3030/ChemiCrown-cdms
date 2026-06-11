@@ -75,14 +75,14 @@ function IssueWarningModal({ employee, token, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-bold flex items-center gap-2 text-amber-600">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-bold flex flex-wrap items-center gap-2 text-amber-600">
             <ShieldAlert size={20} /> Issue Warning
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X size={16} /></button>
         </div>
         <div className="p-6 space-y-4">
-          <div className="bg-muted/50 rounded-xl p-3 flex items-center gap-3">
+          <div className="bg-muted/50 rounded-xl p-3 flex flex-wrap items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
               {employee.firstName?.[0]}
             </div>
@@ -160,8 +160,8 @@ function TerminateModal({ employee, token, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-card border border-destructive/30 rounded-2xl shadow-2xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-bold flex items-center gap-2 text-destructive">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-bold flex flex-wrap items-center gap-2 text-destructive">
             <UserX size={20} /> Terminate Employee
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X size={16} /></button>
@@ -235,8 +235,8 @@ function SuspendModal({ employee, token, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-5xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-bold flex items-center gap-2 text-amber-600">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-bold flex flex-wrap items-center gap-2 text-amber-600">
             <Clock size={20} /> Suspend Employee
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted"><X size={16} /></button>
@@ -553,7 +553,7 @@ export default function HRManagement() {
           <h1 className="text-3xl font-bold tracking-tight">HR Management</h1>
           <p className="text-slate-500 mt-1">Manage employee records, disciplinary actions, and payroll.</p>
         </div>
-        <Button className="flex items-center gap-2" onClick={() => navigate('/dashboard/hr/add-employee')}>
+        <Button className="flex flex-wrap items-center gap-2" onClick={() => navigate('/dashboard/hr/add-employee')}>
           <Plus size={16} /> Add Employee
         </Button>
       </div>
@@ -595,7 +595,7 @@ export default function HRManagement() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {loading ? (
               [1,2,3,4,5,6].map(i => (
-                <div key={i} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm animate-pulse">
+                <div key={i} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex flex-wrap items-center gap-4 shadow-sm animate-pulse">
                   <div className="w-11 h-11 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
                   <div className="flex-1 space-y-2">
                     <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-20" />
@@ -615,7 +615,7 @@ export default function HRManagement() {
                 <button 
                   key={kpi.label} 
                   onClick={() => setActiveTab(kpi.tab)}
-                  className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex items-center gap-4 shadow-sm hover:border-primary/50 transition-colors text-left"
+                  className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex flex-wrap items-center gap-4 shadow-sm hover:border-primary/50 transition-colors text-left"
                 >
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${kpi.color}`}>
                     <kpi.icon size={22} />
@@ -698,7 +698,7 @@ export default function HRManagement() {
               <Input placeholder="Search by name or email..." value={searchTerm}
                 onChange={e => setParam('q', e.target.value)} className="pl-9" />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {/* Advanced filter toggle */}
               <button
                 onClick={() => { setShowFilters(v => !v); setTemp({ status: statusFilter, role: roleFilter, dept: deptFilter }); }}
@@ -729,9 +729,9 @@ export default function HRManagement() {
           {/* Expanded filter panel */}
           {showFilters && (
             <div className="border-b border-border bg-muted/20 px-6 py-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-foreground flex items-center gap-2 text-sm"><Filter size={15} /> Advanced Filters</h3>
-                <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm"><Filter size={15} /> Advanced Filters</h3>
+                <div className="flex flex-wrap gap-3">
                   {hasActiveFilters && <button onClick={clearFilters} className="text-xs text-destructive hover:underline"><X size={12} className="inline mr-0.5" />Clear all</button>}
                   <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
                 </div>
@@ -775,17 +775,17 @@ export default function HRManagement() {
           {hasActiveFilters && (
             <div className="px-4 py-2 border-b border-border flex flex-wrap gap-2 items-center">
               {statusFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                   {statusFilter} <button onClick={() => setParam('status', 'all')}><X size={10} /></button>
                 </span>
               )}
               {roleFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
+                <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold">
                   {roleFilter.replace(/_/g, ' ')} <button onClick={() => setParam('role', 'all')}><X size={10} /></button>
                 </span>
               )}
               {deptFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 text-xs font-semibold">
+                <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 text-xs font-semibold">
                   Dept: {deptFilter} <button onClick={() => setParam('dept', 'all')}><X size={10} /></button>
                 </span>
               )}
@@ -799,12 +799,12 @@ export default function HRManagement() {
               <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors text-left" onClick={() => toggleSort('firstName')}>
-                    <div className="flex items-center gap-1">Employee <ArrowUpDown size={12} /></div>
+                    <div className="flex flex-wrap items-center gap-1">Employee <ArrowUpDown size={12} /></div>
                   </th>
                   <th className="px-6 py-3 text-left">Role / Status</th>
                   {activeTab === 'directory'   && <th className="px-6 py-3">Department / Joined</th>}
                   {activeTab === 'directory'   && <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('score')}>
-                    <div className="flex items-center gap-1"><Trophy size={14} className="text-yellow-500" /> Performance <ArrowUpDown size={12} /></div>
+                    <div className="flex flex-wrap items-center gap-1"><Trophy size={14} className="text-yellow-500" /> Performance <ArrowUpDown size={12} /></div>
                   </th>}
                   {activeTab === 'payroll'     && <><th className="px-6 py-3">Base Salary</th><th className="px-6 py-3">PF Rate</th><th className="px-6 py-3">Configure</th></>}
                   {activeTab === 'warnings'    && <th className="px-6 py-3">Actions</th>}
@@ -815,7 +815,7 @@ export default function HRManagement() {
                 {loading ? (
                   [1,2,3,4].map(i => (
                     <tr key={i}>
-                      <td className="data-table-cell"><div className="flex items-center gap-3"><Skeleton className="w-8 h-8 rounded-full" /><div><Skeleton className="h-4 w-28 mb-1"/><Skeleton className="h-3 w-40"/></div></div></td>
+                      <td className="data-table-cell"><div className="flex flex-wrap items-center gap-3"><Skeleton className="w-8 h-8 rounded-full" /><div><Skeleton className="h-4 w-28 mb-1"/><Skeleton className="h-3 w-40"/></div></div></td>
                       <td className="data-table-cell"><Skeleton className="h-5 w-20 rounded-full"/></td>
                       <td className="data-table-cell"><Skeleton className="h-8 w-24 rounded-lg"/></td>
                       <td className="data-table-cell"><Skeleton className="h-8 w-8 rounded-lg"/></td>
@@ -833,7 +833,7 @@ export default function HRManagement() {
                     return (
                     <tr key={emp.id} className="data-table-row">
                       <td className="data-table-cell">
-                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate(`/dashboard/hr/${emp.id}`)}>
+                        <div className="flex flex-wrap items-center gap-3 cursor-pointer group" onClick={() => navigate(`/dashboard/hr/${emp.id}`)}>
                           <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors text-sm">
                             {emp.firstName?.[0] || '?'}
                           </div>
@@ -876,7 +876,7 @@ export default function HRManagement() {
                               }
                               const scoreColor = score >= 80 ? 'text-emerald-600 bg-emerald-100 border-emerald-200' : score >= 50 ? 'text-amber-600 bg-amber-100 border-amber-200' : 'text-rose-600 bg-rose-100 border-rose-200';
                               return (
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <div className={`px-2 py-1 rounded-lg border font-bold text-sm ${scoreColor}`}>
                                     {score}/100
                                   </div>
@@ -1049,7 +1049,7 @@ export default function HRManagement() {
                   }).map(lr => (
                     <tr key={lr.id} className="data-table-row">
                       <td className="data-table-cell">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
                             {lr.employee?.user?.firstName?.[0] || '?'}
                           </div>
@@ -1073,7 +1073,7 @@ export default function HRManagement() {
                             {lr.status}
                           </span>
                           {isSuperAdmin && (
-                            <div className="flex gap-1 ml-2">
+                            <div className="flex flex-wrap gap-1 ml-2">
                               {lr.status === 'PENDING' && (
                                 <>
                                   <button onClick={() => handleLeaveReview(lr.id, 'APPROVED')} className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg" title="Approve"><CheckCircle2 size={14} /></button>
@@ -1106,9 +1106,9 @@ export default function HRManagement() {
       {activeTab === 'overtime' && (
         <div className="space-y-4">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground flex flex-wrap items-center gap-2">
                 <Timer size={20} className="text-primary" /> Overtime Management
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">Track and approve overtime. 1.5× weekdays, 2× Sundays/holidays</p>
@@ -1217,7 +1217,7 @@ export default function HRManagement() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex gap-1.5 justify-end">
+                        <div className="flex flex-wrap gap-1.5 justify-end">
                           {isSuperAdmin && (
                             <>
                               {ot.status === 'PENDING' && (
@@ -1251,9 +1251,9 @@ export default function HRManagement() {
       {/* ── Incentives Tab ── */}
       {activeTab === 'incentives' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground flex flex-wrap items-center gap-2">
                 <Award size={20} className="text-primary" /> Sales & Performance Incentives
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">Manage commissions, bonuses, and performance incentives</p>
@@ -1363,7 +1363,7 @@ export default function HRManagement() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex gap-1.5 justify-end">
+                        <div className="flex flex-wrap gap-1.5 justify-end">
                           {isSuperAdmin && (
                             <>
                               {inc.status === 'PENDING' && (

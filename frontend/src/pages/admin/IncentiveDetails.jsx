@@ -69,12 +69,12 @@ export default function IncentiveDetails() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900 flex flex-wrap items-center gap-2">
             <Trophy className="text-primary" /> Incentive Details
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">Full view of incentive record and actions</p>
@@ -83,7 +83,7 @@ export default function IncentiveDetails() {
 
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-xl">
               {empUser?.firstName?.[0]}{empUser?.lastName?.[0]}
             </div>
@@ -106,7 +106,7 @@ export default function IncentiveDetails() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 flex flex-col justify-center">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Incentive Month</p>
-            <p className="text-2xl font-black text-slate-800 flex items-center gap-2">
+            <p className="text-2xl font-black text-slate-800 flex flex-wrap items-center gap-2">
               📅 {displayMonth}
             </p>
           </div>

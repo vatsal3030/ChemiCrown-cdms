@@ -152,7 +152,7 @@ export default function HolidayManagement() {
           <h1 className="page-title">Holiday Calendar</h1>
           <p className="page-subtitle">Manage govt. holidays, festivals & company leave days. These auto-deduct from payroll.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={year}
             onChange={e => setYear(parseInt(e.target.value))}
@@ -180,7 +180,7 @@ export default function HolidayManagement() {
           { label: 'Festivals', value: festivalCount, icon: CalendarCheck, color: 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400' },
           { label: 'Company Days', value: companyCount, icon: Plus, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
         ].map(stat => (
-          <div key={stat.label} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+          <div key={stat.label} className="bg-card border border-border rounded-2xl p-4 flex flex-wrap items-center gap-3 shadow-sm">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.color}`}>
               <stat.icon size={18} />
             </div>
@@ -195,8 +195,8 @@ export default function HolidayManagement() {
       {/* Add Holiday Form */}
       {showAddForm && (
         <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-foreground flex items-center gap-2"><Plus size={16} className="text-primary" /> Add Custom Holiday</h3>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h3 className="font-semibold text-foreground flex flex-wrap items-center gap-2"><Plus size={16} className="text-primary" /> Add Custom Holiday</h3>
             <button onClick={() => setShowAddForm(false)} className="p-1.5 rounded-lg hover:bg-muted"><X size={14} /></button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -236,7 +236,7 @@ export default function HolidayManagement() {
         {/* Mini Calendar */}
         <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-5">
           {/* Month Navigation */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <button
               onClick={() => setViewMonth(m => m === 0 ? (setYear(y => y - 1), 11) : m - 1)}
               className="p-1.5 rounded-lg hover:bg-muted transition-colors"
@@ -290,10 +290,10 @@ export default function HolidayManagement() {
           {/* Legend */}
           <div className="mt-4 space-y-1.5 border-t border-border pt-3">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Legend</p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <div className="w-4 h-4 rounded bg-primary" /><span>Holiday (paid off)</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <div className="w-4 h-4 rounded bg-red-100 dark:bg-red-900/20" /><span>Sunday (weekly off)</span>
             </div>
           </div>
@@ -320,7 +320,7 @@ export default function HolidayManagement() {
               {currentMonthHolidays.map(h => {
                 const d = new Date(h.date);
                 return (
-                  <div key={h.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-muted/20 transition-colors">
+                  <div key={h.id} className="px-5 py-3.5 flex flex-wrap items-center gap-4 hover:bg-muted/20 transition-colors">
                     {/* Date badge */}
                     <div className="w-11 h-11 rounded-xl bg-primary/10 flex flex-col items-center justify-center shrink-0">
                       <p className="text-xs font-bold text-primary">{MONTH_NAMES[d.getMonth()].substring(0, 3).toUpperCase()}</p>
@@ -391,7 +391,7 @@ export default function HolidayManagement() {
                         {d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
                       <td className="data-table-cell">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
                           <p className="font-medium text-foreground">{h.name}</p>
                           {h.isReadOnly && <Shield size={11} className="text-red-400" title="National Holiday — cannot delete" />}
                         </div>

@@ -79,8 +79,8 @@ export default function TaskDetails() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <button 
             onClick={() => navigate('/dashboard/tasks')}
             className="p-2 -ml-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
@@ -89,7 +89,7 @@ export default function TaskDetails() {
           </button>
           <h1 className="text-2xl font-bold tracking-tight">Task Details</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className={`px-3 py-1 rounded-full text-sm font-semibold ${STATUS_COLORS[task.status]}`}>
             {task.status.replace('_', ' ')}
           </span>
@@ -161,7 +161,7 @@ export default function TaskDetails() {
         {canEdit && (
           <div className="mt-8 pt-6 border-t border-border">
             <h3 className="text-sm font-semibold text-foreground mb-3">Update Status</h3>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {['PENDING', 'IN_PROGRESS', 'COMPLETED'].map(s => (
                 <button
                   key={s}
