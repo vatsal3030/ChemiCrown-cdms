@@ -141,93 +141,133 @@ export default function AuditLog() {
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="form-card">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label className="form-label text-xs">Action</label>
-            <select
-              value={temp.action}
-              onChange={e => setTemp(t => ({ ...t, action: e.target.value }))}
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+      {/* Content wrapper */}
+      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+          <div className="relative flex-1 sm:max-w-5xl">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Input 
+              className="pl-9 w-full" 
+              placeholder="Search is not available for audit logs... Use advanced filters." 
+              disabled
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowFilters(v => !v)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
+                hasActiveFilters
+                  ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+              }`}
             >
-              <option value="">All Actions</option>
-              <option value="LOGIN">LOGIN</option>
-              <option value="LOGOUT">LOGOUT</option>
-              <option value="ROLE_CHANGED">ROLE_CHANGED</option>
-              <option value="UPDATED_INVENTORY">UPDATED_INVENTORY</option>
-              <option value="CREATED_PRODUCT">CREATED_PRODUCT</option>
-              <option value="UPDATED_PRODUCT">UPDATED_PRODUCT</option>
-              <option value="DELETED_PRODUCT">DELETED_PRODUCT</option>
-              <option value="CREATED_USER">CREATED_USER</option>
-              <option value="UPDATED_USER">UPDATED_USER</option>
-              <option value="DELETED_USER">DELETED_USER</option>
-              <option value="PROCESSED_PAYROLL">PROCESSED_PAYROLL</option>
-              <option value="VERIFIED_PAYMENT">VERIFIED_PAYMENT</option>
-              <option value="CANCELLED_ORDER">CANCELLED_ORDER</option>
-              <option value="ISSUED_WARNING">ISSUED_WARNING</option>
-              <option value="TERMINATED_EMPLOYEE">TERMINATED_EMPLOYEE</option>
-              <option value="SUSPENDED_EMPLOYEE">SUSPENDED_EMPLOYEE</option>
-            </select>
-          </div>
-          <div>
-            <label className="form-label text-xs">Entity</label>
-            <select
-              value={temp.entity}
-              onChange={e => setTemp(t => ({ ...t, entity: e.target.value }))}
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              <SlidersHorizontal size={15} />
+              Filters
+              {hasActiveFilters && (
+                <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
+                  {[action, entity, from, to].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={fetchLogs}
+              className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Refresh"
             >
-              <option value="">All Entities</option>
-              <option value="User">User</option>
-              <option value="Product">Product</option>
-              <option value="Order">Order</option>
-              <option value="Inventory">Inventory</option>
-              <option value="Employee">Employee</option>
-              <option value="Customer">Customer</option>
-              <option value="Salary">Salary</option>
-              <option value="LeaveRequest">LeaveRequest</option>
-              <option value="Payment">Payment</option>
-            </select>
-          </div>
-          <div>
-            <label className="form-label text-xs">From Date</label>
-            <input type="date" value={temp.from} onChange={e => setTemp(t => ({ ...t, from: e.target.value }))}
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-          </div>
-          <div>
-            <label className="form-label text-xs">To Date</label>
-            <input type="date" value={temp.to} onChange={e => setTemp(t => ({ ...t, to: e.target.value }))}
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+              <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+            </button>
           </div>
         </div>
-        {hasActiveFilters && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {action  && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">Action: {action} <button onClick={() => setParam('action', '')}><X size={10}/></button></span>}
-            {entity  && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">Entity: {entity} <button onClick={() => setParam('entity', '')}><X size={10}/></button></span>}
-            {from    && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">From: {from} <button onClick={() => setParam('from', '')}><X size={10}/></button></span>}
-            {to      && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">To: {to} <button onClick={() => setParam('to', '')}><X size={10}/></button></span>}
+
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+                <Filter size={15} /> Advanced Filters
+              </h3>
+              <div className="flex gap-3">
+                {hasActiveFilters && (
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                    <X size={12} /> Clear all
+                  </button>
+                )}
+                <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Action</label>
+                <select
+                  value={temp.action}
+                  onChange={e => setTemp(t => ({ ...t, action: e.target.value }))}
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
+                >
+                  <option value="">All Actions</option>
+                  <option value="LOGIN">LOGIN</option>
+                  <option value="LOGOUT">LOGOUT</option>
+                  <option value="ROLE_CHANGED">ROLE_CHANGED</option>
+                  <option value="UPDATED_INVENTORY">UPDATED_INVENTORY</option>
+                  <option value="CREATED_PRODUCT">CREATED_PRODUCT</option>
+                  <option value="UPDATED_PRODUCT">UPDATED_PRODUCT</option>
+                  <option value="DELETED_PRODUCT">DELETED_PRODUCT</option>
+                  <option value="CREATED_USER">CREATED_USER</option>
+                  <option value="UPDATED_USER">UPDATED_USER</option>
+                  <option value="DELETED_USER">DELETED_USER</option>
+                  <option value="PROCESSED_PAYROLL">PROCESSED_PAYROLL</option>
+                  <option value="VERIFIED_PAYMENT">VERIFIED_PAYMENT</option>
+                  <option value="CANCELLED_ORDER">CANCELLED_ORDER</option>
+                  <option value="ISSUED_WARNING">ISSUED_WARNING</option>
+                  <option value="TERMINATED_EMPLOYEE">TERMINATED_EMPLOYEE</option>
+                  <option value="SUSPENDED_EMPLOYEE">SUSPENDED_EMPLOYEE</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Entity</label>
+                <select
+                  value={temp.entity}
+                  onChange={e => setTemp(t => ({ ...t, entity: e.target.value }))}
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
+                >
+                  <option value="">All Entities</option>
+                  <option value="User">User</option>
+                  <option value="Product">Product</option>
+                  <option value="Order">Order</option>
+                  <option value="Inventory">Inventory</option>
+                  <option value="Employee">Employee</option>
+                  <option value="Customer">Customer</option>
+                  <option value="Salary">Salary</option>
+                  <option value="LeaveRequest">LeaveRequest</option>
+                  <option value="Payment">Payment</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">From Date</label>
+                <input type="date" value={temp.from} onChange={e => setTemp(t => ({ ...t, from: e.target.value }))}
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">To Date</label>
+                <input type="date" value={temp.to} onChange={e => setTemp(t => ({ ...t, to: e.target.value }))}
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
+              </div>
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button size="sm" onClick={applyFilters}>Apply Filters</Button>
+            </div>
           </div>
         )}
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" size="sm" onClick={clearFilters}>Clear</Button>
-          <Button size="sm" onClick={applyFilters}><Search size={14} className="mr-1.5" /> Apply Filters</Button>
-        </div>
-      </div>
 
-      {/* Table */}
-      <div className="data-table-wrapper">
-        <div className="data-table-header">
-          <p className="text-sm font-semibold text-foreground">{total.toLocaleString()} Total Records</p>
-        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-primary/5">
-              <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('createdAt')}>
+            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th className="px-4 py-3 text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('createdAt')}>
                   <div className="flex items-center gap-1">Timestamp <ArrowUpDown size={12} className={sortField === 'createdAt' ? 'text-primary' : ''} /></div>
                 </th>
-                <th className="data-table-cell text-left">User</th>
-                <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('action')}>
+                <th className="px-4 py-3 text-left">User</th>
+                <th className="px-4 py-3 text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('action')}>
                   <div className="flex items-center gap-1">Action <ArrowUpDown size={12} className={sortField === 'action' ? 'text-primary' : ''} /></div>
                 </th>
                 <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('entity')}>

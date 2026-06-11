@@ -135,73 +135,99 @@ export default function TicketDashboard() {
         ))}
       </div>
 
-      <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 items-center mb-6">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-          <Input 
-            className="w-full pl-9 h-10 text-sm" 
-            placeholder="Search tickets by title or user..." 
-            value={searchTerm}
-            onChange={e => setParam('q', e.target.value)}
-          />
+      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+          <div className="relative flex-1 sm:max-w-5xl">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Input 
+              className="pl-9 w-full" 
+              placeholder="Search tickets by title or user..." 
+              value={searchTerm}
+              onChange={e => setParam('q', e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
+                hasFilters
+                  ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+              }`}
+            >
+              <Filter size={15} />
+              Filters
+              {hasFilters && (
+                <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
+                  {[typeFilter !== 'ALL', statusFilter !== 'ALL', priorityFilter !== 'ALL', !!dateFrom, !!dateTo].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={fetchTickets}
+              className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+            </button>
+          </div>
         </div>
-        
-        <Button 
-          variant={hasFilters ? 'default' : (showFilters ? 'secondary' : 'outline')} 
-          className={`h-10 gap-2 shrink-0 w-full md:w-auto ${hasFilters ? 'bg-primary text-white border-primary' : ''}`}
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <Filter size={16} /> Advanced Filters <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-        </Button>
-      </div>
 
-      {showFilters && (
-        <div className="bg-card border border-border p-5 rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 animate-in slide-in-from-top-2">
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Type</label>
-            <select value={typeFilter} onChange={e => setParam('type', e.target.value)} className="w-full h-9 text-sm bg-background border border-input rounded-md px-3">
-              <option value="ALL">All Types</option>
-              {Object.keys(TYPE_ICONS).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Status</label>
-            <select value={statusFilter} onChange={e => setParam('status', e.target.value)} className="w-full h-9 text-sm bg-background border border-input rounded-md px-3">
-              <option value="ALL">All Statuses</option>
-              {Object.keys(STATUS_STYLES).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Priority</label>
-            <select value={priorityFilter} onChange={e => setParam('priority', e.target.value)} className="w-full h-9 text-sm bg-background border border-input rounded-md px-3">
-              <option value="ALL">All Priorities</option>
-              {Object.keys(PRIORITY_STYLES).map(k => <option key={k} value={k}>{k}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">From Date</label>
-            <Input type="date" className="h-9 text-sm" value={dateFrom} onChange={e => setParam('dateFrom', e.target.value)} />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">To Date</label>
-            <Input type="date" className="h-9 text-sm" value={dateTo} onChange={e => setParam('dateTo', e.target.value)} />
-          </div>
-          
-          {hasFilters && (
-            <div className="md:col-span-5 flex justify-end mt-2">
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
-                <X size={14} className="mr-1.5" /> Clear All Filters
-              </Button>
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+                <Filter size={15} /> Advanced Filters
+              </h3>
+              <div className="flex gap-3">
+                {hasFilters && (
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                    <X size={12} /> Clear all
+                  </button>
+                )}
+                <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Type</label>
+                <select value={typeFilter} onChange={e => setParam('type', e.target.value)} className="w-full text-sm bg-background border border-input rounded-md px-3 py-2">
+                  <option value="ALL">All Types</option>
+                  {Object.keys(TYPE_ICONS).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Status</label>
+                <select value={statusFilter} onChange={e => setParam('status', e.target.value)} className="w-full text-sm bg-background border border-input rounded-md px-3 py-2">
+                  <option value="ALL">All Statuses</option>
+                  {Object.keys(STATUS_STYLES).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Priority</label>
+                <select value={priorityFilter} onChange={e => setParam('priority', e.target.value)} className="w-full text-sm bg-background border border-input rounded-md px-3 py-2">
+                  <option value="ALL">All Priorities</option>
+                  {Object.keys(PRIORITY_STYLES).map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">From Date</label>
+                <Input type="date" className="text-sm w-full" value={dateFrom} onChange={e => setParam('dateFrom', e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">To Date</label>
+                <Input type="date" className="text-sm w-full" value={dateTo} onChange={e => setParam('dateTo', e.target.value)} />
+              </div>
+            </div>
+          </div>
+        )}
 
-      <div className="data-table-wrapper">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-primary/5">
-              <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+              <tr>
                 <th className="data-table-cell text-left">Type</th>
                 <th className="data-table-cell text-left">Title</th>
                 <th className="data-table-cell text-left">From</th>
@@ -233,11 +259,9 @@ export default function TicketDashboard() {
                     <td className="data-table-cell text-xs text-muted-foreground">{new Date(t.createdAt).toLocaleDateString('en-IN')}</td>
                     <td className="data-table-cell text-right">
                       <div className="flex justify-end gap-2">
-                        {t.status !== 'RESOLVED' && t.status !== 'CLOSED' && (
-                          <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate(`/dashboard/tickets/${t.id}`)}>
-                            Review
-                          </Button>
-                        )}
+                        <Button size="sm" variant="outline" className="text-xs" onClick={() => navigate(`/dashboard/tickets/${t.id}`)}>
+                          {t.status === 'RESOLVED' || t.status === 'CLOSED' ? 'View' : 'Review'}
+                        </Button>
                         {['SUPER_ADMIN', 'OWNER'].includes(user?.role) && (
                           <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
                             <X size={14} />

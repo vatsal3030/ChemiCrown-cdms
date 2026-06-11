@@ -217,31 +217,41 @@ export default function Payroll() {
       {/* Table */}
       <div className="data-table-wrapper">
         {/* Toolbar */}
-        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 items-center justify-between">
-          <div className="relative w-full sm:max-w-xs">
-            <Search size={14} className="absolute left-3 top-2.5 text-muted-foreground" />
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+          <div className="relative flex-1 sm:max-w-5xl">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search employee..."
               value={search}
               onChange={e => setParam('q', e.target.value)}
-              className="pl-9"
+              className="pl-9 w-full"
             />
           </div>
           <div className="flex gap-2">
-            {/* Advanced filters toggle */}
+            {/* Advanced filter toggle */}
             <button
               onClick={() => { setShowFilters(v => !v); setTemp({ status: statusFilter, minNet, maxNet }); }}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm border transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                 hasActiveFilters
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-card border-border hover:border-primary text-foreground'
+                  ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
               }`}
             >
-              <SlidersHorizontal size={14} />
+              <SlidersHorizontal size={15} />
               Filters
-              {hasActiveFilters && <span className="bg-white/30 text-white text-xs rounded-full px-1 leading-none py-0.5">{[statusFilter !== 'ALL', !!minNet, !!maxNet].filter(Boolean).length}</span>}
+              {hasActiveFilters && (
+                <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
+                  {[statusFilter !== 'ALL', !!minNet, !!maxNet].filter(Boolean).length}
+                </span>
+              )}
             </button>
-            <button onClick={fetchSalaries} className="p-2 rounded-xl border border-border hover:bg-muted"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /></button>
+            <button
+              onClick={fetchSalaries}
+              className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+            </button>
           </div>
         </div>
 

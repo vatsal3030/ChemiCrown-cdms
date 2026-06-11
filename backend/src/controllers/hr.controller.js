@@ -19,10 +19,10 @@ exports.getEmployees = async (req, res, next) => {
     if (role) where.role = role;
     
     // We need to filter by status and dept which are inside the employeeProfile relation
-    if (status || dept) {
+    if ((status && status !== 'all') || (dept && dept !== 'all')) {
       where.employeeProfile = {
-        ...(status ? { status } : {}),
-        ...(dept ? { department: dept } : {})
+        ...(status && status !== 'all' ? { status } : {}),
+        ...(dept && dept !== 'all' ? { department: dept } : {})
       };
     }
 

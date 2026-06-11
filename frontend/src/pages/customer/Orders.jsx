@@ -387,9 +387,9 @@ export default function Orders() {
 
       {/* Search + Filter bar */}
       <div className="bg-white dark:bg-slate-950 border border-border rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 items-center">
-          <div className="relative flex-1 min-w-0">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between items-center">
+          <div className="relative flex-1 sm:max-w-5xl w-full">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Search by order ID, customer..."
@@ -411,10 +411,17 @@ export default function Orders() {
               <SlidersHorizontal size={15} />
               Filters
               {activeFilterCount > 0 && (
-                <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5 font-bold leading-none min-w-[18px] text-center">
+                <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
                   {activeFilterCount}
                 </span>
               )}
+            </button>
+            <button
+              onClick={fetchOrders}
+              className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
             </button>
           </div>
         </div>

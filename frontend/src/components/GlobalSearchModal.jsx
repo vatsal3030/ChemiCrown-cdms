@@ -1,30 +1,48 @@
-import { useState, useEffect, useRef } from 'react';
-import { Search, X, Package, Users, ShoppingCart, ArrowRight } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Search, X, Package, Users, ShoppingCart, ArrowRight, Layout, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useDebounce from '@/hooks/useDebounce';
 import { useAuth } from '@/context/AuthContext';
 
 export default function GlobalSearchModal({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState({ products: [], employees: [], orders: [] });
+  const [results, setResults] = useState({ products: [], employees: [], orders: [], pages: [] });
   const [loading, setLoading] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('all'); // 'all', 'pages', 'products', 'orders', 'employees'
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const debouncedQuery = useDebounce(query, 300);
   const { token, user } = useAuth();
 
+  const SYSTEM_PAGES = useMemo(() => [
+    { id: 'dashboard', name: 'Dashboard', path: '/dashboard', description: 'System overview and metrics' },
+    { id: 'inventory', name: 'Product Catalog', path: '/dashboard/inventory', description: 'Manage inventory and products' },
+    { id: 'orders', name: 'Orders', path: '/dashboard/orders', description: 'View and manage customer orders' },
+    { id: 'hr', name: 'HR Management', path: '/dashboard/hr', description: 'Employee directory and leave management' },
+    { id: 'payroll', name: 'Payroll', path: '/dashboard/payroll', description: 'Manage salaries and payslips' },
+    { id: 'finance', name: 'Finance', path: '/dashboard/finance', description: 'Income and expense tracking' },
+    { id: 'attendance', name: 'Attendance Register', path: '/dashboard/hr/attendance', description: 'Employee attendance calendar' },
+    { id: 'tickets', name: 'Support Tickets', path: '/dashboard/support', description: 'Customer support queries' },
+    { id: 'tasks', name: 'Tasks', path: '/dashboard/tasks', description: 'Task management' },
+    { id: 'stock-history', name: 'Stock History', path: '/dashboard/stock-history', description: 'Inventory movement logs' },
+    { id: 'recycle-bin', name: 'Recycle Bin', path: '/dashboard/recycle-bin', description: 'Restore deleted items' },
+    { id: 'audit-log', name: 'Audit Log', path: '/dashboard/audit-log', description: 'System activity tracking' },
+    { id: 'holiday-calendar', name: 'Holiday Calendar', path: '/dashboard/holidays', description: 'Company holidays and observances' }
+  ], []);
+
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
       setQuery('');
-      setResults({ products: [], employees: [], orders: [] });
+      setActiveCategory('all');
+      setResults({ products: [], employees: [], orders: [], pages: [] });
     }
   }, [isOpen]);
 
   useEffect(() => {
     const fetchResults = async () => {
       if (debouncedQuery.length < 2) {
-        setResults({ products: [], employees: [], orders: [] });
+        setResults({ products: [], employees: [], orders: [], pages: [] });
         return;
       }
 
@@ -69,8 +87,16 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
           );
         }
 
+        // 4. Search Pages (Local)
+        const matchedPages = SYSTEM_PAGES.filter(p => 
+          p.name.toLowerCase().includes(debouncedQuery.toLowerCase()) || 
+          p.description.toLowerCase().includes(debouncedQuery.toLowerCase())
+        ).slice(0, 3);
+        
+        fetchPromises.push(Promise.resolve({ type: 'pages', data: matchedPages }));
+
         const responses = await Promise.all(fetchPromises);
-        const newResults = { products: [], employees: [], orders: [] };
+        const newResults = { products: [], employees: [], orders: [], pages: [] };
         responses.forEach(r => { newResults[r.type] = r.data; });
         setResults(newResults);
 
@@ -86,7 +112,9 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const totalResults = results.products.length + results.employees.length + results.orders.length;
+  const totalResults = results.products.length + results.employees.length + results.orders.length + results.pages.length;
+
+  const showCategory = (cat) => activeCategory === 'all' || activeCategory === cat;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 bg-slate-900/50 backdrop-blur-sm p-4">
@@ -118,6 +146,18 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
           </button>
         </div>
 
+        {/* Category Filters */}
+        {query.length >= 2 && (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card overflow-x-auto no-scrollbar">
+            <Filter size={14} className="text-muted-foreground shrink-0 mr-1" />
+            <button onClick={() => setActiveCategory('all')} className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${activeCategory === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>All</button>
+            <button onClick={() => setActiveCategory('pages')} className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${activeCategory === 'pages' ? 'bg-blue-500 text-white' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20'}`}>Pages</button>
+            <button onClick={() => setActiveCategory('products')} className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${activeCategory === 'products' ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'}`}>Products</button>
+            <button onClick={() => setActiveCategory('orders')} className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${activeCategory === 'orders' ? 'bg-amber-500 text-white' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'}`}>Orders</button>
+            <button onClick={() => setActiveCategory('employees')} className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${activeCategory === 'employees' ? 'bg-purple-500 text-white' : 'bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20'}`}>Employees</button>
+          </div>
+        )}
+
         {/* Results Area */}
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {query.length < 2 ? (
@@ -137,10 +177,34 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
           ) : (
             <div className="space-y-4 p-2">
               
-              {/* Products */}
-              {results.products.length > 0 && (
+              {/* Pages */}
+              {showCategory('pages') && results.pages.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2 flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-2 px-2 flex items-center gap-2">
+                    <Layout size={14} /> System Pages
+                  </h3>
+                  <div className="space-y-1">
+                    {results.pages.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => { navigate(p.path); onClose(); }}
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-transparent hover:border-blue-200 dark:hover:border-blue-800 text-left transition-all group"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">{p.description}</p>
+                        </div>
+                        <ArrowRight size={16} className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Products */}
+              {showCategory('products') && results.products.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2 px-2 flex items-center gap-2">
                     <Package size={14} /> Products
                   </h3>
                   <div className="space-y-1">
@@ -148,13 +212,13 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
                       <button
                         key={p.id}
                         onClick={() => { navigate(`/dashboard/inventory/product/${p.id}`); onClose(); }}
-                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-muted text-left transition-colors group"
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800 text-left transition-all group"
                       >
                         <div>
-                          <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{p.name}</p>
+                          <p className="text-sm font-semibold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{p.name}</p>
                           <p className="text-xs text-muted-foreground">{p.sku} {p.casNumber ? `• CAS: ${p.casNumber}` : ''}</p>
                         </div>
-                        <ArrowRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight size={16} className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     ))}
                   </div>
@@ -162,9 +226,9 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
               )}
 
               {/* Orders */}
-              {results.orders.length > 0 && (
+              {showCategory('orders') && results.orders.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2 flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2 px-2 flex items-center gap-2">
                     <ShoppingCart size={14} /> Orders
                   </h3>
                   <div className="space-y-1">
@@ -172,13 +236,13 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
                       <button
                         key={o.id}
                         onClick={() => { navigate(`/dashboard/orders/${o.id}`); onClose(); }}
-                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-muted text-left transition-colors group"
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 border border-transparent hover:border-amber-200 dark:hover:border-amber-800 text-left transition-all group"
                       >
                         <div>
-                          <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Order #{o.id.substring(0, 8)}</p>
+                          <p className="text-sm font-semibold text-foreground group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Order #{o.id.substring(0, 8)}</p>
                           <p className="text-xs text-muted-foreground">{o.customer?.companyName || o.customer?.name} • ₹{o.totalAmount}</p>
                         </div>
-                        <ArrowRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight size={16} className="text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     ))}
                   </div>
@@ -186,9 +250,9 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
               )}
 
               {/* Employees */}
-              {results.employees.length > 0 && (
+              {showCategory('employees') && results.employees.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2 flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-2 px-2 flex items-center gap-2">
                     <Users size={14} /> Employees
                   </h3>
                   <div className="space-y-1">
@@ -196,13 +260,13 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
                       <button
                         key={e.id}
                         onClick={() => { navigate(`/dashboard/hr/employee/${e.id}`); onClose(); }}
-                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-muted text-left transition-colors group"
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-transparent hover:border-purple-200 dark:hover:border-purple-800 text-left transition-all group"
                       >
                         <div>
-                          <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{e.user?.firstName} {e.user?.lastName}</p>
+                          <p className="text-sm font-semibold text-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{e.user?.firstName} {e.user?.lastName}</p>
                           <p className="text-xs text-muted-foreground">{e.jobTitle} • {e.department}</p>
                         </div>
-                        <ArrowRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight size={16} className="text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     ))}
                   </div>

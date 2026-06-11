@@ -4,6 +4,7 @@ exports.getDashboardStats = async (req, res, next) => {
   try {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - 7);
 
@@ -115,7 +116,7 @@ exports.getDashboardStats = async (req, res, next) => {
     // AttendanceStatus enum: PRESENT | ABSENT | HALF_DAY | LEAVE
     const todayAttendances = await prisma.attendance.groupBy({
       by: ['status'],
-      where: { date: { gte: startOfToday } },
+      where: { date: { gte: startOfToday, lt: startOfTomorrow } },
       _count: { status: true }
     }).catch(() => []);
 
@@ -126,10 +127,18 @@ exports.getDashboardStats = async (req, res, next) => {
       }
     });
 
+    const totalEmployees = await prisma.employee.count({
+      where: { user: { deletedAt: null, role: { not: 'CUSTOMER' } } }
+    }).catch((e) => { console.error(e); return 0; });
+
+    const markedCount = attendanceMap.PRESENT + attendanceMap.ABSENT + attendanceMap.HALF_DAY + attendanceMap.LEAVE;
+    const unmarkedCount = Math.max(0, totalEmployees - markedCount);
+
     const attendanceData = [
       { name: 'Present',  value: attendanceMap.PRESENT },
       { name: 'Absent',   value: attendanceMap.ABSENT },
       { name: 'On Leave', value: attendanceMap.HALF_DAY + attendanceMap.LEAVE },
+      { name: 'Unmarked', value: unmarkedCount },
     ];
 
     // ── 8. Recent Orders ────────────────────────────────────────────────────

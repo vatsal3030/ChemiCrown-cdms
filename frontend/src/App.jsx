@@ -37,6 +37,7 @@ import EmployeeDetails from './pages/admin/EmployeeDetails';
 import PayrollConfig from './pages/admin/PayrollConfig';
 import AttendanceCalendar from './pages/admin/AttendanceCalendar';
 import StockHistory from './pages/admin/StockHistory';
+import StockHistoryDetails from './pages/admin/StockHistoryDetails';
 import RecycleBin from './pages/admin/RecycleBin';
 import Tasks from './pages/admin/Tasks';
 import AssignTask from './pages/admin/AssignTask';
@@ -186,6 +187,7 @@ function App() {
                     <Route path="inventory/product/new" element={<ProductFormPage />} />
                     <Route path="inventory/product/:id" element={<ProductFormPage />} />
                     <Route path="stock-history" element={<StockHistory />} />
+                    <Route path="stock-history/:id" element={<StockHistoryDetails />} />
                   </Route>
                   
                   {/* Orders - accessible by multiple roles */}

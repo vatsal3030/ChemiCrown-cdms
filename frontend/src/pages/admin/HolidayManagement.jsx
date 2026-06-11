@@ -379,29 +379,29 @@ export default function HolidayManagement() {
                   <th className="text-left px-5 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Holiday</th>
                   <th className="text-left px-5 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Type</th>
                   <th className="text-left px-5 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Day</th>
-                  <th className="px-5 py-3"></th>
+                  <th className="data-table-cell"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {holidays.map(h => {
                   const d = new Date(h.date);
                   return (
-                    <tr key={h.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-5 py-3 text-muted-foreground font-mono text-xs">
+                    <tr key={h.id} className="data-table-row">
+                      <td className="data-table-cell text-muted-foreground font-mono text-xs">
                         {d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="data-table-cell">
                         <div className="flex items-center gap-1.5">
                           <p className="font-medium text-foreground">{h.name}</p>
                           {h.isReadOnly && <Shield size={11} className="text-red-400" title="National Holiday — cannot delete" />}
                         </div>
                         {h.description && <p className="text-xs text-muted-foreground">{h.description}</p>}
                       </td>
-                      <td className="px-5 py-3"><HolidayBadge type={h.type} /></td>
-                      <td className="px-5 py-3 text-muted-foreground text-xs capitalize">
+                      <td className="data-table-cell"><HolidayBadge type={h.type} /></td>
+                      <td className="data-table-cell text-muted-foreground text-xs capitalize">
                         {d.toLocaleDateString('en-IN', { weekday: 'long' })}
                       </td>
-                      <td className="px-5 py-3 text-right">
+                      <td className="data-table-cell text-right">
                         {!h.isReadOnly && (
                           <button
                             onClick={() => deleteHoliday(h.id)}

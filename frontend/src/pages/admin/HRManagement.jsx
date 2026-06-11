@@ -437,17 +437,6 @@ export default function HRManagement() {
       const json = await res.json();
       if (json.success) {
         setEmployees(json.data);
-        const targetDateStr = attendanceDate;
-        const newMarked = {};
-        json.data.forEach(emp => {
-          if (emp.employeeProfile?.attendances) {
-            const todayRecord = emp.employeeProfile.attendances.find(a => a.date.startsWith(targetDateStr));
-            if (todayRecord) {
-              newMarked[emp.id] = todayRecord.status;
-            }
-          }
-        });
-        setMarkedToday(newMarked);
       }
     } catch { toast.error('Failed to fetch employees'); }
     finally { setLoading(false); }
@@ -704,28 +693,35 @@ export default function HRManagement() {
 
           {/* Toolbar */}
           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
-            <div className="relative w-full sm:max-w-4xl">
+            <div className="relative flex-1 sm:max-w-5xl">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input placeholder="Search by name or email..." value={searchTerm}
                 onChange={e => setParam('q', e.target.value)} className="pl-9" />
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2">
               {/* Advanced filter toggle */}
               <button
                 onClick={() => { setShowFilters(v => !v); setTemp({ status: statusFilter, role: roleFilter, dept: deptFilter }); }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm border transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                   hasActiveFilters
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-white dark:bg-slate-900 border-border hover:border-primary text-foreground'
+                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                    : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
                 }`}
               >
-                <SlidersHorizontal size={14} />
+                <SlidersHorizontal size={15} />
                 Filters
-                {activeFilterCount > 0 && <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5">{activeFilterCount}</span>}
+                {activeFilterCount > 0 && (
+                  <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
+                    {activeFilterCount}
+                  </span>
+                )}
               </button>
-              <button onClick={fetchEmployees}
-                className="p-2 rounded-lg border border-input hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
-                <RefreshCw size={14} />
+              <button
+                onClick={fetchEmployees}
+                className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
               </button>
             </div>
           </div>
@@ -819,10 +815,10 @@ export default function HRManagement() {
                 {loading ? (
                   [1,2,3,4].map(i => (
                     <tr key={i}>
-                      <td className="px-6 py-4"><div className="flex items-center gap-3"><Skeleton className="w-8 h-8 rounded-full" /><div><Skeleton className="h-4 w-28 mb-1"/><Skeleton className="h-3 w-40"/></div></div></td>
-                      <td className="px-6 py-4"><Skeleton className="h-5 w-20 rounded-full"/></td>
-                      <td className="px-6 py-4"><Skeleton className="h-8 w-24 rounded-lg"/></td>
-                      <td className="px-6 py-4"><Skeleton className="h-8 w-8 rounded-lg"/></td>
+                      <td className="data-table-cell"><div className="flex items-center gap-3"><Skeleton className="w-8 h-8 rounded-full" /><div><Skeleton className="h-4 w-28 mb-1"/><Skeleton className="h-3 w-40"/></div></div></td>
+                      <td className="data-table-cell"><Skeleton className="h-5 w-20 rounded-full"/></td>
+                      <td className="data-table-cell"><Skeleton className="h-8 w-24 rounded-lg"/></td>
+                      <td className="data-table-cell"><Skeleton className="h-8 w-8 rounded-lg"/></td>
                     </tr>
                   ))
                 ) : filteredEmployees.length === 0 ? (
@@ -835,8 +831,8 @@ export default function HRManagement() {
                     const empStatus = emp.employeeProfile?.status || 'ACTIVE';
                     const warningCount = emp.employeeProfile?.warnings?.length || 0;
                     return (
-                    <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
-                      <td className="px-6 py-4">
+                    <tr key={emp.id} className="data-table-row">
+                      <td className="data-table-cell">
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate(`/dashboard/hr/${emp.id}`)}>
                           <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors text-sm">
                             {emp.firstName?.[0] || '?'}
@@ -850,7 +846,7 @@ export default function HRManagement() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="data-table-cell">
                         <div className="space-y-1">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">{emp.role}</span>
                           <StatusBadge status={empStatus} />
@@ -866,7 +862,7 @@ export default function HRManagement() {
                               Joined: {emp.employeeProfile?.joiningDate ? new Date(emp.employeeProfile.joiningDate).toLocaleDateString('en-IN') : 'Unknown'}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="data-table-cell">
                             {(() => {
                               const atts = emp.employeeProfile?.attendances || [];
                               const totalDays = atts.length;
@@ -901,7 +897,7 @@ export default function HRManagement() {
                             {emp.employeeProfile?.baseSalary ? `₹${emp.employeeProfile.baseSalary.toLocaleString('en-IN')}` : <span className="text-amber-500 text-xs">Not set</span>}
                           </td>
                           <td className="px-6 py-4 text-slate-500">{emp.employeeProfile?.pfRate || 12}%</td>
-                          <td className="px-6 py-4">
+                          <td className="data-table-cell">
                             {isSuperAdmin && (
                               <Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/hr/payroll-config/${emp.id}`)}>
                                 <Settings size={13} className="mr-1.5" /> Configure
@@ -913,7 +909,7 @@ export default function HRManagement() {
 
                       {/* Warnings tab */}
                       {activeTab === 'warnings' && (
-                        <td className="px-6 py-4">
+                        <td className="data-table-cell">
                           <div className="flex gap-2 flex-wrap">
                             {isSuperAdmin && (
                               <>
@@ -1051,8 +1047,8 @@ export default function HRManagement() {
                     const diff = new Date(b.createdAt) - new Date(a.createdAt);
                     return leaveSortOrder === 'desc' ? diff : -diff;
                   }).map(lr => (
-                    <tr key={lr.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
-                      <td className="px-6 py-4">
+                    <tr key={lr.id} className="data-table-row">
+                      <td className="data-table-cell">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
                             {lr.employee?.user?.firstName?.[0] || '?'}
@@ -1064,7 +1060,7 @@ export default function HRManagement() {
                         </div>
                       </td>
                       <td className="px-6 py-4 font-medium text-sm">{new Date(lr.date).toLocaleDateString('en-IN', { weekday:'short', month:'short', day:'numeric' })}</td>
-                      <td className="px-6 py-4"><span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold dark:bg-blue-900/30 dark:text-blue-400">{lr.type?.replace('_',' ')}</span></td>
+                      <td className="data-table-cell"><span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold dark:bg-blue-900/30 dark:text-blue-400">{lr.type?.replace('_',' ')}</span></td>
                       <td className="px-6 py-4 text-muted-foreground max-w-[180px] truncate">{lr.reason}</td>
                       <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(lr.createdAt).toLocaleDateString('en-IN')}</td>
                       <td className="px-6 py-4 text-right">

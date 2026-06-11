@@ -362,8 +362,8 @@ export default function ProductDetails() {
       </div>
 
       {/* Tabs Section - Full Width */}
-      <div className="mt-16 w-full">
-        <div className="flex border-b border-border">
+      <div className="mt-16 w-full max-w-full">
+        <div className="flex border-b border-border overflow-x-auto whitespace-nowrap scrollbar-hide">
           <button 
             className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'description' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             onClick={() => setActiveTab('description')}

@@ -473,3 +473,26 @@ exports.getAllTransactions = async (req, res, next) => {
     next(error);
   }
 };
+
+// Get single inventory transaction
+exports.getTransactionById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const transaction = await prisma.inventoryTransaction.findUnique({
+      where: { id },
+      include: {
+        supplier: true,
+        user: { select: { id: true, firstName: true, lastName: true, email: true, employeeProfile: { select: { id: true } } } },
+        inventory: {
+          include: { product: true }
+        }
+      }
+    });
+
+    if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
+
+    res.status(200).json({ success: true, data: transaction });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -76,10 +76,11 @@ export default function PublicLayout() {
                   </button>
                   
                   {accountMenuOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 py-2">
-                      <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Quick Login</span>
-                      </div>
+                    <div className="absolute right-0 top-full pt-2 w-64 z-50">
+                      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 py-2">
+                        <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Quick Login</span>
+                        </div>
                       <div className="max-h-64 overflow-y-auto">
                         {storedAccounts.map(account => (
                           <button 
@@ -109,6 +110,7 @@ export default function PublicLayout() {
                           Add another account
                         </Link>
                       </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -132,7 +134,7 @@ export default function PublicLayout() {
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur absolute w-full left-0 p-4 shadow-lg flex flex-col space-y-4">
+          <div className="md:hidden border-t border-border bg-background absolute w-full left-0 p-4 shadow-2xl flex flex-col space-y-4 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto">
             {navLinks.map((link) => (
               <Link 
                 key={link.name}

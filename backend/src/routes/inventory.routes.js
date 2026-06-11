@@ -10,6 +10,7 @@ router.get('/', inventoryController.getInventory);
 router.get('/categories', inventoryController.getCategories);
 router.get('/logs/all', requireAuth, requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER']), inventoryController.getAllTransactions);
 router.get('/units/unique', inventoryController.getUniqueUnits);
+router.get('/logs/:id', requireAuth, requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER']), inventoryController.getTransactionById);
 router.get('/:id', inventoryController.getProductById);
 router.get('/:id/logs', requireAuth, requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER']), inventoryController.getProductTransactions);
 router.post('/', requireAuthStrict, requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), upload.array('images', 5), inventoryController.addProduct);

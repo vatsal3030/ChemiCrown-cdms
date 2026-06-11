@@ -196,11 +196,11 @@ exports.createExpense = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Amount must be positive' });
     }
 
-    const [expense] = await prisma.$transaction([
-      prisma.expense.create({
+    const expense = await prisma.$transaction(async (tx) => {
+      const newExpense = await tx.expense.create({
         data: { category, amount: parseFloat(amount), description, date: new Date(date), receiptUrl, createdBy: req.user.id }
-      }),
-      prisma.financeLedger.create({
+      });
+      await tx.financeLedger.create({
         data: {
           type: 'DEBIT',
           category,
@@ -208,10 +208,12 @@ exports.createExpense = async (req, res, next) => {
           description,
           date: new Date(date),
           createdBy: req.user.id,
-          isAutomatic: false
+          isAutomatic: false,
+          referenceId: newExpense.id
         }
-      })
-    ]);
+      });
+      return newExpense;
+    });
 
     res.status(201).json({ success: true, data: expense, message: 'Expense recorded' });
   } catch (error) { next(error); }
@@ -244,7 +246,27 @@ exports.updateExpense = async (req, res, next) => {
 exports.deleteExpense = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await prisma.expense.delete({ where: { id } });
+    const expense = await prisma.expense.findUnique({ where: { id } });
+    if (!expense) return res.status(404).json({ success: false, message: 'Expense not found' });
+    
+    await prisma.$transaction(async (tx) => {
+      // Delete matching finance ledger entry
+      await tx.financeLedger.deleteMany({
+        where: {
+          OR: [
+            { referenceId: id },
+            { 
+              description: expense.description, 
+              amount: expense.amount, 
+              category: expense.category,
+              isAutomatic: false
+            }
+          ]
+        }
+      });
+      await tx.expense.delete({ where: { id } });
+    });
+    
     res.json({ success: true, message: 'Expense deleted' });
   } catch (error) { next(error); }
 };

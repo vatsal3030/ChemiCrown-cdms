@@ -340,13 +340,13 @@ export default function Inventory() {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {loading ? (
                 Array(5).fill(0).map((_, idx) => (
-                  <tr key={idx}>
-                    <td className="px-6 py-4"><Skeleton className="h-5 w-48 mb-2" /><Skeleton className="h-3 w-64" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
-                    <td className="px-6 py-4 text-center"><Skeleton className="h-5 w-16 rounded-full mx-auto" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
-                    <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2"><Skeleton className="h-8 w-8 rounded" /><Skeleton className="h-8 w-16 rounded" /><Skeleton className="h-8 w-8 rounded" /></div></td>
+                  <tr key={idx} className="data-table-row">
+                    <td className="data-table-cell"><Skeleton className="h-5 w-48 mb-2" /><Skeleton className="h-3 w-64" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-4 w-24" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-4 w-16" /></td>
+                    <td className="data-table-cell text-center"><Skeleton className="h-5 w-16 rounded-full mx-auto" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-4 w-20" /></td>
+                    <td className="data-table-cell text-right"><div className="flex justify-end gap-2"><Skeleton className="h-8 w-8 rounded" /><Skeleton className="h-8 w-16 rounded" /><Skeleton className="h-8 w-8 rounded" /></div></td>
                   </tr>
                 ))
               ) : products.length === 0 ? (
@@ -363,13 +363,13 @@ export default function Inventory() {
                 products.map(product => {
                   const quantity = product.inventory?.quantity || 0;
                   return (
-                    <tr key={product.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                      <td className="px-6 py-4">
+                    <tr key={product.id} className="data-table-row">
+                      <td className="data-table-cell">
                         <div className="font-semibold text-slate-900 dark:text-slate-50">{product.name}</div>
                         <div className="text-xs text-slate-500 truncate max-w-[220px]">{product.description}</div>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{product.casNumber || 'N/A'}</td>
-                      <td className="px-6 py-4">
+                      <td className="data-table-cell font-mono text-xs text-muted-foreground">{product.casNumber || 'N/A'}</td>
+                      <td className="data-table-cell">
                         <div className="flex items-center gap-2">
                           <span
                             className={`w-2 h-2 rounded-full shrink-0 ${
@@ -379,7 +379,7 @@ export default function Inventory() {
                           <span className="text-sm">{quantity} × {product.packageSize ? `${product.packageSize}${product.baseUnit} ${product.unit}` : product.unit}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="data-table-cell text-center">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
                           product.isAvailable !== false
                             ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
@@ -388,8 +388,8 @@ export default function Inventory() {
                           {product.isAvailable !== false ? 'Active' : 'Hidden'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-semibold text-foreground">₹{product.price}</td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="data-table-cell font-semibold text-foreground">₹{product.price}</td>
+                      <td className="data-table-cell text-right">
                         <div className="flex items-center justify-end gap-1">
                           {/* Stock History — navigate to stock-history page with pre-filter */}
                           <Button variant="outline" size="icon" className="h-8 w-8" title="View Stock History"

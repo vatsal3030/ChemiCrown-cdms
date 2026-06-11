@@ -1,6 +1,7 @@
 import useSWR from 'swr';
-import { History, ArrowUpRight, ArrowDownRight, User, Search, Filter, X, SlidersHorizontal, RefreshCw } from 'lucide-react';
+import { History, ArrowUpRight, ArrowDownRight, User, Search, Filter, X, SlidersHorizontal, RefreshCw, Eye } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
@@ -80,7 +81,7 @@ export default function StockHistory() {
   if (startDate) queryParams.append('startDate', startDate);
   if (endDate) queryParams.append('endDate', endDate);
 
-  const { data, error, isValidating } = useSWR(
+  const { data, error, isValidating, mutate } = useSWR(
     token ? `${import.meta.env.VITE_API_URL}/api/inventory/logs/all?${queryParams.toString()}` : null,
     fetcher
   );
@@ -99,104 +100,110 @@ export default function StockHistory() {
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-white dark:bg-slate-950 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="relative flex-1 w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <Input 
-            className="w-full pl-10" 
-            placeholder="Search by product, SKU, user, or remarks..." 
-            value={searchTerm}
-            onChange={(e) => setParam('q', e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <button
-            onClick={() => setShowFilters(v => !v)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
-              hasFilters
-                ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
-            }`}
-          >
-            <SlidersHorizontal size={15} />
-            Filters
-            {activeFilterCount > 0 && (
-              <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5 font-bold leading-none">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Advanced Filters Panel */}
-      {showFilters && (
-        <div className="bg-white dark:bg-slate-950 border border-border rounded-xl shadow-sm px-6 py-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
-              <Filter size={15} /> Advanced Filters
-            </h3>
-            <div className="flex gap-3">
-              {hasFilters && (
-                <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
-                  <X size={12} /> Clear all
-                </button>
-              )}
-              <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Type</label>
-              <select 
-                className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
-                value={temp.type}
-                onChange={(e) => setTemp({ ...temp, type: e.target.value })}
-              >
-                <option value="all">All Types</option>
-                <option value="in">Stock In</option>
-                <option value="out">Stock Out</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Sort</label>
-              <select 
-                className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
-                value={temp.sort}
-                onChange={(e) => setTemp({ ...temp, sort: e.target.value })}
-              >
-                <option value="desc">Newest First</option>
-                <option value="asc">Oldest First</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">From Date</label>
-              <Input 
-                type="date" 
-                className="w-full text-sm" 
-                value={temp.startDate}
-                onChange={(e) => setTemp({ ...temp, startDate: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">To Date</label>
-              <Input 
-                type="date" 
-                className="w-full text-sm" 
-                value={temp.endDate}
-                onChange={(e) => setTemp({ ...temp, endDate: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button size="sm" onClick={applyFilters}>Apply Filters</Button>
-          </div>
-        </div>
-      )}
-
-      {/* Content */}
       <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+          <div className="relative flex-1 sm:max-w-5xl">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Input 
+              className="pl-9 w-full" 
+              placeholder="Search by product, SKU, user, or remarks..." 
+              value={searchTerm}
+              onChange={(e) => setParam('q', e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowFilters(v => !v)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
+                hasFilters
+                  ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+              }`}
+            >
+              <SlidersHorizontal size={15} />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => mutate()}
+              className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+            </button>
+          </div>
+        </div>
+
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-foreground flex items-center gap-2 text-sm">
+                <Filter size={15} /> Advanced Filters
+              </h3>
+              <div className="flex gap-3">
+                {hasFilters && (
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                    <X size={12} /> Clear all
+                  </button>
+                )}
+                <button onClick={() => setShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Type</label>
+                <select 
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
+                  value={temp.type}
+                  onChange={(e) => setTemp({ ...temp, type: e.target.value })}
+                >
+                  <option value="all">All Types</option>
+                  <option value="in">Stock In</option>
+                  <option value="out">Stock Out</option>
+                  <option value="adjustment">Adjustment</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Sort</label>
+                <select 
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-sm"
+                  value={temp.sort}
+                  onChange={(e) => setTemp({ ...temp, sort: e.target.value })}
+                >
+                  <option value="desc">Newest First</option>
+                  <option value="asc">Oldest First</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">From Date</label>
+                <Input 
+                  type="date" 
+                  className="w-full text-sm" 
+                  value={temp.startDate}
+                  onChange={(e) => setTemp({ ...temp, startDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">To Date</label>
+                <Input 
+                  type="date" 
+                  className="w-full text-sm" 
+                  value={temp.endDate}
+                  onChange={(e) => setTemp({ ...temp, endDate: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button size="sm" onClick={applyFilters}>Apply Filters</Button>
+            </div>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
@@ -207,23 +214,25 @@ export default function StockHistory() {
                 <th className="px-6 py-4">User</th>
                 <th className="px-6 py-4">Remarks</th>
                 <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {loading && logs.length === 0 ? (
                 Array(5).fill(0).map((_, idx) => (
-                  <tr key={idx} className="animate-pulse">
-                    <td className="px-6 py-4"><Skeleton className="h-6 w-24 rounded-full" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-48 mb-1" /><Skeleton className="h-3 w-24" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-5 w-16" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-40" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
+                  <tr key={idx} className="data-table-row">
+                    <td className="data-table-cell"><Skeleton className="h-6 w-24 rounded-full" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-4 w-48 mb-1" /><Skeleton className="h-3 w-24" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-5 w-16" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-4 w-32" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-4 w-40" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-4 w-32" /></td>
+                    <td className="data-table-cell"><Skeleton className="h-6 w-16 float-right" /></td>
                   </tr>
                 ))
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-12 text-center text-slate-500">
+                  <td colSpan="7" className="p-12 text-center text-slate-500">
                     No stock transactions found matching your criteria.
                   </td>
                 </tr>
@@ -231,24 +240,24 @@ export default function StockHistory() {
                 logs.map((log) => {
                   const product = log.inventory?.product;
                   return (
-                    <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                      <td className="px-6 py-4">
+                    <tr key={log.id} className="data-table-row">
+                      <td className="data-table-cell">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${log.type === 'IN' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                           {log.type === 'IN' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
                           {log.type === 'IN' ? 'Stock In' : 'Stock Out'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="data-table-cell">
                         <div className="font-medium text-slate-900 dark:text-slate-50">{product?.name || 'Unknown Product'}</div>
                         <div className="text-xs text-slate-500">SKU: {product?.sku || 'N/A'}</div>
                       </td>
-                      <td className="px-6 py-4 font-bold text-base">
+                      <td className="data-table-cell font-bold text-base">
                         <span className={log.type === 'IN' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
                           {log.type === 'IN' ? '+' : '-'}{log.quantity}
                         </span>
                         <span className="text-xs font-normal text-slate-500 ml-1">{product?.unit}</span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="data-table-cell">
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                           <User size={14} className="text-slate-400" />
                           {log.user?.employeeProfile?.id ? (
@@ -260,7 +269,7 @@ export default function StockHistory() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 max-w-[200px]">
+                      <td className="data-table-cell max-w-[200px]">
                         {log.remarks ? (
                           <div className="group relative w-full">
                             <div className="truncate text-slate-600 dark:text-slate-400 cursor-help">{log.remarks}</div>
@@ -270,8 +279,15 @@ export default function StockHistory() {
                           </div>
                         ) : '-'}
                       </td>
-                      <td className="px-6 py-4 text-slate-500 text-sm whitespace-nowrap">
+                      <td className="data-table-cell text-slate-500 text-sm whitespace-nowrap">
                         {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                      <td className="data-table-cell text-right">
+                        <Link to={`/dashboard/stock-history/${log.id}`}>
+                          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-semibold">
+                            <Eye size={14} /> View
+                          </Button>
+                        </Link>
                       </td>
                     </tr>
                   );
