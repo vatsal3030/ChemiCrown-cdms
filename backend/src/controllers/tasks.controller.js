@@ -7,7 +7,7 @@ exports.getTasks = async (req, res, next) => {
     let where = { deletedAt: null };
     
     // If not admin, they only see tasks assigned to them OR assigned by them
-    if (!['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role)) {
+    if (!['SUPER_ADMIN', 'ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role)) {
       where.OR = [
         { assignedTo: { userId: req.user.id } },
         { assignedById: req.user.id }
@@ -47,7 +47,7 @@ exports.getTaskById = async (req, res, next) => {
     if (!task || task.deletedAt) return res.status(404).json({ error: 'Task not found' });
 
     // Role check
-    const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role);
+    const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role);
     const isAssignee = task.assignedTo?.userId === req.user.id;
     const isAssigner = task.assignedById === req.user.id;
 
@@ -70,7 +70,7 @@ exports.createTask = async (req, res, next) => {
       }
 
       // Role check: Only SUPER_ADMIN, OWNER, MANAGER, HR can create tasks for others
-      if (!['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role)) {
+      if (!['SUPER_ADMIN', 'ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role)) {
         return res.status(403).json({ error: 'You do not have permission to assign tasks.' });
       }
 
@@ -121,7 +121,7 @@ exports.updateTaskStatus = async (req, res, next) => {
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
     // Can only update if they are the assignee or an admin
-    const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role);
+    const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role);
     const isAssignee = task.assignedTo.userId === req.user.id;
     const isAssigner = task.assignedById === req.user.id;
 
@@ -161,7 +161,7 @@ exports.deleteTask = async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    if (!['SUPER_ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role)) {
+    if (!['SUPER_ADMIN', 'ADMIN', 'OWNER', 'MANAGER', 'HR'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Not authorized to delete tasks' });
     }
 

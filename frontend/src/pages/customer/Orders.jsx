@@ -8,6 +8,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Skeleton, SkeletonTableBody } from '@/components/ui/Skeleton';
 
 const STATUS_PIPELINE = ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'];
 
@@ -116,7 +117,12 @@ export default function Orders() {
   useEffect(() => { fetchPendingUpi(); }, [fetchPendingUpi]);
 
   const handleVerifyUpi = async (orderId, action, reason = '') => {
-    setVerifyingId(orderId);
+    // Optimistic UI
+    const previousPending = [...pendingUpi];
+    setPendingUpi(prev => prev.filter(o => o.id !== orderId));
+    setRejectModal(null);
+    setRejectReason('');
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/upi/verify`, {
         method: 'POST',
@@ -126,13 +132,15 @@ export default function Orders() {
       const json = await res.json();
       if (json.success) {
         toast.success(action === 'APPROVE' ? '✅ Payment verified! Order is now processing.' : '❌ Payment rejected. Customer notified.');
-        setPendingUpi(prev => prev.filter(o => o.id !== orderId));
         if (action === 'APPROVE') fetchOrders();
-        setRejectModal(null);
-        setRejectReason('');
-      } else toast.error(json.error || json.message || 'Failed');
-    } catch { toast.error('Network error'); }
-    finally { setVerifyingId(null); }
+      } else {
+        toast.error(json.error || json.message || 'Failed');
+        setPendingUpi(previousPending);
+      }
+    } catch { 
+      toast.error('Network error'); 
+      setPendingUpi(previousPending);
+    }
   };
 
   const toggleSort = (field) => {
@@ -178,7 +186,16 @@ export default function Orders() {
 
 
   const handleAdvance = async (id) => {
-    setAdvancing(id);
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+    
+    // Optimistic UI
+    const currentIndex = STATUS_PIPELINE.indexOf(order.status);
+    const nextStatus = STATUS_PIPELINE[currentIndex + 1];
+    if (!nextStatus) return;
+
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus } : o));
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/advance`, {
         method: 'POST',
@@ -188,10 +205,16 @@ export default function Orders() {
       const json = await res.json();
       if (json.success) {
         toast.success(json.message);
+        // Sync exact status from server just in case
         setOrders(prev => prev.map(o => o.id === id ? { ...o, status: json.data.status } : o));
-      } else toast.error(json.error || 'Failed to advance status');
-    } catch { toast.error('Network error'); }
-    finally { setAdvancing(null); }
+      } else {
+        toast.error(json.error || 'Failed to advance status');
+        fetchOrders(); // Revert
+      }
+    } catch { 
+      toast.error('Network error'); 
+      fetchOrders(); // Revert
+    }
   };
 
   const applyFilters = () => {
@@ -575,15 +598,7 @@ export default function Orders() {
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                Array(5).fill(0).map((_, i) => (
-                  <tr key={i}>
-                    {Array(cols).fill(0).map((_, j) => (
-                      <td key={j} className="data-table-cell">
-                        <div className="h-4 bg-muted rounded-lg animate-pulse" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                <SkeletonTableBody rows={5} columns={cols} />
               ) : orders.length === 0 ? (
                 <tr>
                   <td colSpan={cols} className="px-6 py-16 text-center">

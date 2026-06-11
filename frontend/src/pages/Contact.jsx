@@ -226,10 +226,10 @@ export default function Contact() {
                         <input
                           type="text"
                           value={form.name}
+                          placeholder="Your Full Name"
                           onChange={e => set('name', e.target.value)}
                           maxLength={80}
                           className={`w-full h-11 px-3 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow ${errors.name ? 'border-destructive' : 'border-input'}`}
-                          placeholder="Vatsal Vadgama"
                         />
                         {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
                       </div>

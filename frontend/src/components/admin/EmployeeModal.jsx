@@ -73,6 +73,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <input 
                 required
                 type="text" 
+                placeholder="e.g. Raj"
                 value={formData.firstName}
                 onChange={e => setFormData({...formData, firstName: e.target.value})}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -83,6 +84,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <input 
                 required
                 type="text" 
+                placeholder="e.g. Patel"
                 value={formData.lastName}
                 onChange={e => setFormData({...formData, lastName: e.target.value})}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -96,6 +98,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <input 
                 required
                 type="email" 
+                placeholder="employee@company.com"
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -105,6 +108,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Phone Number</label>
               <input 
                 type="tel" 
+                placeholder="+91 98765 43210"
                 value={formData.phone}
                 onChange={e => setFormData({...formData, phone: e.target.value})}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -169,6 +173,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <input 
                 required
                 type="text" 
+                placeholder="e.g. Sales Executive"
                 value={formData.jobTitle}
                 onChange={e => setFormData({...formData, jobTitle: e.target.value})}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"

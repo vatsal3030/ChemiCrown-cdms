@@ -63,7 +63,7 @@ const buildNavSections = (role) => {
   // PEOPLE section
   const people = { label: 'People', items: [] };
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(role)) {
-    people.items.push({ name: 'HR Management', path: '/dashboard/hr', icon: Users });
+    people.items.push({ name: 'HR Management', path: '/dashboard/hr', icon: Users, exact: true });
     people.items.push({ name: 'Attendance Register', path: '/dashboard/hr/attendance', icon: ClipboardCheck });
     people.items.push({ name: 'Payroll', path: '/dashboard/payroll', icon: Wallet });
     people.items.push({ name: 'Holiday Calendar', path: '/dashboard/holidays', icon: CalendarDays });

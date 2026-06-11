@@ -105,34 +105,63 @@ export default function AttendanceCalendar() {
     setSaving(true);
     let successCount = 0;
     
-    // Process changes sequentially for simplicity/reliability
-    for (const [key, status] of Object.entries(pendingChanges)) {
+    // Optimistic UI update
+    const optimisticEmployees = employees.map(emp => {
+      let atts = [...(emp.employeeProfile?.attendances || [])];
+      for (const [key, status] of Object.entries(pendingChanges)) {
+        const [empId, dateStr] = key.split('_');
+        if (emp.id === empId) {
+          const existingIdx = atts.findIndex(a => a.date.startsWith(dateStr));
+          if (existingIdx >= 0) {
+            atts[existingIdx] = { ...atts[existingIdx], status };
+          } else {
+            atts.push({ date: new Date(dateStr).toISOString(), status });
+          }
+        }
+      }
+      return {
+        ...emp,
+        employeeProfile: {
+          ...emp.employeeProfile,
+          attendances: atts
+        }
+      };
+    });
+    mutate(optimisticEmployees, false);
+    
+    // Process changes in parallel
+    const promises = Object.entries(pendingChanges).map(async ([key, status]) => {
       const [empId, dateStr] = key.split('_');
-      // For backend, it needs an array of employeeIds and a date
-      // We will make individual calls or group by date
-      
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${empId}/attendance`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ 
-            date: dateStr, 
-            status: status || 'REMOVE' 
+            date: new Date(dateStr).toISOString(),
+            status 
           })
         });
         const json = await res.json();
         if (!json.success) throw new Error(json.message || 'Failed to save');
-        successCount++;
+        return true;
       } catch (e) {
         console.error("Failed to update attendance", e);
-        toast.error(`Failed to update attendance for ${dateStr}`);
+        return false;
       }
-    }
+    });
+
+    const results = await Promise.all(promises);
+    successCount = results.filter(Boolean).length;
     
     setSaving(false);
     setPendingChanges({});
-    mutate();
-    toast.success(`Saved ${successCount} attendance records`);
+    mutate(); // Re-fetch from server to ensure state consistency
+    if (successCount > 0) {
+      toast.success(`Saved ${successCount} attendance records`);
+    }
+    if (successCount < results.length) {
+      toast.error(`Failed to save ${results.length - successCount} records`);
+    }
   };
 
   return (
@@ -200,7 +229,7 @@ export default function AttendanceCalendar() {
                 {employees?.filter(e => e.employeeProfile).map(emp => (
                   <tr key={emp.id} className="border-b border-slate-100 hover:bg-slate-50/50 group">
                     <td className="px-3 sm:px-4 py-2 border-r border-slate-100 sticky left-0 bg-white group-hover:bg-slate-50 z-10 transition-colors min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
-                      <div className="font-semibold text-slate-800 truncate text-xs sm:text-sm">{emp.firstName} {emp.lastName}</div>
+                      <div className="font-semibold text-slate-800 truncate text-xs sm:text-sm">{emp.firstName || emp.lastName ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : emp.email?.split('@')[0] || 'Unknown User'}</div>
                       <div className="text-[10px] sm:text-xs text-slate-500 truncate">{emp.employeeProfile?.department || 'No Dept'} • {emp.employeeProfile?.jobTitle}</div>
                     </td>
                     {daysArray.map(day => {

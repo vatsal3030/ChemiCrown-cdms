@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton, SkeletonTableBody } from "@/components/ui/Skeleton";
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import useSWR from 'swr';
@@ -339,16 +339,7 @@ export default function Inventory() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {loading ? (
-                Array(5).fill(0).map((_, idx) => (
-                  <tr key={idx} className="data-table-row">
-                    <td className="data-table-cell"><Skeleton className="h-5 w-48 mb-2" /><Skeleton className="h-3 w-64" /></td>
-                    <td className="data-table-cell"><Skeleton className="h-4 w-24" /></td>
-                    <td className="data-table-cell"><Skeleton className="h-4 w-16" /></td>
-                    <td className="data-table-cell text-center"><Skeleton className="h-5 w-16 rounded-full mx-auto" /></td>
-                    <td className="data-table-cell"><Skeleton className="h-4 w-20" /></td>
-                    <td className="data-table-cell text-right"><div className="flex justify-end gap-2"><Skeleton className="h-8 w-8 rounded" /><Skeleton className="h-8 w-16 rounded" /><Skeleton className="h-8 w-8 rounded" /></div></td>
-                  </tr>
-                ))
+                <SkeletonTableBody rows={5} columns={6} />
               ) : products.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="p-12 text-center text-slate-500">

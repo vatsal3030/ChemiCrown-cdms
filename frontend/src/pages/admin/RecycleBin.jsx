@@ -112,8 +112,19 @@ export default function RecycleBin() {
 
       <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Loading trash...</div>
-        ) : items.length === 0 ? (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Entity Type</th>
+                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Description</th>
+                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Deleted At</th>
+                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Deleted By</th>
+                  <th className="px-6 py-4 text-right font-semibold text-slate-700 dark:text-slate-300">Actions</th>
+                </tr>
+              </thead>
+              <SkeletonTableBody columns={5} rows={5} />
+            </table>
+          ) : items.length === 0 ? (
           <div className="p-12 text-center">
             <Trash2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white">Recycle Bin is empty</h3>

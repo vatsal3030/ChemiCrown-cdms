@@ -14,15 +14,18 @@ import {
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton, SkeletonTableBody } from '@/components/ui/Skeleton';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt = (n) => `₹${(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtShort = (n) => {
-  const v = Math.abs(n || 0);
-  if (v >= 1e7) return `₹${(v / 1e7).toFixed(1)}Cr`;
-  if (v >= 1e5) return `₹${(v / 1e5).toFixed(1)}L`;
-  if (v >= 1e3) return `₹${(v / 1e3).toFixed(1)}K`;
-  return `₹${v.toFixed(0)}`;
+  const num = n || 0;
+  const v = Math.abs(num);
+  const sign = num < 0 ? '-' : '';
+  if (v >= 1e7) return `${sign}₹${(v / 1e7).toFixed(1)}Cr`;
+  if (v >= 1e5) return `${sign}₹${(v / 1e5).toFixed(1)}L`;
+  if (v >= 1e3) return `${sign}₹${(v / 1e3).toFixed(1)}K`;
+  return `${sign}₹${v.toFixed(0)}`;
 };
 
 const PIE_COLORS = ['#1F2E54','#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6'];
@@ -135,14 +138,29 @@ export default function Finance() {
 
   const deleteExpense = async (id) => {
     if (!window.confirm('Delete this expense?')) return;
+    
+    // Optimistic UI update
+    setExpenses(prev => prev.filter(e => e.id !== id));
+    
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/finance/expenses/${id}`, {
         method: 'DELETE', headers
       });
       const json = await res.json();
-      if (json.success) { toast.success('Expense deleted'); fetchExpenses(); fetchOverview(); }
-      else toast.error(json.message);
-    } catch { toast.error('Network error'); }
+      if (json.success) { 
+        toast.success('Expense deleted'); 
+        // Fetch in background to sync overview and ledger
+        fetchOverview(); 
+        fetchLedger(); 
+      }
+      else {
+        toast.error(json.message);
+        fetchExpenses(); // Revert on error
+      }
+    } catch { 
+      toast.error('Network error'); 
+      fetchExpenses(); // Revert on error
+    }
   };
 
   const syncLedger = async () => {
@@ -324,7 +342,7 @@ export default function Finance() {
                 <p className="text-xs text-muted-foreground mb-4">COGS + Payroll + Expenses</p>
                 {pieData.length > 0 ? (
                   <>
-                    <ResponsiveContainer width="100%" height={160}>
+                    <ResponsiveContainer width="100%" height={160} minWidth={0} minHeight={0}>
                       <PieChart>
                         <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" nameKey="name">
                           {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
@@ -354,7 +372,7 @@ export default function Finance() {
             {Object.keys(d.expenseByCategory || {}).length > 0 && (
               <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                 <h3 className="font-bold text-foreground mb-4">Expense Breakdown by Category</h3>
-                <ResponsiveContainer width="100%" height={180}>
+                <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={0}>
                   <BarChart data={Object.entries(d.expenseByCategory).map(([k,v]) => ({ category: k, amount: v }))} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                     <XAxis dataKey="category" tick={{ fontSize: 10 }} />
@@ -429,15 +447,13 @@ export default function Finance() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {ledgerLoading ? (
-                  [1,2,3,4,5].map(i => (
-                    <tr key={i}>{[1,2,3,4,5,6].map(j => <td key={j} className="px-5 py-4"><div className="h-4 bg-slate-100 dark:bg-slate-800 rounded animate-pulse w-24" /></td>)}</tr>
-                  ))
+                  <SkeletonTableBody rows={6} columns={6} />
                 ) : ledger.length === 0 ? (
                   <tr><td colSpan="6" className="p-10 text-center text-muted-foreground">
                     <BookOpen size={32} className="mx-auto mb-2 opacity-30" />
                     <p>No ledger entries found. Click "Sync Ledger" to import historical data.</p>
                   </td></tr>
-                ) : ledger.map(entry => (
+                ) : ledger.filter(entry => !ledgerSearch || entry.description.toLowerCase().includes(ledgerSearch.toLowerCase()) || entry.category.toLowerCase().includes(ledgerSearch.toLowerCase())).map(entry => (
                   <tr key={entry.id} onClick={() => navigate(`/dashboard/finance/ledger/${entry.id}`)} className={`hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors ${entry.type === 'DEBIT' ? 'border-l-2 border-l-red-300 dark:border-l-red-800' : 'border-l-2 border-l-emerald-300 dark:border-l-emerald-800'}`}>
                     <td className="px-5 py-3 text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString('en-IN')}</td>
                     <td className="px-5 py-3">
@@ -498,7 +514,7 @@ export default function Finance() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {expensesLoading ? (
-                  [1,2,3,4].map(i => <tr key={i}>{[1,2,3,4,5].map(j => <td key={j} className="px-5 py-4"><div className="h-4 bg-slate-100 dark:bg-slate-800 rounded animate-pulse w-20" /></td>)}</tr>)
+                  <SkeletonTableBody rows={4} columns={5} />
                 ) : expenses.length === 0 ? (
                   <tr><td colSpan="5" className="p-10 text-center text-muted-foreground">
                     <Receipt size={32} className="mx-auto mb-2 opacity-30" />

@@ -108,8 +108,8 @@ export default function AssignTask() {
                   required
                 >
                   <option value="">-- Select Employee --</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>
+                  {employees.filter(emp => emp.employeeProfile).map(emp => (
+                    <option key={emp.id} value={emp.employeeProfile.id}>
                       {emp.firstName} {emp.lastName} ({emp.role})
                     </option>
                   ))}

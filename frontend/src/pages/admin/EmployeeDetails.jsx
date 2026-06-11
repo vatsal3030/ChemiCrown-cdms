@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, User, Phone, Mail, Building, Briefcase, Calendar as CalendarIcon, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import toast from 'react-hot-toast';
@@ -45,7 +46,22 @@ export default function EmployeeDetails() {
     fetchData();
   }, [id, token]);
 
-  if (loading) return <div className="p-8 text-center text-slate-500 animate-pulse">Loading employee profile...</div>;
+  if (loading) return (
+    <div className="space-y-6 animate-pulse p-4">
+      <div className="flex items-center gap-6 mb-8">
+        <Skeleton className="w-24 h-24 rounded-full" />
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Skeleton className="h-48 w-full rounded-2xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
+      </div>
+    </div>
+  );
   if (!employee) return <div className="p-8 text-center text-red-500">Employee not found.</div>;
 
   // Process data for charts
@@ -73,7 +89,7 @@ export default function EmployeeDetails() {
     const rawScore = presentScore + halfDayScore + absentScore;
     score = Math.max(0, Math.min(100, Math.round((rawScore / maxPossible) * 100)));
   } else {
-    score = 85; // Default if no data
+    score = null; // Default if no data
   }
 
   const salaryData = salaries.map(s => ({
@@ -131,11 +147,11 @@ export default function EmployeeDetails() {
         <div className="relative z-10 flex flex-col items-center bg-black/40 backdrop-blur-md border border-white/10 p-6 rounded-2xl min-w-[160px]">
           <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">Performance Score</p>
           <div className="flex items-baseline gap-1 text-yellow-400">
-            <span className="text-5xl font-black">{score}</span>
-            <span className="text-lg font-bold">/100</span>
+            <span className="text-5xl font-black">{score !== null ? score : 'N/A'}</span>
+            {score !== null && <span className="text-lg font-bold">/100</span>}
           </div>
           <div className="w-full bg-slate-800 h-2 rounded-full mt-4 overflow-hidden">
-            <div className={`h-full rounded-full bg-gradient-to-r ${score >= 80 ? 'from-green-400 to-emerald-500' : score >= 50 ? 'from-yellow-400 to-amber-500' : 'from-red-400 to-rose-500'}`} style={{ width: `${score}%` }}></div>
+            <div className={`h-full rounded-full bg-gradient-to-r ${score >= 80 ? 'from-green-400 to-emerald-500' : score >= 50 ? 'from-yellow-400 to-amber-500' : score !== null ? 'from-red-400 to-rose-500' : 'bg-slate-500'}`} style={{ width: `${score !== null ? score : 0}%` }}></div>
           </div>
         </div>
       </div>
@@ -153,7 +169,7 @@ export default function EmployeeDetails() {
               </div>
             </div>
             <div className="h-64 mb-6">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
@@ -219,7 +235,7 @@ export default function EmployeeDetails() {
             ) : (
               <>
                 <div className="h-48 mb-6">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <LineChart data={salaryData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                       <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12}} />

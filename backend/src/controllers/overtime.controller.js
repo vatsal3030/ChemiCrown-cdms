@@ -54,6 +54,12 @@ exports.createOvertime = async (req, res, next) => {
     if (!employeeId || !date || !hours) {
       return res.status(400).json({ success: false, message: 'employeeId, date, and hours are required' });
     }
+    if (parseFloat(hours) <= 0) {
+      return res.status(400).json({ success: false, message: 'Overtime hours must be a positive number greater than 0' });
+    }
+    if (parseFloat(hours) > 24) {
+      return res.status(400).json({ success: false, message: 'Overtime hours cannot exceed 24 in a single day' });
+    }
 
     const emp = await prisma.employee.findUnique({
       where: { id: employeeId },

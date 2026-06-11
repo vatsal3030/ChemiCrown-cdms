@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function GlobalSearchModal({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
+  const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('searchHistory') || '[]'));
   const [results, setResults] = useState({ products: [], employees: [], orders: [], pages: [] });
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all'); // 'all', 'pages', 'products', 'orders', 'employees'
@@ -30,6 +31,15 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
     { id: 'holiday-calendar', name: 'Holiday Calendar', path: '/dashboard/holidays', description: 'Company holidays and observances' }
   ], []);
 
+  const handleResultClick = (path) => {
+    if (query.trim() && !history.includes(query.trim())) {
+      const newHistory = [query.trim(), ...history.filter(h => h !== query.trim())].slice(0, 5);
+      setHistory(newHistory);
+      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+    }
+    onClose();
+    navigate(path);
+  };
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -134,7 +144,9 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape') onClose();
+              if (e.key === 'Escape') {
+                onClose();
+              }
             }}
           />
           {loading && <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />}
@@ -158,6 +170,22 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
           </div>
         )}
 
+        {query.trim() === '' && history.length > 0 && (
+          <div className="p-4 border-b border-border">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Recent Searches</h3>
+            <div className="flex flex-wrap gap-2">
+              {history.map(h => (
+                <button 
+                  key={h} 
+                  onClick={() => setQuery(h)}
+                  className="px-3 py-1 bg-muted/50 hover:bg-muted text-sm text-foreground rounded-full transition-colors flex items-center gap-1"
+                >
+                  <Search className="w-3 h-3 text-muted-foreground" /> {h}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Results Area */}
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {query.length < 2 ? (
@@ -187,7 +215,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
                     {results.pages.map(p => (
                       <button
                         key={p.id}
-                        onClick={() => { navigate(p.path); onClose(); }}
+                        onClick={() => handleResultClick(p.path)}
                         className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-transparent hover:border-blue-200 dark:hover:border-blue-800 text-left transition-all group"
                       >
                         <div>
@@ -211,7 +239,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
                     {results.products.map(p => (
                       <button
                         key={p.id}
-                        onClick={() => { navigate(`/dashboard/inventory/product/${p.id}`); onClose(); }}
+                        onClick={() => { navigate(`/dashboard/inventory/product/${p.id}`);  }}
                         className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800 text-left transition-all group"
                       >
                         <div>
@@ -235,7 +263,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
                     {results.orders.map(o => (
                       <button
                         key={o.id}
-                        onClick={() => { navigate(`/dashboard/orders/${o.id}`); onClose(); }}
+                        onClick={() => { navigate(`/dashboard/orders/${o.id}`);  }}
                         className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 border border-transparent hover:border-amber-200 dark:hover:border-amber-800 text-left transition-all group"
                       >
                         <div>
@@ -259,7 +287,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
                     {results.employees.map(e => (
                       <button
                         key={e.id}
-                        onClick={() => { navigate(`/dashboard/hr/employee/${e.id}`); onClose(); }}
+                        onClick={() => { navigate(`/dashboard/hr/employee/${e.id}`);  }}
                         className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-transparent hover:border-purple-200 dark:hover:border-purple-800 text-left transition-all group"
                       >
                         <div>

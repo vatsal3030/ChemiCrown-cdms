@@ -59,7 +59,7 @@ exports.getInventory = async (req, res, next) => {
         select: { productId: true, quantity: true, minThreshold: true }
       });
       const lowStockIds = lowStockInventories
-        .filter(inv => inv.quantity <= inv.minThreshold && inv.quantity > 0)
+        .filter(inv => inv.quantity <= inv.minThreshold)
         .map(inv => inv.productId);
       where.id = { in: lowStockIds };
     }

@@ -20,6 +20,8 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Catalog from './pages/Catalog';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -158,6 +160,8 @@ function App() {
                 <Route path="contact" element={<Contact />} />
                 <Route path="catalog" element={<Catalog />} />
                 <Route path="catalog/:id" element={<ProductDetails />} />
+                <Route path="privacy" element={<PrivacyPolicy />} />
+                <Route path="terms" element={<TermsOfService />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />

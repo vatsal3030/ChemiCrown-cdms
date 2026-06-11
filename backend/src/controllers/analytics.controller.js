@@ -55,13 +55,14 @@ exports.getDashboardStats = async (req, res, next) => {
     }).catch(() => []);
 
     const lowStockProducts = lowInventoryItems
-      .filter(i => i.quantity <= i.minThreshold && i.product)
+      .filter(i => i.product && (i.quantity === 0 || (i.minThreshold != null && i.quantity <= i.minThreshold)))
       .map(i => ({
         id: i.product.id,
         name: i.product.name,
         sku: i.product.sku,
         quantity: i.quantity,
-        minThreshold: i.minThreshold
+        minThreshold: i.minThreshold,
+        isOutOfStock: i.quantity === 0
       }));
 
     // ── 5. Monthly Revenue Trend (Last 6 months) ────────────────────────────

@@ -240,7 +240,7 @@ export default function Dashboard() {
           {revenueData.length === 0 ? (
             <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">No revenue data yet</div>
           ) : (
-            <ResponsiveContainer width="100%" minHeight={260} height={260}>
+            <ResponsiveContainer width="100%" minHeight={260} height={260} minWidth={0}>
               <BarChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={8} />
@@ -271,7 +271,7 @@ export default function Dashboard() {
           </div>
           {attendanceData?.some(d => d.value > 0) ? (
             <>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={200} minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
                     data={attendanceData}
@@ -351,7 +351,7 @@ export default function Dashboard() {
           {inventoryData.length === 0 ? (
             <div className="h-56 flex items-center justify-center text-muted-foreground text-sm">No inventory data</div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
               <BarChart data={inventoryData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} dy={8} />

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { Skeleton, SkeletonCard, SkeletonTableRow, SkeletonTableBody } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -365,6 +365,9 @@ export default function HRManagement() {
   }, [activeTab, fetchOvertimes, fetchIncentives]);
 
   const handleOtApprove = async (id, action) => {
+    // Optimistic UI
+    const previousOvertimes = [...overtimes];
+    setOvertimes(prev => prev.filter(ot => ot.id !== id));
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/overtime/${id}/approve`, {
         method: 'PUT',
@@ -372,12 +375,22 @@ export default function HRManagement() {
         body: JSON.stringify({ action })
       });
       const json = await res.json();
-      if (json.success) { toast.success(json.message); fetchOvertimes(); }
-      else toast.error(json.message);
-    } catch { toast.error('Network error'); }
+      if (json.success) {
+        toast.success(`Overtime ${action.toLowerCase()}`);
+      } else {
+        toast.error(json.message);
+        setOvertimes(previousOvertimes);
+      }
+    } catch { 
+      toast.error('Network error'); 
+      setOvertimes(previousOvertimes);
+    }
   };
 
   const handleIncApprove = async (id, action) => {
+    // Optimistic UI
+    const previousIncentives = [...incentives];
+    setIncentives(prev => prev.filter(inc => inc.id !== id));
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/incentives/${id}/approve`, {
         method: 'PUT',
@@ -385,9 +398,17 @@ export default function HRManagement() {
         body: JSON.stringify({ action })
       });
       const json = await res.json();
-      if (json.success) { toast.success(json.message); fetchIncentives(); }
-      else toast.error(json.message);
-    } catch { toast.error('Network error'); }
+      if (json.success) { 
+        toast.success(`Incentive ${action.toLowerCase()}`); 
+      }
+      else {
+        toast.error(json.message);
+        setIncentives(previousIncentives);
+      }
+    } catch { 
+      toast.error('Network error'); 
+      setIncentives(previousIncentives);
+    }
   };
 
   const logOvertime = async () => {
@@ -461,6 +482,14 @@ export default function HRManagement() {
   useEffect(() => { if (activeTab === 'leaves') fetchLeaves(); }, [activeTab, leaveStatusFilter, fetchLeaves]);
 
   const handleLeaveReview = async (id, status) => {
+    // Optimistic UI
+    const previousLeaves = [...leaveRequests];
+    if (leaveStatusFilter === 'PENDING') {
+      setLeaveRequests(prev => prev.filter(l => l.id !== id));
+    } else {
+      setLeaveRequests(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    }
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/leaves/${id}/review`, {
         method: 'PUT',
@@ -470,25 +499,38 @@ export default function HRManagement() {
       const json = await res.json();
       if (json.success) {
         toast.success(`Leave ${status.toLowerCase()}`);
-        if (leaveStatusFilter === 'PENDING') {
-          setLeaveRequests(prev => prev.filter(l => l.id !== id));
-        } else {
-          fetchLeaves();
-        }
-      } else toast.error(json.message || 'Failed');
-    } catch { toast.error('Network error'); }
+      } else {
+        toast.error(json.message || 'Failed');
+        setLeaveRequests(previousLeaves); // Revert
+      }
+    } catch { 
+      toast.error('Network error'); 
+      setLeaveRequests(previousLeaves); // Revert
+    }
   };
 
   const handleReinstate = async (emp) => {
     if (!window.confirm(`Reinstate ${emp.firstName} ${emp.lastName}?`)) return;
+    
+    // Optimistic UI
+    setEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, employeeProfile: { ...e.employeeProfile, status: 'ACTIVE' } } : e));
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${emp.employeeProfile?.id}/reinstate`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
-      if (json.success) { toast.success('Employee reinstated'); fetchEmployees(); }
-      else toast.error(json.message);
-    } catch { toast.error('Network error'); }
+      if (json.success) { 
+        toast.success('Employee reinstated'); 
+      }
+      else {
+        toast.error(json.message);
+        fetchEmployees(); // Revert
+      }
+    } catch { 
+      toast.error('Network error'); 
+      fetchEmployees(); // Revert
+    }
   };
 
   const toggleSort = (field) => {
@@ -632,7 +674,7 @@ export default function HRManagement() {
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-4">Headcount by Department</h3>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <PieChart>
                     <Pie data={deptData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                       {deptData.map((entry, index) => (
@@ -649,7 +691,7 @@ export default function HRManagement() {
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-4">Employees by Role</h3>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <BarChart data={roleData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
@@ -813,14 +855,7 @@ export default function HRManagement() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {loading ? (
-                  [1,2,3,4].map(i => (
-                    <tr key={i}>
-                      <td className="data-table-cell"><div className="flex flex-wrap items-center gap-3"><Skeleton className="w-8 h-8 rounded-full" /><div><Skeleton className="h-4 w-28 mb-1"/><Skeleton className="h-3 w-40"/></div></div></td>
-                      <td className="data-table-cell"><Skeleton className="h-5 w-20 rounded-full"/></td>
-                      <td className="data-table-cell"><Skeleton className="h-8 w-24 rounded-lg"/></td>
-                      <td className="data-table-cell"><Skeleton className="h-8 w-8 rounded-lg"/></td>
-                    </tr>
-                  ))
+                  <SkeletonTableBody rows={5} columns={6} />
                 ) : filteredEmployees.length === 0 ? (
                   <tr><td colSpan="6" className="p-12 text-center text-slate-400">
                     <Users size={36} className="mx-auto mb-3 opacity-30" />
@@ -866,14 +901,21 @@ export default function HRManagement() {
                             {(() => {
                               const atts = emp.employeeProfile?.attendances || [];
                               const totalDays = atts.length;
-                              let score = 85; // Default score
-                              if (totalDays > 0) {
-                                const present = atts.filter(a => a.status === 'PRESENT').length * 10;
-                                const half = atts.filter(a => a.status === 'HALF_DAY').length * 5;
-                                const absent = atts.filter(a => a.status === 'ABSENT').length * -5;
-                                const max = totalDays * 10;
-                                score = Math.max(0, Math.min(100, Math.round(((present + half + absent) / max) * 100)));
+                              if (totalDays === 0) {
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <div className="px-2 py-1 rounded-lg border font-bold text-sm text-slate-400 bg-slate-50 border-slate-200">
+                                      N/A
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">New / No data</span>
+                                  </div>
+                                );
                               }
+                              const present = atts.filter(a => a.status === 'PRESENT').length * 10;
+                              const half = atts.filter(a => a.status === 'HALF_DAY').length * 5;
+                              const absent = atts.filter(a => a.status === 'ABSENT').length * -5;
+                              const max = totalDays * 10;
+                              const score = Math.max(0, Math.min(100, Math.round(((present + half + absent) / max) * 100)));
                               const scoreColor = score >= 80 ? 'text-emerald-600 bg-emerald-100 border-emerald-200' : score >= 50 ? 'text-amber-600 bg-amber-100 border-amber-200' : 'text-rose-600 bg-rose-100 border-rose-200';
                               return (
                                 <div className="flex flex-wrap items-center gap-2">
@@ -1026,7 +1068,19 @@ export default function HRManagement() {
             </div>
           )}
           {leavesLoading ? (
-            <div className="p-8 text-center text-muted-foreground">Loading...</div>
+            <div className="w-full">
+              <div className="animate-pulse space-y-4 px-4 py-2">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex gap-4 p-4 border rounded-xl">
+                    <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-1/3" />
+                      <Skeleton className="h-3 w-1/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : leaveRequests.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">
               <CheckCircle2 size={40} className="mx-auto mb-3 text-emerald-400 opacity-50" />
@@ -1175,7 +1229,9 @@ export default function HRManagement() {
           {/* Overtime Records Table */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             {otLoading ? (
-              <div className="p-8 text-center text-muted-foreground">Loading overtime records...</div>
+              <div className="w-full p-4">
+                <SkeletonTableBody rows={3} columns={5} />
+              </div>
             ) : overtimes.length === 0 ? (
               <div className="p-8 text-center">
                 <Timer size={32} className="mx-auto mb-3 text-muted-foreground/40" />
@@ -1321,7 +1377,9 @@ export default function HRManagement() {
 
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             {incLoading ? (
-              <div className="p-8 text-center text-muted-foreground">Loading incentives...</div>
+              <div className="w-full p-4">
+                <SkeletonTableBody rows={3} columns={5} />
+              </div>
             ) : incentives.length === 0 ? (
               <div className="p-8 text-center">
                 <Award size={32} className="mx-auto mb-3 text-muted-foreground/40" />

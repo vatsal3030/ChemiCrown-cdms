@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
 
 const COLUMNS = [
   { id: 'PENDING',     label: 'Pending',     color: 'bg-amber-500',  badge: 'badge-warning' },
@@ -300,8 +301,8 @@ export default function Tasks() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {COLUMNS.map(c => (
             <div key={c.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
-              <div className="h-6 w-24 bg-muted rounded-lg animate-pulse" />
-              {[1,2].map(i => <div key={i} className="h-24 bg-muted rounded-xl animate-pulse" />)}
+              <Skeleton className="h-6 w-24 mb-4" />
+              {[1,2].map(i => <SkeletonCard key={i} />)}
             </div>
           ))}
         </div>

@@ -96,9 +96,9 @@ export default function Checkout() {
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      // Scroll to first error
       const firstErrorKey = Object.keys(errors)[0];
       document.getElementById(`field-${firstErrorKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      toast.error('Please fill in all required fields correctly.');
       return;
     }
     setFieldErrors({});
@@ -394,40 +394,55 @@ export default function Checkout() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div id="field-phone">
                   <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Phone Number *</label>
                   <Input 
                     type="tel"
                     placeholder="+91 98765 43210"
                     value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    onChange={(e) => {
+                      setFormData({...formData, phone: e.target.value});
+                      if (fieldErrors.phone) setFieldErrors(p => ({ ...p, phone: undefined }));
+                    }}
+                    className={fieldErrors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     required
                   />
+                  {fieldErrors.phone && <p className="text-xs text-red-600 mt-1">{fieldErrors.phone}</p>}
                 </div>
-                <div>
+                <div id="field-email">
                   <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Email Address *</label>
                   <Input 
                     type="email"
                     placeholder="purchasing@company.com"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => {
+                      setFormData({...formData, email: e.target.value});
+                      if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: undefined }));
+                    }}
+                    className={fieldErrors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     required
                   />
+                  {fieldErrors.email && <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>}
                 </div>
               </div>
-              <div>
+              <div id="field-shippingAddress">
                 <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Shipping Address *</label>
                 <textarea 
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className={`w-full rounded-md border ${fieldErrors.shippingAddress ? 'border-red-500 focus-visible:ring-red-500' : 'border-input focus-visible:ring-primary'} bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2`}
                   rows={3}
                   placeholder="Complete delivery address including PIN code..."
                   value={formData.shippingAddress}
-                  onChange={(e) => setFormData({...formData, shippingAddress: e.target.value})}
+                  onChange={(e) => {
+                    setFormData({...formData, shippingAddress: e.target.value});
+                    if (fieldErrors.shippingAddress) setFieldErrors(p => ({ ...p, shippingAddress: undefined }));
+                  }}
                   required
                 />
+                {fieldErrors.shippingAddress && <p className="text-xs text-red-600 mt-1">{fieldErrors.shippingAddress}</p>}
               </div>
-              <div>
+              <div id="field-location">
                 <MapAddressPicker onLocationChange={handleLocationChange} />
+                {fieldErrors.location && <p className="text-xs text-red-600 mt-1">{fieldErrors.location}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Order Notes (Optional)</label>

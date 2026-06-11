@@ -579,12 +579,20 @@ const advanceOrderStatus = async (req, res, next) => {
         }
       });
 
+      // Bug 3 Fix: Auto-mark PAY_ON_DELIVERY payment as PAID when order is DELIVERED
+      if (nextStatus === 'DELIVERED' && order.payment?.paymentMethod === 'PAY_ON_DELIVERY') {
+        await tx.payment.update({
+          where: { orderId: id },
+          data: { status: 'SUCCESS' }
+        });
+      }
+
       // Notify customer
       await tx.notification.create({
         data: {
           userId:  order.customer.userId,
           type:    'ORDER',
-          message: `Your order #${id.substring(0, 8).toUpperCase()} status updated: ${order.status} → ${nextStatus}${note ? '. Note: ' + note : ''}`
+          message: `Your order #${id.substring(0, 8).toUpperCase()} status updated: ${order.status} → ${nextStatus}${note ? '. Note: ' + note : ''}${nextStatus === 'DELIVERED' && order.payment?.paymentMethod === 'PAY_ON_DELIVERY' ? ' Payment marked as received.' : ''}`
         }
       });
 

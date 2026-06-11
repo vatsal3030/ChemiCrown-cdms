@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Search, Filter, Trash2, RefreshCw, ChevronLeft, ChevronRight, Clock, X, ArrowUpDown, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Filter, RefreshCw, Activity, AlertCircle, X, ArrowUpDown, Clock, Shield, Trash2, SlidersHorizontal } from 'lucide-react';
+import { Skeleton, SkeletonTableBody } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -281,13 +282,7 @@ export default function AuditLog() {
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                [...Array(8)].map((_, i) => (
-                  <tr key={i}>
-                    {[...Array(6)].map((_, j) => (
-                      <td key={j} className="data-table-cell"><div className="h-4 bg-muted rounded animate-pulse" /></td>
-                    ))}
-                  </tr>
-                ))
+                <SkeletonTableBody rows={8} columns={6} />
               ) : logs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-16 text-center text-muted-foreground">
