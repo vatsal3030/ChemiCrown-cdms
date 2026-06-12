@@ -206,8 +206,8 @@ const getOrders = async (req, res, next) => {
 
     let where = {};
 
-    // Scope to customer if role is CUSTOMER
-    if (req.user.role === 'CUSTOMER') {
+    // Scope to customer if role is CUSTOMER or myOrders is explicitly true
+    if (req.user.role === 'CUSTOMER' || req.query.myOrders === 'true') {
       const customer = await prisma.customer.findUnique({ where: { userId: req.user.id } });
       if (customer) {
         where.customerId = customer.id;

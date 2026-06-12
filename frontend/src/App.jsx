@@ -48,6 +48,7 @@ import Orders from './pages/customer/Orders';
 import OrderDetails from './pages/customer/OrderDetails';
 import Checkout from './pages/customer/Checkout';
 import Wishlist from './pages/customer/Wishlist';
+import MyOrders from './pages/customer/MyOrders';
 import Cart from './pages/customer/Cart';
 import ProductDetails from './pages/ProductDetails';
 import Settings from './pages/Settings';
@@ -205,6 +206,7 @@ function App() {
                     <Route path="cart" element={<Cart />} />
                     <Route path="checkout" element={<Checkout />} />
                     <Route path="wishlist" element={<Wishlist />} />
+                    <Route path="my-orders" element={<MyOrders />} />
                   </Route>
 
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
@@ -236,7 +238,7 @@ function App() {
                   </Route>
                   
                   {/* Employees + Owner self-service */}
-                  <Route element={<ProtectedRoute allowedRoles={['OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
                     <Route path="me" element={<MyAttendance />} />
                     <Route path="my-payroll" element={<MyPayroll />} />
                   </Route>

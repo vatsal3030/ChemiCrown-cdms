@@ -108,7 +108,7 @@ export default function Login() {
           {storedAccounts && storedAccounts.length > 0 && (
             <div className="mb-5">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Login</p>
-              <div className={`space-y-1.5 ${hasMoreAccounts ? 'max-h-[9.5rem] overflow-y-auto' : ''} relative`}>
+              <div className={`space-y-1.5 ${hasMoreAccounts ? 'max-h-38 overflow-y-auto' : ''} relative`}>
                 {storedAccounts.map((account) => (
                   <div key={account.id} className="relative flex items-center group">
                     <button

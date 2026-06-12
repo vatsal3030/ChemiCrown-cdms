@@ -273,7 +273,7 @@ export default function StockHistory() {
                         {log.remarks ? (
                           <div className="group relative w-full">
                             <div className="truncate text-slate-600 dark:text-slate-400 cursor-help">{log.remarks}</div>
-                            <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-slate-800 text-white text-xs rounded-md p-2 shadow-lg min-w-[200px] max-w-[300px] whitespace-normal break-words">
+                            <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-slate-800 text-white text-xs rounded-md p-2 shadow-lg min-w-[200px] max-w-[300px] whitespace-normal wrap-break-word">
                               {log.remarks}
                             </div>
                           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Settings, Menu, Users,
   ClipboardCheck, LogOut, ChevronUp, UserPlus, Store,
@@ -15,7 +15,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Search } from 'lucide-react';
 
 // Navigation structure with sections for role-based grouping
-const buildNavSections = (role) => {
+const buildNavSections = (role, customerMode = false) => {
   const sections = [];
 
   // OVERVIEW section
@@ -39,17 +39,22 @@ const buildNavSections = (role) => {
         { name: 'My Orders', path: '/dashboard/orders', icon: ClipboardList },
       ]
     });
+  } else if (customerMode && ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER'].includes(role)) {
+    sections.push({
+      label: 'Customer Features',
+      items: [
+        { name: 'Product Catalog', path: '/dashboard/catalog', icon: Store },
+        { name: 'My Cart', path: '/dashboard/cart', icon: ShoppingCart },
+        { name: 'My Wishlist', path: '/dashboard/wishlist', icon: Heart },
+        { name: 'My Orders', path: '/dashboard/my-orders', icon: ClipboardList },
+      ]
+    });
   }
 
   // OPERATIONS section
   const ops = { label: 'Operations', items: [] };
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER', 'SALES'].includes(role)) {
     ops.items.push({ name: 'Product Catalog', path: '/dashboard/catalog', icon: Store });
-  }
-  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER'].includes(role)) {
-    // In-company staff can also use cart, wishlist and place orders
-    ops.items.push({ name: 'My Cart', path: '/dashboard/cart', icon: ShoppingCart });
-    ops.items.push({ name: 'My Wishlist', path: '/dashboard/wishlist', icon: Heart });
   }
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER'].includes(role)) {
     ops.items.push({ name: 'Orders', path: '/dashboard/orders', icon: ClipboardList });
@@ -75,7 +80,7 @@ const buildNavSections = (role) => {
   if (['SUPER_ADMIN', 'OWNER'].includes(role)) {
     people.items.push({ name: 'Verify Customers', path: '/dashboard/verify', icon: UserCheck });
   }
-  if (['OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {
+  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {
     people.items.push({ name: 'My Attendance', path: '/dashboard/me', icon: ClipboardCheck });
     people.items.push({ name: 'My Payslips', path: '/dashboard/my-payroll', icon: FileText });
   }
@@ -161,6 +166,7 @@ export default function DashboardLayout() {
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+  const [customerMode, setCustomerMode] = useState(() => localStorage.getItem('customerMode') !== 'false');
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const switcherRef = useRef(null);
 
@@ -169,6 +175,14 @@ export default function DashboardLayout() {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', collapsed);
   }, [collapsed]);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setCustomerMode(localStorage.getItem('customerMode') !== 'false');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Close account switcher on outside click
   useEffect(() => {
@@ -188,7 +202,7 @@ export default function DashboardLayout() {
 
   if (!user) return null;
 
-  const navSections = buildNavSections(user.role);
+  const navSections = buildNavSections(user.role, customerMode);
   
   // Add badge to My Cart
   navSections.forEach(section => {

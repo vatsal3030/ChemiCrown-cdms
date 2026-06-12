@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   ShoppingCart, Search, Filter, Trash2, ArrowUpDown, Eye,
   Package, ChevronRight, X, SlidersHorizontal, RefreshCw,
-  Calendar, IndianRupee, CheckCircle, XCircle, AlertTriangle,
-  QrCode, Clock, Banknote
+  Calendar, IndianRupee, CheckCircle, XCircle,
+  QrCode, Clock
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Skeleton, SkeletonTableBody } from '@/components/ui/Skeleton';
+import { SkeletonTableBody } from '@/components/ui/Skeleton';
 
 const STATUS_PIPELINE = ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'];
 
@@ -40,7 +40,7 @@ const STATUS_COLORS = {
   CANCELLED:  'bg-red-500',
 };
 
-export default function Orders() {
+export default function Orders({ isMyOrders = false }) {
   const { token, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -65,7 +65,7 @@ export default function Orders() {
 
   const [orders, setOrders]       = useState([]);
   const [loading, setLoading]     = useState(true);
-  const [advancing, setAdvancing] = useState(null);
+  const [advancing]               = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   // Temp filter state (applied on click)
   const [tempFilters, setTempFilters] = useState({ status: statusFilter, from: dateFrom, to: dateTo, minAmt: minAmount, maxAmt: maxAmount });
@@ -74,7 +74,7 @@ export default function Orders() {
     setTempFilters({ status: statusFilter, from: dateFrom, to: dateTo, minAmt: minAmount, maxAmt: maxAmount });
   }, [statusFilter, dateFrom, dateTo, minAmount, maxAmount]);
 
-  const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES'].includes(user?.role);
+  const isAdmin = !isMyOrders && ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES'].includes(user?.role);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -85,6 +85,7 @@ export default function Orders() {
       if (dateTo)   params.set('to',   dateTo);
       if (minAmount) params.set('minAmount', minAmount);
       if (maxAmount) params.set('maxAmount', maxAmount);
+      if (isMyOrders) params.set('myOrders', 'true');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -99,7 +100,7 @@ export default function Orders() {
 
   // UPI Pending Payment Verification (admin only)
   const [pendingUpi, setPendingUpi] = useState([]);
-  const [verifyingId, setVerifyingId] = useState(null);
+  const [verifyingId] = useState(null);
   const [rejectModal, setRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -111,7 +112,9 @@ export default function Orders() {
       });
       const json = await res.json();
       if (json.success) setPendingUpi(json.data || []);
-    } catch {}
+    } catch (e) {
+      console.error(e);
+    }
   }, [isAdmin, token]);
 
   useEffect(() => { fetchPendingUpi(); }, [fetchPendingUpi]);

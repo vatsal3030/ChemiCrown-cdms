@@ -33,14 +33,14 @@ export default function HRDetailsModal({ type, data, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-card w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
         
         {/* Header */}
         <div className={`p-6 text-white flex items-start justify-between ${
-          isLeave ? 'bg-gradient-to-r from-blue-600 to-indigo-600' :
-          isOvertime ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600' :
-          'bg-gradient-to-r from-emerald-600 to-teal-600'
+          isLeave ? 'bg-linear-to-r from-blue-600 to-indigo-600' :
+          isOvertime ? 'bg-linear-to-r from-purple-600 to-fuchsia-600' :
+          'bg-linear-to-r from-emerald-600 to-teal-600'
         }`}>
           <div>
             <div className="flex items-center gap-2 mb-2 opacity-80 text-xs font-bold uppercase tracking-wider">

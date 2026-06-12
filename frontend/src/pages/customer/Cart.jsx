@@ -8,7 +8,7 @@ export default function Cart() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex-1 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
+    <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="mb-5">
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex flex-wrap items-center gap-2">

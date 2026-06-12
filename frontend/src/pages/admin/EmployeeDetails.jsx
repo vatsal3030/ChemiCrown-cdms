@@ -121,15 +121,15 @@ export default function EmployeeDetails() {
         <ArrowLeft size={16} className="mr-1" /> Go Back
       </button>
 
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 rounded-3xl p-8 shadow-2xl flex flex-col md:flex-row gap-8 items-center text-white">
+      <div className="relative overflow-hidden bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 rounded-3xl p-8 shadow-2xl flex flex-col md:flex-row gap-8 items-center text-white">
         <div className="absolute top-0 right-0 p-32 opacity-10 pointer-events-none">
           <Trophy size={400} className="text-indigo-400 rotate-12" />
         </div>
-        <div className="relative z-10 w-28 h-28 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-5xl font-black shadow-[0_0_30px_rgba(99,102,241,0.5)] border-4 border-white/10">
+        <div className="relative z-10 w-28 h-28 rounded-full bg-linear-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-5xl font-black shadow-[0_0_30px_rgba(99,102,241,0.5)] border-4 border-white/10">
           {employee.firstName?.charAt(0) || 'E'}
         </div>
         <div className="relative z-10 flex-1 text-center md:text-left">
-          <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300">
+          <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-slate-300">
             {employee.firstName} {employee.lastName}
           </h1>
           <p className="text-indigo-300 font-bold tracking-widest uppercase text-sm mt-2 flex items-center justify-center md:justify-start gap-2">
@@ -151,7 +151,7 @@ export default function EmployeeDetails() {
             {score !== null && <span className="text-lg font-bold">/100</span>}
           </div>
           <div className="w-full bg-slate-800 h-2 rounded-full mt-4 overflow-hidden">
-            <div className={`h-full rounded-full bg-gradient-to-r ${score >= 80 ? 'from-green-400 to-emerald-500' : score >= 50 ? 'from-yellow-400 to-amber-500' : score !== null ? 'from-red-400 to-rose-500' : 'bg-slate-500'}`} style={{ width: `${score !== null ? score : 0}%` }}></div>
+            <div className={`h-full rounded-full bg-linear-to-r ${score >= 80 ? 'from-green-400 to-emerald-500' : score >= 50 ? 'from-yellow-400 to-amber-500' : score !== null ? 'from-red-400 to-rose-500' : 'bg-slate-500'}`} style={{ width: `${score !== null ? score : 0}%` }}></div>
           </div>
         </div>
       </div>

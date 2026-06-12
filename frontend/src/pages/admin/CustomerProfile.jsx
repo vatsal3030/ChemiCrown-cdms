@@ -129,7 +129,7 @@ export default function CustomerProfile() {
         {/* Left Column: Details */}
         <div className="space-y-6 lg:col-span-1">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-primary"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-blue-500 to-primary"></div>
             <div className="flex flex-wrap items-center gap-4 mb-6">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl">
                 {customer.companyName?.[0] || user.firstName[0]}

@@ -100,6 +100,16 @@ export default function Settings() {
     taskAssigned: true,
     loginAlerts: false
   });
+  
+  const [customerMode, setCustomerMode] = useState(() => localStorage.getItem('customerMode') !== 'false');
+
+  const handleCustomerModeChange = () => {
+    const newValue = !customerMode;
+    setCustomerMode(newValue);
+    localStorage.setItem('customerMode', newValue.toString());
+    window.dispatchEvent(new Event('storage')); // Notify other components (DashboardLayout)
+    toast.success(`Customer mode ${newValue ? 'enabled' : 'disabled'}`);
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -375,6 +385,17 @@ export default function Settings() {
               </div>
 
               <div className="space-y-3">
+                <div className="border-b border-border pb-4 mb-4">
+                  <h3 className="font-semibold text-sm mb-3 uppercase tracking-wider text-muted-foreground">General Features</h3>
+                  <ToggleRow
+                    label="Customer Mode"
+                    description="Enable shopping features like My Cart, Wishlist, and personal Orders in the sidebar."
+                    checked={customerMode}
+                    onChange={handleCustomerModeChange}
+                  />
+                </div>
+                
+                <h3 className="font-semibold text-sm mb-3 uppercase tracking-wider text-muted-foreground">Alerts</h3>
                 <ToggleRow
                   label="Order Status Updates"
                   description="Get notified when orders are placed, dispatched, or delivered."
