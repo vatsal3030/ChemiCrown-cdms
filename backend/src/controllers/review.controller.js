@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 
 // Add or update a review (upsert: one editable review per product per customer)
 exports.addReview = async (req, res, next) => {

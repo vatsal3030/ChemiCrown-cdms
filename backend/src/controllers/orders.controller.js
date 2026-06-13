@@ -19,7 +19,7 @@ const createOrder = async (req, res, next) => {
       return res.status(409).json({ error: 'Duplicate order detected. Please wait before placing the same order again.' });
     }
     processedRequests.set(idempotencyKey, true);
-    setTimeout(() => processedRequests.delete(idempotencyKey), 5000);
+    setTimeout(() => processedRequests.delete(idempotencyKey), 60000);
 
     let customer = await prisma.customer.findUnique({ where: { userId } });
     
@@ -53,19 +53,13 @@ const createOrder = async (req, res, next) => {
           include: { inventory: true }
         });
 
-        if (!product) throw new Error(`Product not found: ${item.chemicalId}`);
+        if (!product) throw { status: 404, message: `Product not found: ${item.chemicalId}` };
         if (!product.inventory || product.inventory.quantity < item.quantity) {
-          throw new Error(`Insufficient stock for ${product.name}. Available: ${product.inventory?.quantity || 0}`);
-        }
-
-        // Deduct inventory atomically to prevent race condition
-        const updateRes = await tx.inventory.updateMany({
-          where: { productId: product.id, quantity: { gte: item.quantity } },
-          data: { quantity: { decrement: item.quantity } }
-        });
-
-        if (updateRes.count === 0) {
-          throw new Error(`Insufficient stock for ${product.name} during checkout race condition.`);
+          throw { 
+            status: 400, 
+            message: `Insufficient stock for ${product.name}. Available: ${product.inventory?.quantity || 0}`,
+            outOfStockItem: { id: product.id, name: product.name, available: product.inventory?.quantity || 0 }
+          };
         }
 
         const itemTotal = product.price * item.quantity;
@@ -154,7 +148,10 @@ const createOrder = async (req, res, next) => {
         razorpayOrder: rzpOrder
       });
     } catch (error) {
-      next(error);
+      if (error.status) {
+        return res.status(error.status).json({ error: error.message, outOfStockItem: error.outOfStockItem });
+      }
+      throw error;
     }
   };
 
@@ -171,20 +168,31 @@ const verifyPayment = async (req, res, next) => {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (isAuthentic) {
-      // 1. Update Payment Record
-      await prisma.payment.update({
-        where: { orderId },
-        data: {
-          razorpayPaymentId: razorpay_payment_id,
-          razorpaySignature: razorpay_signature,
-          status: 'SUCCESS'
-        }
-      });
+      await prisma.$transaction(async (tx) => {
+        // 1. Update Payment Record
+        await tx.payment.update({
+          where: { orderId },
+          data: {
+            razorpayPaymentId: razorpay_payment_id,
+            razorpaySignature: razorpay_signature,
+            status: 'SUCCESS'
+          }
+        });
 
-      // 2. Update Order Status to PROCESSING after payment confirmation
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { status: 'PROCESSING' }
+        // 2. Deduct Inventory now that payment is confirmed
+        const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: true } });
+        for (const item of order.items) {
+          await tx.inventory.updateMany({
+            where: { productId: item.productId, quantity: { gte: item.quantity } },
+            data: { quantity: { decrement: item.quantity } }
+          });
+        }
+
+        // 3. Update Order Status to PROCESSING after payment confirmation
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: 'PROCESSING' }
+        });
       });
 
       res.status(200).json({ message: 'Payment verified successfully' });
@@ -529,9 +537,19 @@ const verifyCodOrder = async (req, res, next) => {
       return res.status(400).json({ error: 'Only Pay on Delivery orders can be manually verified' });
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id },
-      data: { status: 'PROCESSING' }
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // Deduct inventory
+      for (const item of order.items) {
+        await tx.inventory.updateMany({
+          where: { productId: item.productId, quantity: { gte: item.quantity } },
+          data: { quantity: { decrement: item.quantity } }
+        });
+      }
+
+      return await tx.order.update({
+        where: { id },
+        data: { status: 'PROCESSING' }
+      });
     });
 
     res.status(200).json({ message: 'Pay on Delivery order verified successfully', order: updatedOrder });
@@ -711,6 +729,15 @@ const verifyUpiPayment = async (req, res, next) => {
             verifiedBy: adminId
           }
         });
+
+        // Deduct inventory on manual UPI approval
+        const orderItems = await tx.orderItem.findMany({ where: { orderId } });
+        for (const item of orderItems) {
+          await tx.inventory.updateMany({
+            where: { productId: item.productId, quantity: { gte: item.quantity } },
+            data: { quantity: { decrement: item.quantity } }
+          });
+        }
 
         await tx.order.update({
           where: { id: orderId },

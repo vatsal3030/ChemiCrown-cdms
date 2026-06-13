@@ -283,8 +283,24 @@ export default function DashboardLayout() {
             <div className={`absolute z-50 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden ${
               collapsed ? 'bottom-2 left-full ml-2 w-64' : 'bottom-full left-3 right-3 mb-2'
             }`}>
-              <div className="px-4 py-3 border-b border-border">
+              <div className="px-4 py-3 border-b border-border flex justify-between items-center">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Switch Account</p>
+                {/* Customer Mode Toggle */}
+                {['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER'].includes(user.role) && (
+                  <label className="flex items-center cursor-pointer" title="Toggle Customer Mode">
+                    <span className="text-xs font-semibold mr-2 text-muted-foreground">Customer Mode</span>
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only" checked={customerMode} onChange={(e) => {
+                        const val = e.target.checked;
+                        setCustomerMode(val);
+                        localStorage.setItem('customerMode', val);
+                        window.dispatchEvent(new Event('storage'));
+                      }} />
+                      <div className={`block w-8 h-5 rounded-full transition-colors ${customerMode ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                      <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${customerMode ? 'transform translate-x-3' : ''}`}></div>
+                    </div>
+                  </label>
+                )}
               </div>
               <div className="max-h-52 overflow-y-auto p-2">
                 {storedAccounts.map(account => (

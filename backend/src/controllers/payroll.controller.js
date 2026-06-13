@@ -101,6 +101,21 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
     // Total working days = all days − Sundays − holidays
     const totalWorkingDays = Math.max(1, daysInMonth - sundaysCount - holidayDays);
 
+    // Auto-create Employee profiles for Users who don't have one (e.g. newly created users or missing ones)
+    const missingEmployees = await prisma.user.findMany({
+      where: { role: { not: 'CUSTOMER' }, deletedAt: null, employeeProfile: null }
+    });
+    if (missingEmployees.length > 0) {
+      await prisma.employee.createMany({
+        data: missingEmployees.map(u => ({
+          userId: u.id,
+          department: 'Unassigned',
+          jobTitle: u.role,
+          isActive: true
+        }))
+      });
+    }
+
     const employees = await prisma.employee.findMany({
       where: { isActive: true, deletedAt: null },
       include: {

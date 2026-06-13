@@ -389,9 +389,11 @@ const forgotPassword = async (req, res, next) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
     const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
     await prisma.user.update({
       where: { email },
-      data: { resetPasswordOtp: otp, resetPasswordExpires: expires }
+      data: { resetPasswordOtp: hashedOtp, resetPasswordExpires: expires }
     });
 
     await sendOtpEmail(email, otp);
@@ -409,7 +411,12 @@ const verifyOtp = async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     
-    if (!user || user.resetPasswordOtp !== otp || new Date() > user.resetPasswordExpires) {
+    if (!user || !user.resetPasswordOtp || new Date() > user.resetPasswordExpires) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    const isMatch = await bcrypt.compare(otp, user.resetPasswordOtp);
+    if (!isMatch) {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
 
@@ -426,7 +433,12 @@ const resetPassword = async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     
-    if (!user || user.resetPasswordOtp !== otp || new Date() > user.resetPasswordExpires) {
+    if (!user || !user.resetPasswordOtp || new Date() > user.resetPasswordExpires) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    const isMatch = await bcrypt.compare(otp, user.resetPasswordOtp);
+    if (!isMatch) {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
 

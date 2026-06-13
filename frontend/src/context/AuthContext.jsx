@@ -13,6 +13,20 @@ export function AuthProvider({ children }) {
   // can see all previously signed-in accounts from any tab
   const [storedAccounts, setStoredAccounts] = useState([]);
 
+  // Helper to validate token expiry
+  const isTokenValid = (tkn) => {
+    if (!tkn) return false;
+    try {
+      const payload = JSON.parse(atob(tkn.split('.')[1]));
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   // ── helpers ─────────────────────────────────────────────────────────────────
   const _saveAccounts = (accounts) => {
     localStorage.setItem('chemicrown_accounts', JSON.stringify(accounts));
@@ -49,17 +63,25 @@ export function AuthProvider({ children }) {
 
   // ── Bootstrap ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Load the shared accounts list for the switcher
+    // Load the shared accounts list for the switcher, filtering out expired ones
     try {
       const saved = localStorage.getItem('chemicrown_accounts');
-      if (saved) setStoredAccounts(JSON.parse(saved));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const validAccounts = parsed.filter(a => isTokenValid(a.token));
+        setStoredAccounts(validAccounts);
+        if (validAccounts.length !== parsed.length) {
+          _saveAccounts(validAccounts);
+        }
+      }
     } catch {}
 
     // Validate this tab's token (sessionStorage → tab-isolated)
     const tkn = sessionStorage.getItem('token');
-    if (tkn) {
+    if (tkn && isTokenValid(tkn)) {
       fetchUser(tkn);
     } else {
+      if (tkn) sessionStorage.removeItem('token');
       setLoading(false);
     }
   }, [fetchUser]);

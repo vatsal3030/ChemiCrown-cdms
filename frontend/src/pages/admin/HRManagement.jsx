@@ -569,6 +569,14 @@ export default function HRManagement() {
   const uniqueRoles = [...new Set(employees.map(e => e.role))];
   const uniqueDepts = [...new Set(employees.map(e => e.employeeProfile?.department).filter(Boolean))];
   const activeCount = employees.filter(e => (e.employeeProfile?.status || 'ACTIVE') === 'ACTIVE').length;
+  
+  const todayStr = new Date().toISOString().substring(0, 10);
+  const presentTodayCount = employees.filter(e => {
+    if (!e.employeeProfile?.attendances) return false;
+    const todayAtt = e.employeeProfile.attendances.find(a => new Date(a.date).toISOString().substring(0, 10) === todayStr);
+    return todayAtt && ['PRESENT', 'HALF_DAY'].includes(todayAtt.status);
+  }).length;
+
   const suspendedCount = employees.filter(e => e.employeeProfile?.status === 'SUSPENDED').length;
   const terminatedCount = employees.filter(e => e.employeeProfile?.status === 'TERMINATED').length;
   const hasActiveFilters = statusFilter !== 'all' || roleFilter !== 'all' || deptFilter !== 'all';
@@ -648,7 +656,7 @@ export default function HRManagement() {
             ) : (
               [
                 { label: 'Total Employees', value: employees.length, icon: Users, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400', tab: 'directory' },
-                { label: 'Active Personnel', value: activeCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400', tab: 'directory' },
+                { label: 'Present Today', value: presentTodayCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400', tab: 'directory' },
                 { label: 'Pending Leaves', value: leaveRequests.filter(l => l.status === 'PENDING').length, icon: Clock, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400', tab: 'leaves' },
                 { label: 'Pending Overtimes', value: overtimes.filter(o => o.status === 'PENDING').length, icon: AlertCircle, color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400', tab: 'overtime' },
                 { label: 'Terminated', value: terminatedCount, icon: UserX, color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400', tab: 'directory' },

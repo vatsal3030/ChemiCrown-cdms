@@ -142,7 +142,18 @@ export default function Checkout() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || 'Failed to place order.');
+        if (data.outOfStockItem) {
+          toast.error(data.error || 'Insufficient stock.');
+          if (data.outOfStockItem.available > 0) {
+            updateQuantity(data.outOfStockItem.id, data.outOfStockItem.available);
+            toast.success(`Adjusted ${data.outOfStockItem.name} to maximum available stock.`);
+          } else {
+            removeFromCart(data.outOfStockItem.id);
+            toast.success(`Removed ${data.outOfStockItem.name} from cart as it is out of stock.`);
+          }
+        } else {
+          toast.error(data.error || 'Failed to place order.');
+        }
         setLoading(false);
         isProcessing.current = false;
         return;

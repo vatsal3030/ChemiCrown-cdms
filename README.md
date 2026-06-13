@@ -1,122 +1,143 @@
-<div align="center">
-  <img src="./logo.jpeg" alt="ChemiCrown Logo" width="200"/>
-  <h1>ChemiCrown CDMS</h1>
-  <p><strong>A Modern Chemical Distribution Management System</strong></p>
-  
-  <p>
-    <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
-    <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
-    <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
-    <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
-    <img src="https://img.shields.io/badge/Express.js-404D59?style=for-the-badge" alt="Express" />
-    <img src="https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white" alt="Prisma" />
-    <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  </p>
-</div>
+# 👑 ChemiCrown CDMS (Chemical Distribution Management System)
+
+![ChemiCrown Banner](chemicrown.png)
+
+## 📖 Overview
+**ChemiCrown CDMS** is a full-fledged, enterprise-grade ERP/B2B eCommerce platform tailored for chemical distribution. Built from the ground up to solve complex supply chain, HR, finance, and customer-management workflows, it provides an intuitive, high-performance web interface to manage end-to-end business operations.
+
+From **inventory tracking** to **HR payroll processing**, from **B2B customer orders** to **multi-role RBAC authorization**, ChemiCrown acts as the central nervous system for modern chemical enterprises.
 
 ---
 
-## 📖 Overview
+## 🚀 Key Features
 
-**ChemiCrown CDMS** is a comprehensive internal management and customer-facing portal built to digitize operations for wholesale industrial chemical distributors. It modernizes manual workflows by unifying **Inventory Management**, **Customer Ordering Pipelines**, **Live Chat Support**, and **Human Resources (Attendance & Payroll)** under one secure, real-time application.
+### 1. 👥 Multi-Role RBAC System
+- **Super Admin & Owner**: Full platform visibility, financial overrides, user management, and refund handling.
+- **Managers & Sales**: Process orders, configure payroll, view real-time inventory, and track sales performance.
+- **HR & Operations**: Manage employee records, track attendance, approve leaves, and generate dynamic payroll slips.
+- **Customers**: B2B customer portal with unified cart, wishlist, order history, invoice downloads, and Razorpay/UPI/COD payment support.
 
-## ✨ Key Features
+### 2. 🛒 B2B Order & Inventory Management
+- Centralized Product Catalog with complex variants, chemical specifications, and data sheets.
+- Automated stock deduction on payment success.
+- End-to-end order tracking (Requested ➔ Pending ➔ Processing ➔ Dispatched ➔ Delivered).
+- Advanced order state transitions with idempotency to prevent double charges.
 
-- **🛍️ Public & Customer Portal**
-  - Fully responsive, beautifully designed product catalog.
-  - Shopping Cart, Wishlist, and Checkout system.
-  - Personal Order History tracking.
-  
-- **📦 Inventory & Stock Management**
-  - Full CRUD for products, categories, and bulk inventory logic.
-  - Automated low-stock alerts and threshold monitoring.
-  - Material Safety Data Sheets (MSDS) & storage instruction tracking.
+### 3. 💳 Payments & Finance
+- Full Razorpay integration for fast, secure checkouts.
+- Direct UPI integration with UTR tracking for zero-fee transactions.
+- Automated ledger entry generation for sales, expenses, and payroll.
+- Refund lifecycle tracking (including cancellation fees and API refunds).
 
-- **💼 Sales & Order Pipeline**
-  - Role-based pipeline (Requested → Pending → Processing → Packaged → Dispatched → Delivered).
-  - Razorpay UPI Payment verification.
-  - Sales & Finance analytical dashboard with Recharts.
+### 4. 👔 Complete HRMS
+- **Attendance**: Real-time tracking (Present/Absent/Half-Day/Leave) dynamically syncing with payroll.
+- **Payroll**: Automated calculation of base pay, overtime, incentives, absent deductions, PF, and TDS.
+- **Employee Portal**: Dedicated "Customer Mode" for internal staff ordering, along with employee self-service to view attendance and download payslips.
 
-- **👥 Human Resources Module**
-  - Track Employee Attendance, Leaves, and Overtime visually via calendar UI.
-  - Generate automated Monthly Payslips factoring in incentives and deductions.
-  - Admin view for managing company staff and RBAC (Role-Based Access Control) permissions.
-
-- **⚡ Real-time & System Utilities**
-  - Real-time Notifications & Live Support Chat powered by `Socket.io`.
-  - Comprehensive Audit Logs and an internal "Recycle Bin" for soft-deleted entities.
-  - Zod data validation, Helmet security headers, and JWT Authentication.
+---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **Framework:** React 19 + Vite
-- **Styling:** Tailwind CSS v4, Framer Motion (micro-animations), `lucide-react` (icons)
-- **Routing & State:** React Router DOM v7, SWR (data fetching)
-- **Data Viz & Utilities:** Recharts, Leaflet (maps), `react-hot-toast`
+### Frontend (Client Application)
+- **Framework**: React 18 + Vite
+- **Routing**: React Router DOM (v6)
+- **Styling**: Tailwind CSS + Lucide Icons
+- **State Management & Data Fetching**: Context API, React Query (for complex data)
+- **UI Components**: Recharts (Analytics), Framer Motion (Animations), react-hot-toast (Notifications)
+- **Build Tool**: Vite
 
-### Backend
-- **Core:** Node.js, Express.js
-- **Database & ORM:** PostgreSQL, Prisma ORM (v6)
-- **Real-time & Security:** Socket.io, JWT (jsonwebtoken), Bcryptjs, Zod
-- **3rd-Party Integrations:** Cloudinary (image hosting), Nodemailer (emails), Razorpay (payments)
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (v18+ recommended)
-- PostgreSQL (local or remote instance)
-- API Keys for Cloudinary, Razorpay, and an SMTP email service.
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone <your-repo-url>
-   cd ChemiCrown-cdms
-   ```
-
-2. **Backend Setup:**
-   ```bash
-   cd backend
-   npm install
-   ```
-   - Duplicate `.env.example` to `.env` and fill in your `DATABASE_URL`, `JWT_SECRET`, and API keys.
-   - Run database migrations and seed the database:
-     ```bash
-     npx prisma migrate dev
-     node prisma/seed.js
-     node seed-holidays.js
-     ```
-   - Start the server:
-     ```bash
-     npm run dev
-     ```
-
-3. **Frontend Setup:**
-   ```bash
-   cd ../frontend
-   npm install
-   ```
-   - Create a `.env` file referencing your backend URL:
-     ```env
-     VITE_API_URL=http://localhost:5000
-     ```
-   - Start the dev server:
-     ```bash
-     npm run dev
-     ```
-
-## 🔒 Access Control (RBAC)
-The system leverages a strict internal Role system to toggle UI components and lock down API routes:
-- `SUPER_ADMIN`, `OWNER`: Full system & financial access.
-- `MANAGER`: Overlooks HR, Inventory, and overall operations.
-- `SALES`, `MARKETING`: Customer verification, quotation handling, and order advancing.
-- `INVENTORY_MANAGER`: Exclusive access to stock modification and supplier tracking.
-- `CUSTOMER`: Limited public access + Personal Cart/Wishlist/Order History.
-
-## 🤝 Contributing
-Built by the dedicated Internship Team. Refer to the `docs/` folder for internal Project Charters, Entity-Relationship Diagrams, and Architecture flows.
+### Backend (API & Business Logic)
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database ORM**: Prisma
+- **Database**: PostgreSQL (hosted on Supabase)
+- **Authentication**: JSON Web Tokens (JWT) + Bcrypt
+- **Security**: Helmet, CORS, Express Rate Limit
+- **Payment Gateway**: Razorpay SDK
 
 ---
-*Powered by ChemiCrown - Distributing Excellence.*
+
+## ⚙️ Getting Started (Local Development)
+
+### Prerequisites
+- Node.js (v18+)
+- PostgreSQL Database (Local or Supabase)
+- Razorpay Sandbox Account
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/vatsal3030/ChemiCrown-cdms.git
+cd ChemiCrown-cdms
+```
+
+### 2. Backend Setup
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file in the `backend/` directory:
+```env
+# Server
+PORT=5000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# Database (Prisma)
+DATABASE_URL="postgresql://user:password@localhost:5432/chemicrown"
+DIRECT_URL="postgresql://user:password@localhost:5432/chemicrown"
+
+# JWT Auth
+JWT_SECRET=your_super_secret_key_here
+JWT_EXPIRES_IN=24h
+
+# Razorpay
+RAZORPAY_KEY_ID=rzp_test_xxxxxx
+RAZORPAY_KEY_SECRET=your_razorpay_secret
+```
+
+Run database migrations and seed the database:
+```bash
+npx prisma db push
+node src/seeds/runAllSeeds.js
+```
+
+Start the backend development server:
+```bash
+npm run dev
+```
+
+### 3. Frontend Setup
+Open a new terminal window:
+```bash
+cd frontend
+npm install
+```
+
+Create a `.env` file in the `frontend/` directory:
+```env
+VITE_API_URL=http://localhost:5000
+VITE_RAZORPAY_KEY_ID=rzp_test_xxxxxx
+```
+
+Start the frontend development server:
+```bash
+npm run dev
+```
+
+---
+
+## 🏗️ Architecture & Concepts
+
+1. **Monolithic API with Contextual Routes**: The Express API serves distinct routing namespaces (`/api/auth`, `/api/hr`, `/api/orders`, `/api/finance`) ensuring separation of concerns.
+2. **Tab-Isolated Shopping Cart**: Built entirely on `sessionStorage`, ensuring different accounts can securely log in across different browser tabs without data collision.
+3. **Idempotency**: Critical checkout and payment endpoints employ idempotency keys to completely eliminate race conditions and ghost deductions.
+4. **Soft Deletes**: Entities like Employees, Products, and Users use `deletedAt` timestamps to ensure historical referential integrity (e.g., viewing past orders for a deleted product).
+5. **Real-Time Synchronisation**: Global states like 'Customer Mode' and 'Authentication' utilize cross-tab synchronization through `window.addEventListener('storage')`.
+
+---
+
+## 📝 License
+This project is proprietary and confidential.
+
+Developed specifically for **ChemiCrown**. All rights reserved.

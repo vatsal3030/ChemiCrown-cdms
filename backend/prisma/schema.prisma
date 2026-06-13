@@ -151,7 +151,6 @@ model Product {
   
   @@index([name])
   @@index([casNumber])
-  @@index([categoryId])
   @@index([deletedAt])
   isActive    Boolean  @default(true) // Deprecated: use deletedAt
   isAvailable Boolean  @default(true) // Admin toggle for availability
