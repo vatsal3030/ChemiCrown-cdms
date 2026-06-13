@@ -1261,7 +1261,6 @@ export default function HRManagement() {
                   </tr>
                 </tbody>
               ) : (
-                </thead>
                 <tbody className="divide-y divide-border">
                   {overtimes.map(ot => (
                     <tr key={ot.id} className="hover:bg-muted/20 transition-colors">
@@ -1309,8 +1308,8 @@ export default function HRManagement() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            )}
+              )}
+            </table>
           </div>
         </div>
       )}
