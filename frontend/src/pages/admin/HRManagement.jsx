@@ -1236,28 +1236,31 @@ export default function HRManagement() {
 
           {/* Overtime Records Table */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            {otLoading ? (
-              <div className="w-full p-4">
-                <SkeletonTableBody rows={3} columns={5} />
-              </div>
-            ) : overtimes.length === 0 ? (
-              <div className="p-8 text-center">
-                <Timer size={32} className="mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-muted-foreground">No overtime records found.</p>
-                <p className="text-xs text-muted-foreground mt-1">Click "Log Overtime" to add the first entry.</p>
-              </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Employee</th>
-                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date</th>
-                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Hours</th>
-                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Rate</th>
-                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Amount</th>
-                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3"></th>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Employee</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date</th>
+                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Hours</th>
+                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Rate</th>
+                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Amount</th>
+                  <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              {otLoading ? (
+                <SkeletonTableBody rows={3} columns={7} />
+              ) : overtimes.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center">
+                      <Timer size={32} className="mx-auto mb-3 text-muted-foreground/40" />
+                      <p className="text-muted-foreground">No overtime records found.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Click "Log Overtime" to add the first entry.</p>
+                    </td>
                   </tr>
+                </tbody>
+              ) : (
                 </thead>
                 <tbody className="divide-y divide-border">
                   {overtimes.map(ot => (
@@ -1384,28 +1387,30 @@ export default function HRManagement() {
           )}
 
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            {incLoading ? (
-              <div className="w-full p-4">
-                <SkeletonTableBody rows={3} columns={5} />
-              </div>
-            ) : incentives.length === 0 ? (
-              <div className="p-8 text-center">
-                <Award size={32} className="mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-muted-foreground">No incentives recorded yet.</p>
-                <p className="text-xs text-muted-foreground mt-1">Click "Add Incentive" to log the first one.</p>
-              </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Employee</th>
-                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Month</th>
-                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Achieved</th>
-                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Incentive</th>
-                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Employee</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Month</th>
+                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Achieved</th>
+                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Incentive</th>
+                  <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              {incLoading ? (
+                <SkeletonTableBody rows={3} columns={6} />
+              ) : incentives.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center">
+                      <Award size={32} className="mx-auto mb-3 text-muted-foreground/40" />
+                      <p className="text-muted-foreground">No incentives recorded yet.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Click "Add Incentive" to log the first one.</p>
+                    </td>
                   </tr>
-                </thead>
+                </tbody>
+              ) : (
                 <tbody className="divide-y divide-border">
                   {incentives.map(inc => (
                     <tr key={inc.id} className="hover:bg-muted/20 transition-colors">
@@ -1454,8 +1459,8 @@ export default function HRManagement() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            )}
+              )}
+            </table>
           </div>
         </div>
       )}

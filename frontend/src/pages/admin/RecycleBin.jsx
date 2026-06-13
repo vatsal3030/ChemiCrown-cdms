@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Trash2, RotateCcw, AlertTriangle, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { SkeletonTableBody } from '@/components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 export default function RecycleBin() {
