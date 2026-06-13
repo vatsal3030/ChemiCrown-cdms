@@ -123,7 +123,9 @@ export default function RecycleBin() {
                   <th className="px-6 py-4 text-right font-semibold text-slate-700 dark:text-slate-300">Actions</th>
                 </tr>
               </thead>
-              <SkeletonTableBody columns={5} rows={5} />
+              <tbody>
+                <SkeletonTableBody columns={5} rows={5} />
+              </tbody>
             </table>
           ) : items.length === 0 ? (
           <div className="p-12 text-center">

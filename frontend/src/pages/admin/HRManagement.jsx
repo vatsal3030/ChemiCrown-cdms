@@ -1249,7 +1249,9 @@ export default function HRManagement() {
                 </tr>
               </thead>
               {otLoading ? (
-                <SkeletonTableBody rows={3} columns={7} />
+                <tbody>
+                  <SkeletonTableBody rows={3} columns={7} />
+                </tbody>
               ) : overtimes.length === 0 ? (
                 <tbody>
                   <tr>
@@ -1398,7 +1400,9 @@ export default function HRManagement() {
                 </tr>
               </thead>
               {incLoading ? (
-                <SkeletonTableBody rows={3} columns={6} />
+                <tbody>
+                  <SkeletonTableBody rows={3} columns={6} />
+                </tbody>
               ) : incentives.length === 0 ? (
                 <tbody>
                   <tr>
