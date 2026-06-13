@@ -46,7 +46,7 @@ export default function PayrollPaymentPage() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          const found = data.data.find(s => s.id === parseInt(id));
+          const found = data.data.find(s => s.id === id);
           if (found) {
             setSlip(found);
             const pref = found.employee?.paymentPreference;

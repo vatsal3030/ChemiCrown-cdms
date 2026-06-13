@@ -82,6 +82,14 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
     const [year, monthNum] = month.split('-').map(Number);
     const monthStart = new Date(year, monthNum - 1, 1);
     const monthEnd = new Date(year, monthNum, 1);
+    
+    // Security Check: Block generation for future months
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (monthStart > currentMonthStart) {
+      return res.status(400).json({ success: false, message: 'Cannot generate payroll for future months' });
+    }
+
     const daysInMonth = new Date(year, monthNum, 0).getDate();
 
     // Count Sundays in this month
@@ -137,101 +145,120 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
 
     const results = [];
 
-    await prisma.$transaction(async (tx) => {
-      for (const emp of employees) {
-        // Skip if already generated
-        if (emp.salaries.length > 0) {
-          results.push({ employeeId: emp.id, skipped: true, reason: 'Slip already exists' });
-          continue;
-        }
-
-        const baseSalary = emp.baseSalary || 0;
-        if (baseSalary === 0) {
-          results.push({ employeeId: emp.id, skipped: true, reason: 'No base salary configured' });
-          continue;
-        }
-
-        const pfRate = emp.pfRate || 12;
-        const perDaySalary = baseSalary / totalWorkingDays;
-
-        // Count absent days and half days (only on actual working days)
-        let absentDays = 0;
-        emp.attendances.forEach(a => {
-          const dayOfWeek = new Date(a.date).getDay();
-          const isSunday = dayOfWeek === 0;
-          const isHoliday = holidayDates.some(h => 
-            new Date(h.date).toDateString() === new Date(a.date).toDateString()
-          );
-          // Don't count absences on Sundays or holidays
-          if (!isSunday && !isHoliday) {
-            if (a.status === 'ABSENT') absentDays += 1;
-            else if (a.status === 'HALF_DAY') absentDays += 0.5;
-          }
-        });
-
-        // Overtime payout (sum of all approved overtime for the month)
-        const overtimePayout = emp.overtimes.reduce((sum, ot) => sum + (ot.amount || 0), 0);
-
-        // Incentive payout (sales/marketing commission)
-        const incentivePayout = emp.salesIncentives.reduce((sum, si) => sum + (si.incentiveAmount || 0), 0);
-
-        const absentDeduction = Number((perDaySalary * absentDays).toFixed(2));
-        const pfContribution = Number(((baseSalary * pfRate) / 100).toFixed(2));
-        const netPay = Number(Math.max(0,
-          baseSalary
-          + overtimePayout
-          + incentivePayout
-          - absentDeduction
-          - pfContribution
-        ).toFixed(2));
-
-        const slip = await tx.salary.create({
-          data: {
-            employeeId: emp.id,
-            month,
-            amount: baseSalary,
-            overtime: Number(overtimePayout.toFixed(2)),
-            incentive: Number(incentivePayout.toFixed(2)),
-            absentDeduction,
-            deductions: absentDeduction, // for compatibility
-            pfContribution,
-            netPay,
-            absentDays,
-            workingDays: totalWorkingDays,
-            holidayDays,
-            status: 'PENDING'
-          }
-        });
-
-        // Mark overtime as PAID and link to salary
-        if (emp.overtimes.length > 0) {
-          await tx.overtime.updateMany({
-            where: { id: { in: emp.overtimes.map(o => o.id) } },
-            data: { status: 'PAID', salaryId: slip.id }
-          });
-        }
-
-        // Mark incentives as PAID and link to salary
-        if (emp.salesIncentives.length > 0) {
-          await tx.salesIncentive.updateMany({
-            where: { id: { in: emp.salesIncentives.map(si => si.id) } },
-            data: { status: 'PAID', salaryId: slip.id }
-          });
-        }
-
-        // Upsert PF ledger
-        await tx.pFLedger.upsert({
-          where: { employeeId: emp.id },
-          create: { employeeId: emp.id, balance: pfContribution, lastUpdatedMonth: month },
-          update: {
-            balance: { increment: pfContribution },
-            lastUpdatedMonth: month
-          }
-        });
-
-        results.push({ employeeId: emp.id, salaryId: slip.id, netPay, pfContribution, absentDays, overtimePayout, incentivePayout });
+    for (const emp of employees) {
+      // Skip if already generated
+      if (emp.salaries.length > 0) {
+        results.push({ employeeId: emp.id, skipped: true, reason: 'Slip already exists' });
+        continue;
       }
-    });
+
+      // Security Check: Do not generate slip if they joined AFTER this month
+      if (emp.joiningDate && new Date(emp.joiningDate) >= monthEnd) {
+        results.push({ employeeId: emp.id, skipped: true, reason: 'Joined after this month' });
+        continue;
+      }
+
+      // Security Check: Do not generate slip if they were terminated/resigned BEFORE this month started
+      if ((emp.status === 'TERMINATED' || emp.status === 'RESIGNED') && emp.terminatedAt) {
+        if (new Date(emp.terminatedAt) < monthStart) {
+          results.push({ employeeId: emp.id, skipped: true, reason: 'Terminated/Resigned before this month' });
+          continue;
+        }
+      }
+
+      const baseSalary = emp.baseSalary || 0;
+      if (baseSalary === 0) {
+        results.push({ employeeId: emp.id, skipped: true, reason: 'No base salary configured' });
+        continue;
+      }
+
+      const pfRate = emp.pfRate || 12;
+      const perDaySalary = baseSalary / totalWorkingDays;
+
+      // Count absent days and half days (only on actual working days)
+      let absentDays = 0;
+      emp.attendances.forEach(a => {
+        const dayOfWeek = new Date(a.date).getDay();
+        const isSunday = dayOfWeek === 0;
+        const isHoliday = holidayDates.some(h => 
+          new Date(h.date).toDateString() === new Date(a.date).toDateString()
+        );
+        // Don't count absences on Sundays or holidays
+        if (!isSunday && !isHoliday) {
+          if (a.status === 'ABSENT') absentDays += 1;
+          else if (a.status === 'HALF_DAY') absentDays += 0.5;
+        }
+      });
+
+      // Overtime payout (sum of all approved overtime for the month)
+      const overtimePayout = emp.overtimes.reduce((sum, ot) => sum + (ot.amount || 0), 0);
+
+      // Incentive payout (sales/marketing commission)
+      const incentivePayout = emp.salesIncentives.reduce((sum, si) => sum + (si.incentiveAmount || 0), 0);
+
+      const absentDeduction = Number((perDaySalary * absentDays).toFixed(2));
+      const pfContribution = Number(((baseSalary * pfRate) / 100).toFixed(2));
+      const netPay = Number(Math.max(0,
+        baseSalary
+        + overtimePayout
+        + incentivePayout
+        - absentDeduction
+        - pfContribution
+      ).toFixed(2));
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          const slip = await tx.salary.create({
+            data: {
+              employeeId: emp.id,
+              month,
+              amount: baseSalary,
+              overtime: Number(overtimePayout.toFixed(2)),
+              incentive: Number(incentivePayout.toFixed(2)),
+              absentDeduction,
+              deductions: absentDeduction, // for compatibility
+              pfContribution,
+              netPay,
+              absentDays,
+              workingDays: totalWorkingDays,
+              holidayDays,
+              status: 'PENDING'
+            }
+          });
+
+          // Mark overtime as PAID and link to salary
+          if (emp.overtimes.length > 0) {
+            await tx.overtime.updateMany({
+              where: { id: { in: emp.overtimes.map(o => o.id) } },
+              data: { status: 'PAID', salaryId: slip.id }
+            });
+          }
+
+          // Mark incentives as PAID and link to salary
+          if (emp.salesIncentives.length > 0) {
+            await tx.salesIncentive.updateMany({
+              where: { id: { in: emp.salesIncentives.map(si => si.id) } },
+              data: { status: 'PAID', salaryId: slip.id }
+            });
+          }
+
+          // Upsert PF ledger
+          await tx.pFLedger.upsert({
+            where: { employeeId: emp.id },
+            create: { employeeId: emp.id, balance: pfContribution, lastUpdatedMonth: month },
+            update: {
+              balance: { increment: pfContribution },
+              lastUpdatedMonth: month
+            }
+          });
+
+          results.push({ employeeId: emp.id, salaryId: slip.id, netPay, pfContribution, absentDays, overtimePayout, incentivePayout });
+        }, { timeout: 15000, maxWait: 5000 }); // Increase transaction timeout per employee
+      } catch (err) {
+        console.error(`Failed to process payroll for employee ${emp.id}:`, err);
+        results.push({ employeeId: emp.id, skipped: true, reason: 'Transaction failed or timed out' });
+      }
+    }
 
     const generatedCount = results.filter(r => !r.skipped).length;
     const skippedCount = results.filter(r => r.skipped).length;
