@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
 const bcrypt = require('bcryptjs');
+const { sendWelcomeEmail } = require('../services/email.service');
 
 exports.getEmployees = async (req, res, next) => {
   try {
@@ -220,6 +221,9 @@ exports.addEmployee = async (req, res, next) => {
 
       return { user, employee };
     });
+
+    // Send Welcome Email containing credentials
+    await sendWelcomeEmail(email, password, firstName);
 
     res.status(201).json({ success: true, message: 'Employee added successfully', data: newEmployee });
   } catch (error) {
