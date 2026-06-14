@@ -126,8 +126,12 @@ export default function LeaveDetails() {
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl">
-              {empUser?.firstName?.[0]}{empUser?.lastName?.[0]}
+            <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl overflow-hidden">
+              {empUser?.profileImageUrl ? (
+                <img src={empUser.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                `${empUser?.firstName?.[0] || ''}${empUser?.lastName?.[0] || ''}`
+              )}
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-900">{empUser?.firstName} {empUser?.lastName}</h2>

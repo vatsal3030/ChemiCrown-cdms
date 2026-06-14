@@ -293,8 +293,12 @@ export default function CustomerManagement() {
                 <tr key={customer.id} className="data-table-row">
                   <td className="data-table-cell">
                     <a href={`/dashboard/customers/${customer.id}`} className="flex flex-wrap items-center gap-3 hover:opacity-80 transition-opacity">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${customer.isBlocked ? 'bg-rose-100 text-rose-700' : 'bg-primary/10 text-primary'}`}>
-                        {customer.company?.[0] || '?'}
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden ${customer.isBlocked ? 'bg-rose-100 text-rose-700' : 'bg-primary/10 text-primary'}`}>
+                        {customer.user?.profileImageUrl ? (
+                          <img src={customer.user.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          customer.company?.[0] || '?'
+                        )}
                       </div>
                       <div>
                         <p className="font-semibold text-primary hover:underline">{customer.company || 'N/A'}</p>

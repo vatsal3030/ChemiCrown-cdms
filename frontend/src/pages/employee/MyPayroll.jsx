@@ -136,13 +136,13 @@ export default function MyPayroll() {
   // fetchPayroll defined in component scope (not inside useEffect)
   // so it can be passed as a prop and called from child components
   const fetchPayroll = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/my`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
       if (json.success) {
-        // Defensive: ensure salaries is always an array
         setData({
           salaries: Array.isArray(json.data?.salaries) ? json.data.salaries : [],
           pfBalance: json.data?.pfBalance || 0,
@@ -163,7 +163,7 @@ export default function MyPayroll() {
   }, [fetchPayroll]);
 
   const salaries = data.salaries || [];
-  const totalEarned = salaries.filter(s => s.status === 'PAID').reduce((a, s) => a + (s.netPay || 0), 0);
+  const totalEarned = salaries.reduce((a, s) => a + (s.netPay || 0), 0);
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
 
   return (
@@ -222,7 +222,7 @@ export default function MyPayroll() {
                 </div>
               </div>
               <p className="text-2xl font-bold text-foreground mt-2">₹{totalEarned.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">Across all paid months</p>
+              <p className="text-xs text-muted-foreground mt-1">Across all salary slips</p>
             </div>
             <div className="kpi-card">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

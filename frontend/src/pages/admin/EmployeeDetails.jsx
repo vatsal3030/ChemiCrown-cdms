@@ -125,8 +125,12 @@ export default function EmployeeDetails() {
         <div className="absolute top-0 right-0 p-32 opacity-10 pointer-events-none">
           <Trophy size={400} className="text-indigo-400 rotate-12" />
         </div>
-        <div className="relative z-10 w-28 h-28 rounded-full bg-linear-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-5xl font-black shadow-[0_0_30px_rgba(99,102,241,0.5)] border-4 border-white/10">
-          {employee.firstName?.charAt(0) || 'E'}
+        <div className="relative z-10 w-28 h-28 rounded-full bg-linear-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-5xl font-black shadow-[0_0_30px_rgba(99,102,241,0.5)] border-4 border-white/10 overflow-hidden">
+          {employee.profileImageUrl ? (
+            <img src={employee.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            employee.firstName?.charAt(0) || 'E'
+          )}
         </div>
         <div className="relative z-10 flex-1 text-center md:text-left">
           <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-slate-300">

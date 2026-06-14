@@ -25,20 +25,20 @@ export default function MyAttendance() {
   const [showLeaveForm, setShowLeaveForm] = useState(false);
   const [viewDate, setViewDate] = useState(new Date());
   
-  const fetcher = async (url) => {
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const fetcher = async ([url, t]) => {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${t}` } });
     const json = await res.json();
     if (!json.success) throw new Error(json.message);
     return json.data;
   };
 
   const { data: profile, error, isLoading } = useSWR(
-    token ? `${import.meta.env.VITE_API_URL}/api/hr/me` : null,
+    token ? [`${import.meta.env.VITE_API_URL}/api/hr/me`, token] : null,
     fetcher
   );
 
   const { data: leaveRequests, mutate: mutateLeaves } = useSWR(
-    token ? `${import.meta.env.VITE_API_URL}/api/leaves/my` : null,
+    token ? [`${import.meta.env.VITE_API_URL}/api/leaves/my`, token] : null,
     fetcher
   );
 

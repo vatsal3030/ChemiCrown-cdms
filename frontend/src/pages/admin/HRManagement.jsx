@@ -83,8 +83,12 @@ function IssueWarningModal({ employee, token, onClose, onSuccess }) {
         </div>
         <div className="p-6 space-y-4">
           <div className="bg-muted/50 rounded-xl p-3 flex flex-wrap items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
-              {employee.firstName?.[0]}
+            <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm overflow-hidden">
+              {employee.profileImageUrl ? (
+                <img src={employee.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                employee.firstName?.[0] || '?'
+              )}
             </div>
             <div>
               <p className="font-semibold text-sm text-foreground">{employee.firstName} {employee.lastName}</p>
@@ -877,8 +881,12 @@ export default function HRManagement() {
                     <tr key={emp.id} className="data-table-row">
                       <td className="data-table-cell">
                         <div className="flex flex-wrap items-center gap-3 cursor-pointer group" onClick={() => navigate(`/dashboard/hr/${emp.id}`)}>
-                          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors text-sm">
-                            {emp.firstName?.[0] || '?'}
+                          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors text-sm overflow-hidden">
+                            {emp.profileImageUrl ? (
+                              <img src={emp.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                              emp.firstName?.[0] || '?'
+                            )}
                           </div>
                           <div>
                             <div className="font-semibold text-slate-900 dark:text-slate-50 group-hover:text-primary transition-colors">

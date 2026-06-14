@@ -52,8 +52,12 @@ function TaskCard({ task, user, onDelete, onView, dragging, dragHandleProps }) {
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-3 pt-3 border-t border-border">
         <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] uppercase">
-            {task.assignedTo?.user?.firstName?.[0] || '?'}
+          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] uppercase overflow-hidden">
+            {task.assignedTo?.user?.profileImageUrl ? (
+              <img src={task.assignedTo.user.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              task.assignedTo?.user?.firstName?.[0] || '?'
+            )}
           </div>
           <span className="truncate max-w-[100px]">{assigneeName}</span>
         </div>

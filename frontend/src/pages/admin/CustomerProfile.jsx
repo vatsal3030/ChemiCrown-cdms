@@ -131,8 +131,12 @@ export default function CustomerProfile() {
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-blue-500 to-primary"></div>
             <div className="flex flex-wrap items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl">
-                {customer.companyName?.[0] || user.firstName[0]}
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl overflow-hidden">
+                {user.profileImageUrl ? (
+                  <img src={user.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  customer.companyName?.[0] || user.firstName[0]
+                )}
               </div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">{customer.companyName || `${user.firstName} ${user.lastName}`}</h2>

@@ -145,11 +145,15 @@ export default function AuditLogDetails() {
             
             {log.user ? (
               <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-                    {log.user.firstName?.[0] || 'U'}
-                  </div>
-                  <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden">
+                      {log.user.profileImageUrl ? (
+                        <img src={log.user.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        log.user.firstName?.[0] || 'U'
+                      )}
+                    </div>
+                    <div>
                     <div className="font-bold">{log.user.firstName} {log.user.lastName}</div>
                     <div className="text-sm text-muted-foreground">{log.user.email}</div>
                   </div>
