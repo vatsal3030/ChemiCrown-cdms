@@ -83,14 +83,19 @@ exports.getDashboardStats = async (req, res, next) => {
 
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
-      // Set to 1st of the month to avoid edge case overflow (e.g., subtracting a month from Jan 31st -> skips to Mar 3rd)
+      // Set to 1st of the month to avoid edge case overflow
       const targetMonthDate = new Date(d.getFullYear(), d.getMonth() - i, 1);
-      revenueMap[monthNames[targetMonthDate.getMonth()]] = 0;
+      const m = monthNames[targetMonthDate.getMonth()];
+      const y = targetMonthDate.getFullYear().toString().substring(2);
+      revenueMap[`${m} '${y}`] = 0;
     }
 
     recentPayments.forEach(p => {
-      const m = monthNames[new Date(p.createdAt).getMonth()];
-      if (revenueMap[m] !== undefined) revenueMap[m] += p.amount;
+      const pDate = new Date(p.createdAt);
+      const m = monthNames[pDate.getMonth()];
+      const y = pDate.getFullYear().toString().substring(2);
+      const key = `${m} '${y}`;
+      if (revenueMap[key] !== undefined) revenueMap[key] += p.amount;
     });
 
     const revenueValues = Object.values(revenueMap);

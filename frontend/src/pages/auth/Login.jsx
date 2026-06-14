@@ -234,7 +234,7 @@ export default function Login() {
                   Remember me <span className="text-xs text-muted-foreground">({rememberMe ? '30 days' : '7 days'})</span>
                 </span>
               </label>
-              <Link to="/forgot-password" className="text-sm font-medium text-primary hover:text-primary/80">
+              <Link to="/forgot-password" state={{ email }} className="text-sm font-medium text-primary hover:text-primary/80">
                 Forgot password?
               </Link>
             </div>

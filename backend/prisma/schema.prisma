@@ -666,3 +666,9 @@ enum OvertimeStatus {
   CANCELLED
   PAID
 }
+
+
+model IdempotencyKey {
+  key       String   @id
+  createdAt DateTime @default(now())
+}

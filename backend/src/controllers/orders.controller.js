@@ -7,7 +7,7 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET || 'secret_placeholder'
 });
 
-const processedRequests = new Map();
+
 
 const createOrder = async (req, res, next) => {
   try {
@@ -15,11 +15,24 @@ const createOrder = async (req, res, next) => {
     const userId = req.user.id;
 
     const idempotencyKey = `${userId}-${JSON.stringify(items)}`;
-    if (processedRequests.has(idempotencyKey)) {
-      return res.status(409).json({ error: 'Duplicate order detected. Please wait before placing the same order again.' });
+    
+    try {
+      await prisma.idempotencyKey.create({
+        data: { key: idempotencyKey }
+      });
+    } catch (err) {
+      if (err.code === 'P2002') {
+        return res.status(409).json({ error: 'Duplicate order detected. Please wait before placing the same order again.' });
+      }
+      throw err;
     }
-    processedRequests.set(idempotencyKey, true);
-    setTimeout(() => processedRequests.delete(idempotencyKey), 60000);
+
+    // Cleanup old keys (fire and forget)
+    prisma.idempotencyKey.deleteMany({
+      where: {
+        createdAt: { lt: new Date(Date.now() - 60000) }
+      }
+    }).catch(() => {});
 
     let customer = await prisma.customer.findUnique({ where: { userId } });
     
@@ -160,8 +173,12 @@ const verifyPayment = async (req, res, next) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(500).json({ error: 'Server configuration error: Razorpay secret not set' });
+    }
+
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'secret_placeholder')
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
       .digest('hex');
 

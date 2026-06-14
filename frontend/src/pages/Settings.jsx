@@ -10,6 +10,21 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 
+const PREDEFINED_AVATARS = [
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=c0aede",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper&backgroundColor=ffdfbf",
+  "https://api.dicebear.com/7.x/bottts/svg?seed=Robot&backgroundColor=d1d4f9",
+  "https://api.dicebear.com/7.x/identicon/svg?seed=Tech&backgroundColor=b6e3f4",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Sara&backgroundColor=c0aede",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Brian&backgroundColor=ffdfbf",
+  "https://api.dicebear.com/7.x/adventurer/svg?seed=Mia&backgroundColor=b6e3f4",
+  "https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&backgroundColor=d1d4f9",
+  "https://api.dicebear.com/7.x/micah/svg?seed=John&backgroundColor=ffdfbf",
+  "https://api.dicebear.com/7.x/micah/svg?seed=Jane&backgroundColor=c0aede",
+  "https://api.dicebear.com/7.x/initials/svg?seed=Admin&backgroundColor=b6e3f4"
+];
+
 const TABS = [
   { id: 'profile',       label: 'Profile',       icon: User },
   { id: 'security',      label: 'Security',      icon: Lock },
@@ -87,9 +102,20 @@ export default function Settings() {
   }, [formData, SESSION_KEY]);
 
   // Security
-  const [pwData, setPwData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwData, setPwData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '', otp: '' });
   const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false });
   const [isChangingPw, setIsChangingPw] = useState(false);
+  const [useOtpReset, setUseOtpReset] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => setOtpTimer((prev) => prev - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
 
   // Notifications
   const [notifPrefs, setNotifPrefs] = useState({
@@ -117,6 +143,18 @@ export default function Settings() {
       if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
       setProfileImage(file);
       setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSelectPredefinedAvatar = async (url) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const file = new File([blob], "avatar.svg", { type: "image/svg+xml" });
+      setProfileImage(file);
+      setPreviewUrl(url);
+    } catch (err) {
+      toast.error('Failed to load avatar');
     }
   };
 
@@ -158,16 +196,26 @@ export default function Settings() {
     e.preventDefault();
     if (pwData.newPassword.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     if (pwData.newPassword !== pwData.confirmPassword) { toast.error('Passwords do not match'); return; }
+    
+    if (useOtpReset && pwData.otp.length < 6) { toast.error('Please enter a valid 6-digit OTP'); return; }
+
     setIsChangingPw(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/change-password`, {
+      const endpoint = useOtpReset ? '/api/auth/reset-password' : '/api/auth/change-password';
+      const body = useOtpReset 
+        ? { email: user.email, otp: pwData.otp, newPassword: pwData.newPassword }
+        : { currentPassword: pwData.currentPassword, newPassword: pwData.newPassword };
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ currentPassword: pwData.currentPassword, newPassword: pwData.newPassword })
+        body: JSON.stringify(body)
       });
       const json = await res.json();
       if (res.ok) {
-        setPwData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setPwData({ currentPassword: '', newPassword: '', confirmPassword: '', otp: '' });
+        setUseOtpReset(false);
+        setOtpSent(false);
         toast.success('Password changed successfully!');
       } else {
         toast.error(json.error || 'Failed to change password');
@@ -175,6 +223,26 @@ export default function Settings() {
     } catch (err) { console.error(err); toast.error('Network error'); }
     finally {
       setIsChangingPw(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`OTP sent to ${user.email}`);
+        setOtpSent(true);
+        setOtpTimer(60);
+      } else {
+        toast.error(data.error || 'Failed to send OTP');
+      }
+    } catch {
+      toast.error('Network error');
     }
   };
 
@@ -253,6 +321,21 @@ export default function Settings() {
                 </div>
               </div>
 
+              <div>
+                <p className="font-semibold text-sm text-foreground mb-3">Or choose a pre-defined avatar</p>
+                <div className="flex flex-wrap gap-4">
+                  {PREDEFINED_AVATARS.map((url, i) => (
+                    <div 
+                      key={i} 
+                      onClick={() => handleSelectPredefinedAvatar(url)}
+                      className={`w-14 h-14 rounded-2xl cursor-pointer overflow-hidden border-2 transition-all hover:scale-105 ${previewUrl === url ? 'border-primary shadow-md shadow-primary/20' : 'border-transparent hover:border-primary/50'}`}
+                    >
+                      <img src={url} alt="Predefined Avatar" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="form-label">First Name</label>
@@ -303,56 +386,117 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground mt-0.5">Use a strong password with at least 8 characters.</p>
                 </div>
 
-                {[
-                  { key: 'currentPassword', label: 'Current Password', showKey: 'current' },
-                  { key: 'newPassword', label: 'New Password', showKey: 'new' },
-                  { key: 'confirmPassword', label: 'Confirm New Password', showKey: 'confirm' }
-                ].map(({ key, label, showKey }) => (
-                  <div key={key}>
-                    <label className="form-label">{label}</label>
-                    <div className="relative">
-                      <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        type={showPw[showKey] ? 'text' : 'password'}
-                        className="pl-9 pr-10"
-                        placeholder="••••••••"
-                        value={pwData[key]}
-                        onChange={e => setPwData({ ...pwData, [key]: e.target.value })}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPw(p => ({ ...p, [showKey]: !p[showKey] }))}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPw[showKey] ? <EyeOff size={15} /> : <Eye size={15} />}
-                      </button>
+                {useOtpReset ? (
+                  <>
+                    <div>
+                      <label className="form-label">6-Digit OTP</label>
+                      <div className="flex gap-3">
+                        <Input
+                          type="text"
+                          maxLength={6}
+                          placeholder="------"
+                          value={pwData.otp}
+                          onChange={e => setPwData({ ...pwData, otp: e.target.value })}
+                          className="tracking-widest text-center text-lg"
+                          required
+                        />
+                        <Button type="button" variant="outline" onClick={handleSendOtp} disabled={otpTimer > 0}>
+                          {otpTimer > 0 ? `Resend (${otpTimer}s)` : (otpSent ? 'Resend OTP' : 'Send OTP')}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5">Sent to {user?.email}</p>
                     </div>
-                    {key === 'newPassword' && pwData.newPassword && (
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                        {pwData.newPassword.length >= 8
-                          ? <CheckCircle2 size={13} className="text-emerald-500" />
-                          : <AlertTriangle size={13} className="text-amber-500" />}
-                        <span className={`text-xs ${pwData.newPassword.length >= 8 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                          {pwData.newPassword.length >= 8 ? 'Meets minimum length' : 'Minimum 8 characters required'}
-                        </span>
+                    {[
+                      { key: 'newPassword', label: 'New Password', showKey: 'new' },
+                      { key: 'confirmPassword', label: 'Confirm New Password', showKey: 'confirm' }
+                    ].map(({ key, label, showKey }) => (
+                      <div key={key}>
+                        <label className="form-label">{label}</label>
+                        <div className="relative">
+                          <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            type={showPw[showKey] ? 'text' : 'password'}
+                            className="pl-9 pr-10"
+                            placeholder="••••••••"
+                            value={pwData[key]}
+                            onChange={e => setPwData({ ...pwData, [key]: e.target.value })}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPw(p => ({ ...p, [showKey]: !p[showKey] }))}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showPw[showKey] ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                        </div>
                       </div>
-                    )}
-                    {key === 'confirmPassword' && pwData.confirmPassword && (
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                        {pwData.newPassword === pwData.confirmPassword
-                          ? <CheckCircle2 size={13} className="text-emerald-500" />
-                          : <AlertTriangle size={13} className="text-destructive" />}
-                        <span className={`text-xs ${pwData.newPassword === pwData.confirmPassword ? 'text-emerald-600' : 'text-destructive'}`}>
-                          {pwData.newPassword === pwData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
-                        </span>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {[
+                      { key: 'currentPassword', label: 'Current Password', showKey: 'current' },
+                      { key: 'newPassword', label: 'New Password', showKey: 'new' },
+                      { key: 'confirmPassword', label: 'Confirm New Password', showKey: 'confirm' }
+                    ].map(({ key, label, showKey }) => (
+                      <div key={key}>
+                        <label className="form-label">{label}</label>
+                        <div className="relative">
+                          <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            type={showPw[showKey] ? 'text' : 'password'}
+                            className="pl-9 pr-10"
+                            placeholder="••••••••"
+                            value={pwData[key]}
+                            onChange={e => setPwData({ ...pwData, [key]: e.target.value })}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPw(p => ({ ...p, [showKey]: !p[showKey] }))}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showPw[showKey] ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                        </div>
+                        {key === 'newPassword' && pwData.newPassword && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                            {pwData.newPassword.length >= 8
+                              ? <CheckCircle2 size={13} className="text-emerald-500" />
+                              : <AlertTriangle size={13} className="text-amber-500" />}
+                            <span className={`text-xs ${pwData.newPassword.length >= 8 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                              {pwData.newPassword.length >= 8 ? 'Meets minimum length' : 'Minimum 8 characters required'}
+                            </span>
+                          </div>
+                        )}
+                        {key === 'confirmPassword' && pwData.confirmPassword && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                            {pwData.newPassword === pwData.confirmPassword
+                              ? <CheckCircle2 size={13} className="text-emerald-500" />
+                              : <AlertTriangle size={13} className="text-destructive" />}
+                            <span className={`text-xs ${pwData.newPassword === pwData.confirmPassword ? 'text-emerald-600' : 'text-destructive'}`}>
+                              {pwData.newPassword === pwData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    ))}
+                  </>
+                )}
 
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={isChangingPw} className="gap-2">
+                <div className="flex justify-between items-center mt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setUseOtpReset(!useOtpReset);
+                      if (!useOtpReset && !otpSent) handleSendOtp();
+                    }}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    {useOtpReset ? 'Know your current password?' : 'Forgot your current password?'}
+                  </button>
+                  <Button type="submit" disabled={isChangingPw || (useOtpReset && !otpSent)} className="gap-2">
                     <Lock size={15} /> {isChangingPw ? 'Updating...' : 'Update Password'}
                   </Button>
                 </div>

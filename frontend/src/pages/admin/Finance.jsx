@@ -453,7 +453,7 @@ export default function Finance() {
                     <BookOpen size={32} className="mx-auto mb-2 opacity-30" />
                     <p>No ledger entries found. Click "Sync Ledger" to import historical data.</p>
                   </td></tr>
-                ) : ledger.filter(entry => !ledgerSearch || entry.description.toLowerCase().includes(ledgerSearch.toLowerCase()) || entry.category.toLowerCase().includes(ledgerSearch.toLowerCase())).map(entry => (
+                ) : ledger.map(entry => (
                   <tr key={entry.id} onClick={() => navigate(`/dashboard/finance/ledger/${entry.id}`)} className={`hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors ${entry.type === 'DEBIT' ? 'border-l-2 border-l-red-300 dark:border-l-red-800' : 'border-l-2 border-l-emerald-300 dark:border-l-emerald-800'}`}>
                     <td className="px-5 py-3 text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString('en-IN')}</td>
                     <td className="px-5 py-3">

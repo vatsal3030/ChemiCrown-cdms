@@ -1,27 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(location.state?.email || '');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
   const [resendTimer, setResendTimer] = useState(0);
+  const [expireTimer, setExpireTimer] = useState(0);
 
   useEffect(() => {
     let interval;
     if (resendTimer > 0) {
-      interval = setInterval(() => {
-        setResendTimer((prev) => prev - 1);
-      }, 1000);
+      interval = setInterval(() => setResendTimer((prev) => prev - 1), 1000);
     }
     return () => clearInterval(interval);
   }, [resendTimer]);
+
+  useEffect(() => {
+    let interval;
+    if (step === 2 && expireTimer > 0) {
+      interval = setInterval(() => setExpireTimer((prev) => prev - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [step, expireTimer]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -36,6 +44,7 @@ export default function ForgotPassword() {
         toast.success(data.message || `OTP sent to ${email}`);
         setStep(2);
         setResendTimer(60);
+        setExpireTimer(600); // 10 minutes
       } else {
         toast.error(data.error || 'Failed to send OTP');
       }
@@ -100,6 +109,7 @@ export default function ForgotPassword() {
         if (data.success) {
           toast.success(`A new OTP has been sent to ${email}`);
           setResendTimer(60);
+          setExpireTimer(600); // 10 minutes
         } else {
           toast.error(data.error || 'Failed to resend OTP');
         }
@@ -161,11 +171,18 @@ export default function ForgotPassword() {
                   required
                 />
               </div>
-              <button type="submit" className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 transition-colors">
+              <button type="submit" disabled={expireTimer === 0} className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 Verify OTP <ArrowRight className="ml-2 w-5 h-5" />
               </button>
               
-              <div className="text-center mt-4 text-sm">
+              <div className="text-center mt-4 text-sm flex flex-col gap-2">
+                {expireTimer > 0 ? (
+                  <p className="text-muted-foreground font-medium">
+                    OTP expires in {Math.floor(expireTimer / 60).toString().padStart(2, '0')}:{(expireTimer % 60).toString().padStart(2, '0')}
+                  </p>
+                ) : (
+                  <p className="text-destructive font-medium">OTP has expired. Please resend.</p>
+                )}
                 <button 
                   type="button" 
                   onClick={handleResend}
