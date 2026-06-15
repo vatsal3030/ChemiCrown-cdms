@@ -206,6 +206,15 @@ const verifyPayment = async (req, res, next) => {
         }
 
         // 3. Update Order Status to PROCESSING after payment confirmation
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: orderId,
+            oldStatus: order.status,
+            newStatus: 'PROCESSING',
+            note: 'Razorpay payment verified successfully'
+          }
+        });
+
         await tx.order.update({
           where: { id: orderId },
           data: { status: 'PROCESSING' }
@@ -335,7 +344,23 @@ const getOrderById = async (req, res, next) => {
 
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    res.status(200).json({ success: true, data: order });
+    let assignedSales = null;
+    if (order.customer?.assignedSalesId) {
+      const emp = await prisma.employee.findUnique({
+        where: { id: order.customer.assignedSalesId },
+        include: { user: { select: { firstName: true, lastName: true, phone: true, email: true } } }
+      });
+      if (emp) {
+        assignedSales = {
+          firstName: emp.user.firstName,
+          lastName: emp.user.lastName,
+          phone: emp.user.phone,
+          email: emp.user.email
+        };
+      }
+    }
+
+    res.status(200).json({ success: true, data: { ...order, assignedSales } });
   } catch (error) {
     next(error);
   }
@@ -441,6 +466,7 @@ const cancelOrder = async (req, res, next) => {
           orderId:   id,
           oldStatus: order.status,
           newStatus: 'CANCELLED',
+          note:      reason?.trim() || null,
           changedById: req.user?.id
         }
       });
@@ -563,13 +589,64 @@ const verifyCodOrder = async (req, res, next) => {
         });
       }
 
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          oldStatus: order.status,
+          newStatus: 'PROCESSING',
+          note: 'COD verification completed by admin',
+          changedById: req.user?.id
+        }
+      });
+
       return await tx.order.update({
         where: { id },
         data: { status: 'PROCESSING' }
       });
+    }, { timeout: 10000 });
+
+    // Fetch the fully populated order outside the interactive transaction
+    const fullOrder = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        customer: {
+          include: {
+            user: { select: { firstName: true, lastName: true, email: true, phone: true } }
+          }
+        },
+        payment: true,
+        history: {
+          include: { user: { select: { firstName: true, lastName: true } } },
+          orderBy: { changedAt: 'desc' }
+        }
+      }
     });
 
-    res.status(200).json({ message: 'Pay on Delivery order verified successfully', order: updatedOrder });
+    let assignedSales = null;
+    if (fullOrder.customer?.assignedSalesId) {
+      const emp = await prisma.employee.findUnique({
+        where: { id: fullOrder.customer.assignedSalesId },
+        include: { user: { select: { firstName: true, lastName: true, phone: true, email: true } } }
+      });
+      if (emp) {
+        assignedSales = {
+          firstName: emp.user.firstName,
+          lastName: emp.user.lastName,
+          phone: emp.user.phone,
+          email: emp.user.email
+        };
+      }
+    }
+
+    res.status(200).json({ 
+      message: 'Pay on Delivery order verified successfully', 
+      order: { ...fullOrder, assignedSales } 
+    });
   } catch (error) {
     next(error);
   }
@@ -610,6 +687,7 @@ const advanceOrderStatus = async (req, res, next) => {
           orderId: id,
           oldStatus: order.status,
           newStatus: nextStatus,
+          note: note || null,
           changedById: req.user?.id
         }
       });
@@ -638,7 +716,7 @@ const advanceOrderStatus = async (req, res, next) => {
           updatedBy: req.user.id
         }
       });
-    });
+    }, { timeout: 10000 });
 
     // Audit log
     await prisma.auditLog.create({
@@ -651,7 +729,49 @@ const advanceOrderStatus = async (req, res, next) => {
       }
     }).catch(() => {}); // Non-blocking
 
-    res.json({ success: true, message: `Order advanced to ${nextStatus}`, data: updated });
+    // Fetch the fully populated order outside the interactive transaction
+    const fullOrder = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        customer: {
+          include: {
+            user: { select: { firstName: true, lastName: true, email: true, phone: true } }
+          }
+        },
+        payment: true,
+        history: {
+          include: { user: { select: { firstName: true, lastName: true } } },
+          orderBy: { changedAt: 'desc' }
+        }
+      }
+    });
+
+    let assignedSales = null;
+    if (fullOrder.customer?.assignedSalesId) {
+      const emp = await prisma.employee.findUnique({
+        where: { id: fullOrder.customer.assignedSalesId },
+        include: { user: { select: { firstName: true, lastName: true, phone: true, email: true } } }
+      });
+      if (emp) {
+        assignedSales = {
+          firstName: emp.user.firstName,
+          lastName: emp.user.lastName,
+          phone: emp.user.phone,
+          email: emp.user.email
+        };
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Order advanced to ${nextStatus}`, 
+      data: { ...fullOrder, assignedSales } 
+    });
   } catch (error) {
     next(error);
   }

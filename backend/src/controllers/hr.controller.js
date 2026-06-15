@@ -222,8 +222,12 @@ exports.addEmployee = async (req, res, next) => {
       return { user, employee };
     });
 
-    // Send Welcome Email containing credentials
-    await sendWelcomeEmail(email, password, firstName);
+    // Send Welcome Email (non-blocking — employee creation should not fail if email fails)
+    sendWelcomeEmail(email, password, firstName).then(result => {
+      if (!result.success) console.warn(`⚠️  Welcome email to ${email} failed: ${result.error}`);
+    }).catch(err => {
+      console.warn(`⚠️  Welcome email to ${email} failed:`, err.message);
+    });
 
     res.status(201).json({ success: true, message: 'Employee added successfully', data: newEmployee });
   } catch (error) {

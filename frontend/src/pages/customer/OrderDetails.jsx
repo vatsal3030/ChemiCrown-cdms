@@ -63,7 +63,34 @@ export default function OrderDetails() {
   }, [id, token]);
 
   const handleAdvance = async () => {
+    if (advancing) return;
+    const previousStatus = order.status;
+    const previousHistory = order.history ? [...order.history] : [];
+    
+    const currentIndex = TIMELINE.indexOf(order.status);
+    const nextStatus = TIMELINE[currentIndex + 1];
+    if (!nextStatus) return;
+
+    // Optimistically update order status and append note/history
+    setOrder(prev => ({ 
+      ...prev, 
+      status: nextStatus,
+      history: [
+        {
+          id: 'temp-' + Date.now(),
+          status: nextStatus,
+          createdAt: new Date().toISOString(),
+          note: advanceNote,
+          user: { firstName: user.firstName, lastName: user.lastName }
+        },
+        ...(prev.history || [])
+      ]
+    }));
     setAdvancing(true);
+
+    // Instant success toast
+    toast.success(`Order advanced to ${nextStatus.charAt(0) + nextStatus.slice(1).toLowerCase()}`);
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/advance`, {
         method: 'POST',
@@ -72,29 +99,86 @@ export default function OrderDetails() {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success(json.message);
-        setOrder(prev => ({ ...prev, status: json.data.status }));
+        // Sync exact data (status, history, etc.)
+        setOrder(prev => ({ ...prev, ...json.data }));
         setAdvanceNote('');
-      } else toast.error(json.error || 'Failed to advance');
-    } catch { toast.error('Network error'); }
-    finally { setAdvancing(false); }
+      } else {
+        toast.error(json.error || 'Failed to advance status. Reverting...');
+        setOrder(prev => ({ ...prev, status: previousStatus, history: previousHistory })); // Rollback
+      }
+    } catch { 
+      toast.error('Network error. Reverting status update.'); 
+      setOrder(prev => ({ ...prev, status: previousStatus, history: previousHistory })); // Rollback
+    } finally { 
+      setAdvancing(false); 
+    }
   };
 
   const handleVerifyCod = async () => {
+    const previousStatus = order.status;
+    const previousHistory = order.history ? [...order.history] : [];
+
+    setOrder(prev => ({
+      ...prev,
+      status: 'PROCESSING',
+      history: [
+        {
+          id: 'temp-cod-' + Date.now(),
+          status: 'PROCESSING',
+          createdAt: new Date().toISOString(),
+          note: 'COD verification completed by admin',
+          user: { firstName: user.firstName, lastName: user.lastName }
+        },
+        ...(prev.history || [])
+      ]
+    }));
+
+    // Instant success toast
+    toast.success('COD order verified successfully');
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/verify-cod`, {
         method: 'PUT', headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (res.ok) { toast.success('COD order verified'); setOrder(data.order); }
-      else toast.error(data.error || 'Failed to verify');
-    } catch { toast.error('Network error'); }
+      if (res.ok && data.order) {
+        setOrder(data.order);
+      } else {
+        toast.error(data.error || 'Failed to verify COD order. Reverting...');
+        setOrder(prev => ({ ...prev, status: previousStatus, history: previousHistory })); // Rollback
+      }
+    } catch {
+      toast.error('Network error. Reverting COD verification.');
+      setOrder(prev => ({ ...prev, status: previousStatus, history: previousHistory })); // Rollback
+    }
   };
 
   const handleCancelOrder = async () => {
     const reason = window.prompt('Reason for cancellation (optional):');
     if (reason === null) return;
+    
+    const previousStatus = order.status;
+    const previousHistory = order.history ? [...order.history] : [];
+    
+    setOrder(prev => ({
+      ...prev,
+      status: 'CANCELLED',
+      history: [
+        {
+          id: 'temp-cancel-' + Date.now(),
+          status: 'CANCELLED',
+          createdAt: new Date().toISOString(),
+          note: reason?.trim() || 'Order cancelled',
+          user: { firstName: user.firstName, lastName: user.lastName }
+        },
+        ...(prev.history || [])
+      ]
+    }));
     setCancelling(true);
+
+    // Instant success toast
+    toast.success('Order cancelled successfully.');
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/cancel`, {
         method: 'POST',
@@ -103,17 +187,19 @@ export default function OrderDetails() {
       });
       const json = await res.json();
       if (json.success) {
-        setOrder(prev => ({ ...prev, status: 'CANCELLED' }));
         if (json.refundAmount > 0) {
-          toast.success(`Order cancelled. Refund of ₹${json.refundAmount.toFixed(2)} in ${json.estimatedRefundDays}.`, { duration: 6000 });
-        } else {
-          toast.success('Order cancelled successfully.');
+          toast.success(`Refund of ₹${json.refundAmount.toFixed(2)} will be processed in ${json.estimatedRefundDays}.`, { duration: 6000 });
         }
       } else {
-        toast.error(json.error || 'Failed to cancel order');
+        toast.error(json.error || 'Failed to cancel order. Reverting...');
+        setOrder(prev => ({ ...prev, status: previousStatus, history: previousHistory })); // Rollback
       }
-    } catch { toast.error('Network error'); }
-    finally { setCancelling(false); }
+    } catch { 
+      toast.error('Network error. Reverting cancellation.'); 
+      setOrder(prev => ({ ...prev, status: previousStatus, history: previousHistory })); // Rollback
+    } finally { 
+      setCancelling(false); 
+    }
   };
 
   const handleRefundRequest = async () => {
@@ -336,39 +422,42 @@ export default function OrderDetails() {
           </div>
 
           {/* ── Status History ── */}
-          {order.statusHistory && order.statusHistory.length > 0 && (
+          {order.history && order.history.length > 0 && (
             <div className="form-card">
               <h2 className="font-bold text-sm text-foreground mb-4">Status History</h2>
               <div className="space-y-4">
-                {order.statusHistory.map((history, idx) => (
-                  <div key={history.id} className="relative pl-6">
-                    {/* Timeline line */}
-                    {idx !== order.statusHistory.length - 1 && (
-                      <div className="absolute left-[11px] top-6 bottom-[-16px] w-[2px] bg-border" />
-                    )}
-                    {/* Timeline dot */}
-                    <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center border-2 border-background">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                    </div>
-                    {/* Content */}
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{STATUS_CONFIG[history.status]?.label || history.status}</p>
-                      <p className="text-[10px] text-muted-foreground mb-1">
-                        {new Date(history.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-                      </p>
-                      {history.note && (
-                        <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded-lg mt-1 border border-border">
-                          {history.note}
-                        </p>
+                {order.history.map((history, idx) => {
+                  const hStatus = history.status || history.newStatus;
+                  return (
+                    <div key={history.id} className="relative pl-6">
+                      {/* Timeline line */}
+                      {idx !== order.history.length - 1 && (
+                        <div className="absolute left-[11px] top-6 bottom-[-16px] w-[2px] bg-border" />
                       )}
-                      {isAdmin && history.changedBy && (
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          Changed by: <span className="font-medium text-foreground">{history.changedBy.firstName} {history.changedBy.lastName}</span>
+                      {/* Timeline dot */}
+                      <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center border-2 border-background">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      </div>
+                      {/* Content */}
+                      <div>
+                        <p className="font-semibold text-sm text-foreground">{STATUS_CONFIG[hStatus]?.label || hStatus}</p>
+                        <p className="text-[10px] text-muted-foreground mb-1">
+                          {new Date(history.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                         </p>
-                      )}
+                        {history.note && (
+                          <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded-lg mt-1 border border-border">
+                            {history.note}
+                          </p>
+                        )}
+                        {history.user && (
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Handled by: <span className="font-medium text-foreground">{history.user.firstName} {history.user.lastName}</span>
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -418,6 +507,50 @@ export default function OrderDetails() {
               {order.customer?.user?.email && <p className="text-muted-foreground break-all">✉ {order.customer.user.email}</p>}
             </div>
           </div>
+
+          {/* Delivery & Tracking Info */}
+          {order.history?.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED'))?.note && (
+            <div className="form-card border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10">
+              <h2 className="font-bold text-sm text-indigo-700 dark:text-indigo-300 mb-2 flex flex-wrap items-center gap-1.5">
+                <Truck size={13} /> Delivery & Tracking
+              </h2>
+              <div className="text-xs space-y-1">
+                <p className="font-semibold text-foreground">
+                  Status: Dispatched
+                </p>
+                <p className="text-muted-foreground leading-relaxed">
+                  {order.history.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED')).note}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Dispatched on {new Date(order.history.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED')).createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Account Manager */}
+          {order.assignedSales && (
+            <div className="form-card border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10">
+              <h2 className="font-bold text-sm text-violet-700 dark:text-violet-300 mb-2 flex flex-wrap items-center gap-1.5">
+                <Building2 size={13} /> Account Manager
+              </h2>
+              <div className="text-xs space-y-1">
+                <p className="font-semibold text-foreground">
+                  {order.assignedSales.firstName} {order.assignedSales.lastName}
+                </p>
+                {order.assignedSales.phone && (
+                  <p className="text-muted-foreground">
+                    📞 <a href={`tel:${order.assignedSales.phone}`} className="hover:underline">{order.assignedSales.phone}</a>
+                  </p>
+                )}
+                {order.assignedSales.email && (
+                  <p className="text-muted-foreground break-all">
+                    ✉ <a href={`mailto:${order.assignedSales.email}`} className="hover:underline">{order.assignedSales.email}</a>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Payment */}
           {order.payment && (

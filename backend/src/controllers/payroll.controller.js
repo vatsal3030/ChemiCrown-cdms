@@ -65,6 +65,22 @@ function countSundaysInMonth(year, monthNum) {
   return count;
 }
 
+async function unlinkPayrollComponents(tx, salaryIds) {
+  if (!salaryIds || salaryIds.length === 0) return;
+
+  // Reset Overtime status and salaryId
+  await tx.overtime.updateMany({
+    where: { salaryId: { in: salaryIds } },
+    data: { status: 'APPROVED', salaryId: null }
+  });
+
+  // Reset SalesIncentive status and salaryId
+  await tx.salesIncentive.updateMany({
+    where: { salaryId: { in: salaryIds } },
+    data: { status: 'APPROVED', salaryId: null }
+  });
+}
+
 /**
  * POST /api/payroll/generate
  * Auto-generate payroll for all active employees for a given month.
@@ -74,7 +90,7 @@ function countSundaysInMonth(year, monthNum) {
  */
 exports.generateMonthlyPayroll = async (req, res, next) => {
   try {
-    const { month } = req.body; // e.g. "2026-06"
+    const { month, force } = req.body; // e.g. "2026-06" ; force=true to regenerate PENDING slips
     if (!month || !/^\d{4}-\d{2}$/.test(month)) {
       return res.status(400).json({ success: false, message: 'Invalid month format. Use YYYY-MM' });
     }
@@ -122,6 +138,24 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
           isActive: true
         }))
       });
+    }
+
+    // If force=true, delete existing PENDING slips so they can be regenerated
+    // (e.g., after attendance corrections). PAID slips are never touched.
+    if (force) {
+      const pendingSlips = await prisma.salary.findMany({
+        where: { month, status: 'PENDING' },
+        select: { id: true }
+      });
+      const pendingIds = pendingSlips.map(s => s.id);
+
+      if (pendingIds.length > 0) {
+        await prisma.$transaction(async (tx) => {
+          await unlinkPayrollComponents(tx, pendingIds);
+          await tx.salary.deleteMany({ where: { id: { in: pendingIds } } });
+        });
+        console.log(`[PAYROLL] Force-deleted ${pendingIds.length} PENDING slips for ${month} before regeneration`);
+      }
     }
 
     const employees = await prisma.employee.findMany({
@@ -396,40 +430,6 @@ exports.markAsPaid = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/payroll/:id/confirm
- * Employee confirms receipt of their salary
- */
-exports.confirmReceipt = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const slip = await prisma.salary.findUnique({
-      where: { id },
-      include: { employee: true }
-    });
-    if (!slip) return res.status(404).json({ success: false, message: 'Salary slip not found' });
-    if (slip.status !== 'PAID') {
-      return res.status(400).json({ success: false, message: 'Salary has not been paid yet' });
-    }
-    // Verify the salary belongs to the requesting employee
-    if (slip.employee.userId !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'You can only confirm your own salary receipts' });
-    }
-    if (slip.confirmedByEmployee) {
-      return res.status(409).json({ success: false, message: 'Receipt already confirmed' });
-    }
-
-    const updated = await prisma.salary.update({
-      where: { id },
-      data: { confirmedByEmployee: true, confirmedAt: new Date() }
-    });
-
-    res.json({ success: true, message: 'Salary receipt confirmed', data: updated });
-  } catch (error) {
-    next(error);
-  }
-};
 
 
 /**
@@ -542,7 +542,10 @@ exports.deleteSlip = async (req, res, next) => {
     if (!slip) return res.status(404).json({ success: false, message: 'Salary slip not found' });
     if (slip.status === 'PAID') return res.status(400).json({ success: false, message: 'Cannot delete a PAID slip.' });
 
-    await prisma.salary.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await unlinkPayrollComponents(tx, [id]);
+      await tx.salary.delete({ where: { id } });
+    });
     res.json({ success: true, message: 'Salary slip deleted' });
   } catch (error) { next(error); }
 };
@@ -554,10 +557,19 @@ exports.deleteSlip = async (req, res, next) => {
 exports.deleteMonthSlips = async (req, res, next) => {
   try {
     const { month } = req.params;
-    const result = await prisma.salary.deleteMany({
-      where: { month, status: 'PENDING' }
+    const pendingSlips = await prisma.salary.findMany({
+      where: { month, status: 'PENDING' },
+      select: { id: true }
     });
-    res.json({ success: true, message: `Deleted ${result.count} pending slip(s) for ${month}` });
+    const pendingIds = pendingSlips.map(s => s.id);
+
+    if (pendingIds.length > 0) {
+      await prisma.$transaction(async (tx) => {
+        await unlinkPayrollComponents(tx, pendingIds);
+        await tx.salary.deleteMany({ where: { id: { in: pendingIds } } });
+      });
+    }
+    res.json({ success: true, message: `Deleted ${pendingIds.length} pending slip(s) for ${month}` });
   } catch (error) { next(error); }
 };
 
@@ -636,7 +648,7 @@ exports.confirmReceipt = async (req, res, next) => {
 
     const updated = await prisma.salary.update({
       where: { id },
-      data: { confirmedByEmployee: true }
+      data: { confirmedByEmployee: true, confirmedAt: new Date() }
     });
 
     res.json({ success: true, message: 'Salary receipt confirmed successfully', data: updated });

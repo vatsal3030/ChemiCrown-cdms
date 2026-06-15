@@ -285,6 +285,7 @@ model OrderStatusHistory {
   order     Order       @relation(fields: [orderId], references: [id])
   oldStatus OrderStatus
   newStatus OrderStatus
+  note      String?     // Optional note (tracking number, logistics partner, etc.)
   changedById String?     // Track who changed the order state
   user        User?       @relation("OrderStateChanger", fields: [changedById], references: [id])
   changedAt DateTime    @default(now())

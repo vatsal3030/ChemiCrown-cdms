@@ -311,7 +311,7 @@ export default function AddEmployeePage() {
                     onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                     onChange={e => set('baseSalary', e.target.value)}
                     placeholder="e.g. 35000"
-                    className="form-input pl-8"
+                    className="form-input pl-9"
                   />
                 </div>
               </div>
@@ -324,7 +324,7 @@ export default function AddEmployeePage() {
                     onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                     onChange={e => set('ctc', e.target.value)}
                     placeholder="e.g. 500000"
-                    className="form-input pl-8"
+                    className="form-input pl-9"
                   />
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function AddEmployeePage() {
                     type="number" min={0} max={24} step={0.5} value={form.pfRate}
                     onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                     onChange={e => set('pfRate', e.target.value)}
-                    className="form-input pl-8"
+                    className="form-input pl-9"
                   />
                 </div>
               </div>
@@ -373,7 +373,7 @@ export default function AddEmployeePage() {
                     type="text" value={form.bankAccountName}
                     onChange={e => set('bankAccountName', e.target.value)}
                     placeholder="As per bank records"
-                    className="form-input pl-8"
+                    className="form-input pl-9"
                   />
                 </div>
               </div>
@@ -385,7 +385,7 @@ export default function AddEmployeePage() {
                     type="text" value={form.bankName}
                     onChange={e => set('bankName', e.target.value)}
                     placeholder="e.g. SBI, HDFC"
-                    className="form-input pl-8"
+                    className="form-input pl-9"
                   />
                 </div>
               </div>
@@ -420,7 +420,7 @@ export default function AddEmployeePage() {
                   type="text" value={form.upiId}
                   onChange={e => set('upiId', e.target.value)}
                   placeholder="e.g. 9876543210@paytm"
-                  className="form-input pl-8"
+                  className="form-input pl-9"
                 />
               </div>
             </div>

@@ -204,7 +204,31 @@ export default function AttendanceCalendar() {
 
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="p-12 text-center text-slate-500 animate-pulse">Loading attendance data...</div>
+          <div className="p-4 space-y-2 animate-pulse">
+            {/* Skeleton header row */}
+            <div className="flex gap-1">
+              <div className="h-10 w-[200px] bg-slate-200 rounded-lg shrink-0" />
+              {Array.from({ length: Math.min(daysInMonth, 15) }).map((_, i) => (
+                <div key={i} className="h-10 w-8 bg-slate-100 rounded shrink-0" />
+              ))}
+              <div className="h-10 flex-1 bg-slate-100 rounded" />
+            </div>
+            {/* Skeleton data rows */}
+            {Array.from({ length: 6 }).map((_, row) => (
+              <div key={row} className="flex gap-1">
+                <div className="h-12 w-[200px] bg-slate-100 rounded-lg shrink-0">
+                  <div className="h-3 w-24 bg-slate-200 rounded mt-3 ml-3" />
+                  <div className="h-2 w-16 bg-slate-200/60 rounded mt-1.5 ml-3" />
+                </div>
+                {Array.from({ length: Math.min(daysInMonth, 15) }).map((_, c) => (
+                  <div key={c} className="h-12 w-8 bg-slate-50 rounded shrink-0 flex items-center justify-center">
+                    <div className="w-5 h-5 bg-slate-200/50 rounded" />
+                  </div>
+                ))}
+                <div className="h-12 flex-1 bg-slate-50 rounded" />
+              </div>
+            ))}
+          </div>
         ) : error ? (
           <div className="p-12 text-center text-red-500 flex flex-col items-center">
             <AlertTriangle className="mb-2" /> Failed to load data

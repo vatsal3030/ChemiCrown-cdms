@@ -65,7 +65,7 @@ export default function Orders({ isMyOrders = false }) {
 
   const [orders, setOrders]       = useState([]);
   const [loading, setLoading]     = useState(true);
-  const [advancing]               = useState(null);
+  const [advancing, setAdvancing] = useState({});
   const [showFilters, setShowFilters] = useState(false);
   // Temp filter state (applied on click)
   const [tempFilters, setTempFilters] = useState({ status: statusFilter, from: dateFrom, to: dateTo, minAmt: minAmount, maxAmt: maxAmount });
@@ -159,9 +159,17 @@ export default function Orders({ isMyOrders = false }) {
   };
 
   const handleCancel = async (id) => {
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
     const reason = window.prompt('Reason for cancellation (optional — leave blank to skip):');
     if (reason === null) return; // User pressed Cancel on the prompt
     if (!window.confirm(`Cancel order #${id.substring(0, 8).toUpperCase()}? This cannot be undone.`)) return;
+
+    const previousStatus = order.status;
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'CANCELLED' } : o));
+    
+    // Instant success toast
+    toast.success('Order cancelled successfully.');
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/cancel`, {
@@ -171,33 +179,39 @@ export default function Orders({ isMyOrders = false }) {
       });
       const json = await res.json();
       if (json.success) {
-        // Update the row status locally — no flicker/disappear
-        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'CANCELLED' } : o));
         if (json.refundAmount > 0) {
           toast.success(
-            `Order cancelled. Refund of ₹${json.refundAmount.toFixed(2)} will be processed in ${json.estimatedRefundDays}.`,
+            `Refund of ₹${json.refundAmount.toFixed(2)} will be processed in ${json.estimatedRefundDays}.`,
             { duration: 6000 }
           );
-        } else {
-          toast.success('Order cancelled successfully.');
         }
       } else {
         toast.error(json.error || 'Failed to cancel order');
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: previousStatus } : o)); // Revert only this order
       }
-    } catch { toast.error('Network error'); }
+    } catch { 
+      toast.error('Network error. Reverting cancellation.'); 
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: previousStatus } : o)); // Revert only this order
+    }
   };
 
 
   const handleAdvance = async (id) => {
     const order = orders.find(o => o.id === id);
     if (!order) return;
+    if (advancing[id]) return;
     
     // Optimistic UI
     const currentIndex = STATUS_PIPELINE.indexOf(order.status);
     const nextStatus = STATUS_PIPELINE[currentIndex + 1];
     if (!nextStatus) return;
 
+    const previousStatus = order.status;
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus } : o));
+    setAdvancing(prev => ({ ...prev, [id]: true }));
+
+    // Instant success toast
+    toast.success(`Order advanced to ${nextStatus.charAt(0) + nextStatus.slice(1).toLowerCase()}`);
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/advance`, {
@@ -207,16 +221,21 @@ export default function Orders({ isMyOrders = false }) {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success(json.message);
         // Sync exact status from server just in case
         setOrders(prev => prev.map(o => o.id === id ? { ...o, status: json.data.status } : o));
       } else {
         toast.error(json.error || 'Failed to advance status');
-        fetchOrders(); // Revert
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: previousStatus } : o)); // Revert only this order
       }
     } catch { 
-      toast.error('Network error'); 
-      fetchOrders(); // Revert
+      toast.error('Network error. Reverting status update.'); 
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: previousStatus } : o)); // Revert only this order
+    } finally {
+      setAdvancing(prev => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
     }
   };
 
@@ -653,10 +672,10 @@ export default function Orders({ isMyOrders = false }) {
                         {canAdvance ? (
                           <button
                             onClick={() => handleAdvance(order.id)}
-                            disabled={advancing === order.id}
+                            disabled={!!advancing[order.id]}
                             className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 rounded-xl transition-all disabled:opacity-50 whitespace-nowrap"
                           >
-                            {advancing === order.id ? (
+                            {advancing[order.id] ? (
                               <span className="flex flex-wrap items-center gap-1.5">
                                 <span className="w-3 h-3 border-2 border-primary/40 border-t-primary rounded-full animate-spin inline-block" />
                                 Advancing…

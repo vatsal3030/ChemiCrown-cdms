@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   User, Lock, Bell, Shield, Save, Eye, EyeOff, Camera,
   Phone, Mail, CheckCircle2, AlertTriangle, Globe,
-  Settings as SettingsIcon
+  Settings as SettingsIcon, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -108,6 +108,7 @@ export default function Settings() {
   const [useOtpReset, setUseOtpReset] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpTimer, setOtpTimer] = useState(0);
+  const [sendingOtp, setSendingOtp] = useState(false);
 
   useEffect(() => {
     let interval;
@@ -227,6 +228,8 @@ export default function Settings() {
   };
 
   const handleSendOtp = async () => {
+    if (sendingOtp || otpTimer > 0) return; // prevent multiple clicks
+    setSendingOtp(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
         method: 'POST',
@@ -243,6 +246,8 @@ export default function Settings() {
       }
     } catch {
       toast.error('Network error');
+    } finally {
+      setSendingOtp(false);
     }
   };
 
@@ -400,8 +405,8 @@ export default function Settings() {
                           className="tracking-widest text-center text-lg"
                           required
                         />
-                        <Button type="button" variant="outline" onClick={handleSendOtp} disabled={otpTimer > 0}>
-                          {otpTimer > 0 ? `Resend (${otpTimer}s)` : (otpSent ? 'Resend OTP' : 'Send OTP')}
+                        <Button type="button" variant="outline" onClick={handleSendOtp} disabled={otpTimer > 0 || sendingOtp}>
+                          {sendingOtp ? <><Loader2 size={14} className="mr-1 animate-spin" /> Sending...</> : otpTimer > 0 ? `Resend (${otpTimer}s)` : (otpSent ? 'Resend OTP' : 'Send OTP')}
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1.5">Sent to {user?.email}</p>

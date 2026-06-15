@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ForgotPassword() {
@@ -12,6 +12,11 @@ export default function ForgotPassword() {
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
+  // ── Loading states to prevent multiple clicks ──
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [resettingPw, setResettingPw] = useState(false);
+
   const [resendTimer, setResendTimer] = useState(0);
   const [expireTimer, setExpireTimer] = useState(0);
 
@@ -33,6 +38,8 @@ export default function ForgotPassword() {
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
+    if (sendingOtp) return; // guard
+    setSendingOtp(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
         method: 'POST',
@@ -50,15 +57,19 @@ export default function ForgotPassword() {
       }
     } catch {
       toast.error('Network error');
+    } finally {
+      setSendingOtp(false);
     }
   };
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    if (verifyingOtp) return;
     if (otp.length < 6) {
       toast.error('Please enter a valid 6-digit OTP');
       return;
     }
+    setVerifyingOtp(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/verify-otp`, {
         method: 'POST',
@@ -74,11 +85,19 @@ export default function ForgotPassword() {
       }
     } catch {
       toast.error('Network error');
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
+    if (resettingPw) return;
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    setResettingPw(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/reset-password`, {
         method: 'POST',
@@ -94,28 +113,32 @@ export default function ForgotPassword() {
       }
     } catch {
       toast.error('Network error');
+    } finally {
+      setResettingPw(false);
     }
   };
 
   const handleResend = async () => {
-    if (resendTimer === 0) {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-        if (data.success) {
-          toast.success(`A new OTP has been sent to ${email}`);
-          setResendTimer(60);
-          setExpireTimer(600); // 10 minutes
-        } else {
-          toast.error(data.error || 'Failed to resend OTP');
-        }
-      } catch {
-        toast.error('Network error');
+    if (resendTimer > 0 || sendingOtp) return;
+    setSendingOtp(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`A new OTP has been sent to ${email}`);
+        setResendTimer(60);
+        setExpireTimer(600); // 10 minutes
+      } else {
+        toast.error(data.error || 'Failed to resend OTP');
       }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setSendingOtp(false);
     }
   };
 
@@ -148,11 +171,20 @@ export default function ForgotPassword() {
                     className="block w-full pl-10 pr-3 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" 
                     placeholder="john@company.com"
                     required
+                    disabled={sendingOtp}
                   />
                 </div>
               </div>
-              <button type="submit" className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 transition-colors">
-                Send Recovery OTP <ArrowRight className="ml-2 w-5 h-5" />
+              <button 
+                type="submit" 
+                disabled={sendingOtp}
+                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {sendingOtp ? (
+                  <><Loader2 className="mr-2 w-5 h-5 animate-spin" /> Sending...</>
+                ) : (
+                  <>Send Recovery OTP <ArrowRight className="ml-2 w-5 h-5" /></>
+                )}
               </button>
             </form>
           )}
@@ -165,14 +197,23 @@ export default function ForgotPassword() {
                   type="text" 
                   maxLength={6}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                   className="block w-full text-center tracking-widest text-xl px-3 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" 
                   placeholder="------"
                   required
+                  disabled={verifyingOtp}
                 />
               </div>
-              <button type="submit" disabled={expireTimer === 0} className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                Verify OTP <ArrowRight className="ml-2 w-5 h-5" />
+              <button 
+                type="submit" 
+                disabled={expireTimer === 0 || verifyingOtp} 
+                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {verifyingOtp ? (
+                  <><Loader2 className="mr-2 w-5 h-5 animate-spin" /> Verifying...</>
+                ) : (
+                  <>Verify OTP <ArrowRight className="ml-2 w-5 h-5" /></>
+                )}
               </button>
               
               <div className="text-center mt-4 text-sm flex flex-col gap-2">
@@ -186,10 +227,10 @@ export default function ForgotPassword() {
                 <button 
                   type="button" 
                   onClick={handleResend}
-                  disabled={resendTimer > 0}
-                  className={`font-medium ${resendTimer > 0 ? 'text-muted-foreground cursor-not-allowed' : 'text-primary hover:underline'}`}
+                  disabled={resendTimer > 0 || sendingOtp}
+                  className={`font-medium ${resendTimer > 0 || sendingOtp ? 'text-muted-foreground cursor-not-allowed' : 'text-primary hover:underline'}`}
                 >
-                  {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                  {sendingOtp ? 'Sending...' : resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
                 </button>
               </div>
             </form>
@@ -210,6 +251,8 @@ export default function ForgotPassword() {
                     className="block w-full pl-10 pr-10 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" 
                     placeholder="••••••••"
                     required
+                    minLength={8}
+                    disabled={resettingPw}
                   />
                   <button
                     type="button"
@@ -220,8 +263,16 @@ export default function ForgotPassword() {
                   </button>
                 </div>
               </div>
-              <button type="submit" className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 transition-colors">
-                Update Password <ArrowRight className="ml-2 w-5 h-5" />
+              <button 
+                type="submit" 
+                disabled={resettingPw}
+                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {resettingPw ? (
+                  <><Loader2 className="mr-2 w-5 h-5 animate-spin" /> Updating...</>
+                ) : (
+                  <>Update Password <ArrowRight className="ml-2 w-5 h-5" /></>
+                )}
               </button>
             </form>
           )}

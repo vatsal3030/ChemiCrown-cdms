@@ -64,19 +64,44 @@ export default function Payroll() {
   useEffect(() => { fetchSalaries(); }, [fetchSalaries]);
 
   const handleGenerate = async () => {
-    if (!window.confirm(`Generate payroll for all active employees for ${month}? This cannot be undone.`)) return;
+    const hasExisting = salaries.length > 0;
+    const hasPending = salaries.some(s => s.status === 'PENDING');
+    let force = false;
+
+    if (hasExisting) {
+      if (hasPending) {
+        const confirmForce = window.confirm(
+          `Payroll slips already exist for ${month}.\n\nDo you want to REGENERATE (re-calculate) all PENDING slips?\n\nThis will delete the pending slips and recalculate them based on the latest attendance and approved overtime/incentives. PAID slips will not be modified.`
+        );
+        if (!confirmForce) return;
+        force = true;
+      } else {
+        toast.error('All payroll slips for this month are already PAID. Cannot regenerate.');
+        return;
+      }
+    } else {
+      if (!window.confirm(`Generate payroll for all active employees for ${month}? This cannot be undone.`)) return;
+    }
+
     try {
       setGenerating(true);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ month })
+        body: JSON.stringify({ month, force })
       });
       const json = await res.json();
-      if (json.success) { toast.success(json.message || 'Payroll generated!'); fetchSalaries(); }
-      else toast.error(json.message || 'Failed to generate payroll');
-    } catch { toast.error('Network error'); }
-    finally { setGenerating(false); }
+      if (json.success) { 
+        toast.success(json.message || 'Payroll processed successfully!'); 
+        fetchSalaries(); 
+      } else { 
+        toast.error(json.message || 'Failed to generate payroll'); 
+      }
+    } catch { 
+      toast.error('Network error'); 
+    } finally { 
+      setGenerating(false); 
+    }
   };
 
 

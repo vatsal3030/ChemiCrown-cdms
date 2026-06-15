@@ -543,13 +543,13 @@ export default function HRManagement() {
   };
 
   const applyFilters = () => {
-    setSearchParams(prev => {
-      Object.entries(temp).forEach(([k, v]) => {
-        if (!v || v === 'all') prev.delete(k);
-        else prev.set(k, v);
-      });
-      return prev;
-    }, { replace: true });
+    const newParams = new URLSearchParams(searchParams.toString());
+    Object.entries(temp).forEach(([k, v]) => {
+      if (!v || v === 'all') newParams.delete(k);
+      else newParams.set(k, v);
+    });
+    const newSearch = newParams.toString();
+    navigate(`${location.pathname}${newSearch ? '?' + newSearch : ''}#${activeTab}`, { replace: true });
     setShowFilters(false);
   };
 
