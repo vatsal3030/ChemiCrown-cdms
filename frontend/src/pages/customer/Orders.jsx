@@ -666,6 +666,16 @@ export default function Orders({ isMyOrders = false }) {
                       <span className={STATUS_STYLES[order.status] || 'badge badge-secondary'}>
                         {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
                       </span>
+                      {order.lastHandledBy && (
+                        <p className="text-[10px] text-muted-foreground mt-1 truncate max-w-[120px]" title={`Handled by ${order.lastHandledBy}`}>
+                          👤 {order.lastHandledBy}
+                        </p>
+                      )}
+                      {order.paymentMethod && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {order.paymentMethod === 'PAY_ON_DELIVERY' ? '🏷️ COD' : order.paymentMethod === 'RAZORPAY' ? '💳 Online' : order.paymentMethod === 'UPI_DIRECT' ? '📱 UPI' : '💰'}
+                        </p>
+                      )}
                     </td>
                     {isAdmin && (
                       <td className="data-table-cell">
