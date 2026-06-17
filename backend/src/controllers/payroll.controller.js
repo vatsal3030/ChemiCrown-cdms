@@ -582,30 +582,47 @@ exports.bulkPay = async (req, res, next) => {
     const { month, paymentMethod = 'DIGITAL_TRANSFER' } = req.body;
     if (!month) return res.status(400).json({ success: false, message: 'Month is required' });
 
-    const slips = await prisma.salary.findMany({ where: { month, status: 'PENDING' } });
+    const slips = await prisma.salary.findMany({
+      where: { month, status: 'PENDING' },
+      include: { employee: { include: { user: { select: { id: true, firstName: true, lastName: true } } } } }
+    });
     if (slips.length === 0) return res.status(400).json({ success: false, message: `No pending slips for ${month}` });
 
     const now = new Date();
-    await prisma.$transaction(
-      slips.map(s =>
+    const methodLabels = { CASH: 'Cash', BANK_TRANSFER: 'Bank Transfer', UPI: 'UPI Transfer', CHEQUE: 'Cheque', DIGITAL_TRANSFER: 'Digital Transfer' };
+    const methodLabel = methodLabels[paymentMethod] || paymentMethod;
+
+    // Atomic transaction: update all slips + create ledger entries
+    await prisma.$transaction([
+      ...slips.map(s =>
         prisma.salary.update({
           where: { id: s.id },
-          data: { status: 'PAID', paidAt: now, paymentMethod }
+          data: { status: 'PAID', paidAt: now, paymentMethod, paidById: req.user.id }
+        })
+      ),
+      ...slips.map(s =>
+        prisma.financeLedger.create({
+          data: { type: 'DEBIT', category: 'PAYROLL', amount: s.netPay, description: `Bulk payroll ${month} - ${s.employee?.user?.firstName || ''} ${s.employee?.user?.lastName || ''}`, referenceId: s.id, date: now, isAutomatic: true }
         })
       )
-    );
+    ]);
 
-    // Sync ledger
+    // Notify each employee (non-blocking, outside transaction)
     for (const s of slips) {
-      prisma.financeLedger.create({
-        data: { type: 'DEBIT', category: 'PAYROLL', amount: s.netPay, description: `Bulk payroll ${month}`, referenceId: s.id, date: now, isAutomatic: true }
-      }).catch(() => {});
+      if (s.employee?.user?.id) {
+        prisma.notification.create({
+          data: {
+            userId: s.employee.user.id,
+            message: `💰 Salary of ₹${s.netPay.toFixed(2)} for ${month} has been paid via ${methodLabel}. Please confirm receipt in your Payroll section.`
+          }
+        }).catch(() => {});
+      }
     }
-
 
     res.json({ success: true, message: `Processed ${slips.length} payments for ${month}` });
   } catch (error) { next(error); }
 };
+
 
 /**
  * POST|PUT /api/payroll/:id/confirm

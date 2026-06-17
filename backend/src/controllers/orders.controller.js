@@ -2,11 +2,20 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const prisma = require('../config/prisma');
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'secret_placeholder'
-});
-
+// Lazy Razorpay init — only needed for online payment flows, not COD/UPI
+let _razorpay = null;
+const getRazorpay = () => {
+  if (!_razorpay) {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      throw { status: 503, message: 'Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.' };
+    }
+    _razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+  }
+  return _razorpay;
+};
 
 
 const createOrder = async (req, res, next) => {
@@ -147,7 +156,7 @@ const createOrder = async (req, res, next) => {
         receipt: `rcpt_${order.id.substring(0, 8)}`
       };
 
-      const rzpOrder = await razorpay.orders.create(options);
+      const rzpOrder = await getRazorpay().orders.create(options);
 
       // Update payment record with razorpay order ID
       await prisma.payment.update({
@@ -291,6 +300,12 @@ const getOrders = async (req, res, next) => {
         items: true,
         customer: {
           include: { user: { select: { firstName: true, lastName: true } } }
+        },
+        payment: { select: { paymentMethod: true, status: true } },
+        history: {
+          orderBy: { changedAt: 'desc' },
+          take: 1,
+          include: { user: { select: { firstName: true, lastName: true } } }
         }
       }
     });
@@ -300,7 +315,12 @@ const getOrders = async (req, res, next) => {
       createdAt: o.createdAt,
       status: o.status,
       customer: o.customer,
-      total: o.total || o.items.reduce((acc, item) => acc + (item.quantity * item.price), 0)
+      total: o.total || o.items.reduce((acc, item) => acc + (item.quantity * item.price), 0),
+      paymentMethod: o.payment?.paymentMethod || null,
+      paymentStatus: o.payment?.status || null,
+      lastHandledBy: o.history?.[0]?.user
+        ? `${o.history[0].user.firstName || ''} ${o.history[0].user.lastName || ''}`.trim()
+        : null
     }));
 
     res.status(200).json({ success: true, data: formatted });

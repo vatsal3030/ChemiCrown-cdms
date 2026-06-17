@@ -403,7 +403,10 @@ exports.getProductTransactions = async (req, res, next) => {
     const transactions = await prisma.inventoryTransaction.findMany({
       where: { inventoryId: inventory.id },
       orderBy: { createdAt: 'desc' },
-      include: { supplier: true }
+      include: {
+        supplier: true,
+        user: { select: { id: true, firstName: true, lastName: true } }
+      }
     });
 
     res.status(200).json({ success: true, data: transactions });

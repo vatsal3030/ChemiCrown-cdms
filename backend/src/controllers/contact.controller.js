@@ -33,7 +33,7 @@ const submitContact = async (req, res, next) => {
     // Check duplicate identical messages in the last hour
     const recentDuplicate = await prisma.supportTicket.findFirst({
       where: {
-        submittedBy: 'GUEST',
+        submittedBy: { startsWith: 'GUEST' },
         title: `Contact Form: ${subject || 'Inquiry'}`,
         createdAt: { gte: new Date(now - 60 * 60 * 1000) }
       }
@@ -49,7 +49,7 @@ const submitContact = async (req, res, next) => {
 
     await prisma.supportTicket.create({
       data: {
-        submittedBy: 'GUEST',
+        submittedBy: `GUEST:${email}`,
         type: 'OTHER',
         priority: 'MEDIUM',
         title: `Contact Form: ${subject || 'Inquiry'}`,
