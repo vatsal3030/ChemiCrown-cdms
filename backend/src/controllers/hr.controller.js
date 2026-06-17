@@ -332,9 +332,14 @@ exports.markAttendance = async (req, res, next) => {
       });
     }
 
-    const targetDateStr = date || new Date().toISOString().split('T')[0];
+    // Accept both full ISO strings (from frontend) and YYYY-MM-DD strings
+    const rawDate = date || new Date().toISOString();
+    const targetDateStr = rawDate.substring(0, 10); // Always extract YYYY-MM-DD
     const targetDate = new Date(`${targetDateStr}T00:00:00.000Z`);
-    const nextDay = new Date(`${targetDateStr}T00:00:00.000Z`);
+    if (isNaN(targetDate.getTime())) {
+      return res.status(400).json({ success: false, message: `Invalid date: ${date}` });
+    }
+    const nextDay = new Date(targetDate);
     nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
     const existing = await prisma.attendance.findFirst({
