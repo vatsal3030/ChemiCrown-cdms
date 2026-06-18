@@ -19,7 +19,7 @@ const generateDeliveryChallan = async (req, res, next) => {
               select: {
                 name: true, hsnCode: true, gstRate: true,
                 unit: true, packageSize: true, baseUnit: true, sku: true,
-                casNumber: true, unNumber: true, hazardClass: true
+                casNumber: true, unNumber: true
               }
             }
           }
@@ -55,7 +55,7 @@ const generateDeliveryChallan = async (req, res, next) => {
 
     // Determine if any items are hazardous
     const hasHazardous = order.items.some(item =>
-      item.product?.unNumber || item.product?.hazardClass
+      item.product?.unNumber
     );
 
     const challan = {
@@ -85,19 +85,23 @@ const generateDeliveryChallan = async (req, res, next) => {
         address: order.shippingAddress || 'N/A'
       },
       // Items
-      items: order.items.map((item, i) => ({
-        sr: i + 1,
-        name: item.product?.name || 'Unknown',
-        sku: item.product?.sku || '',
-        hsnCode: item.product?.hsnCode || item.hsnCode || '',
-        casNumber: item.product?.casNumber || '',
-        unNumber: item.product?.unNumber || '',
-        hazardClass: item.product?.hazardClass || '',
-        unit: item.product?.unit || '',
-        packageSize: item.product?.packageSize || '',
-        baseUnit: item.product?.baseUnit || '',
-        quantity: item.quantity
-      })),
+      items: order.items.map((item, i) => {
+        const unNumber = item.product?.unNumber || '';
+        const hazardClass = unNumber ? String(unNumber).replace(/[^0-9]/g, '')[0] || '9' : '';
+        return {
+          sr: i + 1,
+          name: item.product?.name || 'Unknown',
+          sku: item.product?.sku || '',
+          hsnCode: item.product?.hsnCode || item.hsnCode || '',
+          casNumber: item.product?.casNumber || '',
+          unNumber,
+          hazardClass,
+          unit: item.product?.unit || '',
+          packageSize: item.product?.packageSize || '',
+          baseUnit: item.product?.baseUnit || '',
+          quantity: item.quantity
+        };
+      }),
       // Transport
       transport: {
         mode: 'Road',

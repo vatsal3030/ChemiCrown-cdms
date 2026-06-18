@@ -19,29 +19,32 @@ const getRazorpay = () => {
 
 
 const createOrder = async (req, res, next) => {
+  let keyCreated = false;
+  let idempotencyKey = '';
   try {
     const { items, distanceKm, shippingAddress, orderNotes, paymentMethod } = req.body; // array of { chemicalId, quantity }
     const userId = req.user.id;
 
-    const idempotencyKey = `${userId}-${JSON.stringify(items)}`;
+    idempotencyKey = `${userId}-${JSON.stringify(items)}`;
     
+    // Cleanup old keys first so they don't cause false duplicate detections
+    await prisma.idempotencyKey.deleteMany({
+      where: {
+        createdAt: { lt: new Date(Date.now() - 60000) }
+      }
+    }).catch(() => {});
+
     try {
       await prisma.idempotencyKey.create({
         data: { key: idempotencyKey }
       });
+      keyCreated = true;
     } catch (err) {
       if (err.code === 'P2002') {
         return res.status(409).json({ error: 'Duplicate order detected. Please wait before placing the same order again.' });
       }
       throw err;
     }
-
-    // Cleanup old keys (fire and forget)
-    prisma.idempotencyKey.deleteMany({
-      where: {
-        createdAt: { lt: new Date(Date.now() - 60000) }
-      }
-    }).catch(() => {});
 
     let customer = await prisma.customer.findUnique({ where: { userId } });
     
@@ -187,6 +190,13 @@ const createOrder = async (req, res, next) => {
         razorpayOrder: rzpOrder
       });
     } catch (error) {
+      if (keyCreated && idempotencyKey) {
+        // Delete key on failure so the user can retry immediately
+        await prisma.idempotencyKey.delete({
+          where: { key: idempotencyKey }
+        }).catch(() => {});
+      }
+
       if (error.status) {
         return res.status(error.status).json({ error: error.message, outOfStockItem: error.outOfStockItem });
       }
