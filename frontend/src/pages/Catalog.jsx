@@ -459,17 +459,17 @@ export default function Catalog() {
                         <Heart size={14} className={favoriteIds.has(product.id) ? 'fill-red-500 text-red-500' : 'text-slate-500'} />
                       </button>
 
-                      {/* Stock badge — 3 states */}
+                      {/* Stock badge — 3 states (solid colors for high contrast overlay) */}
                       {lowStock ? (
-                        <span className="inline-flex flex-wrap items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-700 shadow-sm">
+                        <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-600 text-white border border-amber-500 shadow-sm">
                           <Package size={10} /> Low Stock
                         </span>
                       ) : inStock ? (
-                        <span className="inline-flex flex-wrap items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 shadow-sm">
+                        <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-600 text-white border border-emerald-500 shadow-sm">
                           <CheckCircle2 size={10} /> In Stock
                         </span>
                       ) : (
-                        <span className="inline-flex flex-wrap items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-sm">
+                        <span className="inline-flex flex-wrap items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-rose-600 text-white border border-rose-500 shadow-sm">
                           <XCircle size={10} /> Out of Stock
                         </span>
                       )}
