@@ -175,6 +175,7 @@ export default function DashboardLayout() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
   const switcherRef = useRef(null);
+  const themeToggleRef = useRef(null);
 
   useKeyboardShortcuts(setSearchModalOpen);
 
@@ -182,15 +183,42 @@ export default function DashboardLayout() {
     localStorage.setItem('sidebarCollapsed', collapsed);
   }, [collapsed]);
 
-  // Apply dark mode class to document root
+  // Apply dark mode class on initial mount only
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', darkMode);
     localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Wave animation theme toggle using View Transition API
+  const handleThemeToggle = () => {
+    const newDark = !darkMode;
+
+    // Calculate animation origin from the toggle button's position
+    const rect = themeToggleRef.current?.getBoundingClientRect();
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth - 40;
+    const y = rect ? rect.top + rect.height / 2 : 32;
+
+    // Set CSS custom properties for clip-path origin
+    document.documentElement.style.setProperty('--tt-x', `${x}px`);
+    document.documentElement.style.setProperty('--tt-y', `${y}px`);
+
+    const applyTheme = () => {
+      document.documentElement.classList.toggle('dark', newDark);
+    };
+
+    if (document.startViewTransition) {
+      const transition = document.startViewTransition(applyTheme);
+      transition.finished.then(() => {
+        document.documentElement.style.removeProperty('--tt-x');
+        document.documentElement.style.removeProperty('--tt-y');
+      });
+    } else {
+      applyTheme();
+    }
+
+    setDarkMode(newDark);
+    localStorage.setItem('theme', newDark ? 'dark' : 'light');
+  };
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -421,11 +449,12 @@ export default function DashboardLayout() {
           <div className="flex items-center gap-2">
             {/* Dark mode toggle */}
             <button
-              onClick={() => setDarkMode(d => !d)}
+              ref={themeToggleRef}
+              onClick={handleThemeToggle}
               className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              {darkMode ? <Sun size={18} className="animate-spin-once" /> : <Moon size={18} />}
             </button>
             <NotificationDropdown />
           </div>
