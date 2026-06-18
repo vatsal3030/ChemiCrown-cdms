@@ -72,6 +72,8 @@ import AuditLog from './pages/admin/AuditLog';
 import AuditLogDetails from './pages/admin/AuditLogDetails';
 import TicketDashboard from './pages/admin/TicketDashboard';
 import SupportTicketReview from './pages/admin/SupportTicketReview';
+import InvoicePage from './pages/InvoicePage';
+import DeliveryChallanPage from './pages/DeliveryChallanPage';
 import NotFound from './pages/NotFound';
 
 import { Toaster, ToastBar, toast as hotToast } from 'react-hot-toast';
@@ -95,6 +97,8 @@ function DynamicTitle() {
       else if (subpath.startsWith('/catalog/')) title = 'Product Details | ChemiCrown CDMS';
       else if (subpath === '/inventory') title = 'Inventory | ChemiCrown CDMS';
       else if (subpath === '/orders') title = 'Orders | ChemiCrown CDMS';
+      else if (subpath.startsWith('/orders/') && subpath.endsWith('/invoice')) title = 'Tax Invoice | ChemiCrown CDMS';
+      else if (subpath.startsWith('/orders/') && subpath.endsWith('/challan')) title = 'Delivery Challan | ChemiCrown CDMS';
       else if (subpath.startsWith('/orders/')) title = 'Order Details | ChemiCrown CDMS';
       else if (subpath === '/hr') title = 'HR Management | ChemiCrown CDMS';
       else if (subpath === '/recycle-bin') title = 'Recycle Bin | ChemiCrown CDMS';
@@ -199,6 +203,8 @@ function App() {
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'CUSTOMER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
                     <Route path="orders" element={<Orders />} />
                     <Route path="orders/:id" element={<OrderDetails />} />
+                    <Route path="orders/:id/invoice" element={<InvoicePage />} />
+                    <Route path="orders/:id/challan" element={<DeliveryChallanPage />} />
                   </Route>
                   
                   {/* Customer-style shopping routes — also accessible by in-company roles */}

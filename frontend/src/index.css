@@ -276,3 +276,94 @@
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+/* ─────────────────────────────────────────────
+   PRINT STYLES — Clean output for invoices,
+   orders, reports, salary slips, etc.
+───────────────────────────────────────────── */
+@media print {
+  /* Hide non-content UI */
+  aside,
+  header,
+  nav,
+  .no-print,
+  button,
+  [role="dialog"],
+  [role="alertdialog"],
+  .fixed {
+    display: none !important;
+  }
+
+  /* Reset backgrounds and colors for ink-friendly output */
+  * {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-color: #ccc !important;
+  }
+
+  /* Main content should fill the page */
+  body {
+    margin: 0;
+    padding: 0;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  main {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure the flex layout doesn't constrain print */
+  .flex.h-screen {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .flex-1.flex.flex-col {
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* Page breaks */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Company letterhead for printed documents */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #000;
+  }
+
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+}
+
+/* Hide print-only elements on screen */
+.print-only,
+.print-header {
+  display: none;
+}

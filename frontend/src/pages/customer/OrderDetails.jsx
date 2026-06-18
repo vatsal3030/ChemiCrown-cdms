@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import {
   ArrowLeft, Package, MapPin, Truck, CheckCircle2,
   Clock, XCircle, RefreshCw, Star, ChevronRight, AlertTriangle,
-  RotateCcw, Building2, Phone, Mail, Hash, ExternalLink
+  RotateCcw, Building2, Phone, Mail, Hash, ExternalLink, FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReviewModal from '@/components/ReviewModal';
@@ -280,6 +280,24 @@ export default function OrderDetails() {
         </span>
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 shrink-0">
+          {/* Invoice — available from PROCESSING onwards */}
+          {['PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'].includes(order.status) && (
+            <Button variant="outline" size="sm" asChild
+              className="border-primary/30 text-primary hover:bg-primary/5 text-xs h-8 px-3">
+              <Link to={`/dashboard/orders/${order.id}/invoice`}>
+                <FileText size={13} className="mr-1" /> Invoice
+              </Link>
+            </Button>
+          )}
+          {/* Delivery Challan — admin only, from PACKAGED onwards */}
+          {isAdmin && ['PACKAGED', 'DISPATCHED', 'DELIVERED'].includes(order.status) && (
+            <Button variant="outline" size="sm" asChild
+              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/30 text-xs h-8 px-3">
+              <Link to={`/dashboard/orders/${order.id}/challan`}>
+                <Truck size={13} className="mr-1" /> Challan
+              </Link>
+            </Button>
+          )}
           {/* Cancel — available before dispatched */}
           {!isCancelled && !isDelivered && order.status !== 'DISPATCHED' && (
             <Button variant="outline" size="sm" disabled={cancelling} onClick={handleCancelOrder}
@@ -402,6 +420,9 @@ export default function OrderDetails() {
                   {item.product?.casNumber && (
                     <p className="text-[10px] text-muted-foreground font-mono">CAS: {item.product.casNumber}</p>
                   )}
+                  {(item.hsnCode || item.product?.hsnCode) && (
+                    <p className="text-[10px] text-muted-foreground font-mono">HSN: {item.hsnCode || item.product?.hsnCode}{item.gstRate ? ` · GST ${item.gstRate}%` : ''}</p>
+                  )}
                   {/* Review button — only for delivered orders */}
                   {isDelivered && isCustomer && (
                     <button
@@ -480,7 +501,27 @@ export default function OrderDetails() {
                   <span className="font-medium">₹{shipping.toFixed(2)}</span>
                 </div>
               )}
-              {tax > 0 && (
+              {/* GST breakup */}
+              {order.cgstTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">CGST</span>
+                  <span className="font-medium">₹{Number(order.cgstTotal).toFixed(2)}</span>
+                </div>
+              )}
+              {order.sgstTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">SGST</span>
+                  <span className="font-medium">₹{Number(order.sgstTotal).toFixed(2)}</span>
+                </div>
+              )}
+              {order.igstTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">IGST</span>
+                  <span className="font-medium">₹{Number(order.igstTotal).toFixed(2)}</span>
+                </div>
+              )}
+              {/* Fallback: show total tax if no breakup data */}
+              {!order.cgstTotal && !order.sgstTotal && !order.igstTotal && tax > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax (GST)</span>
                   <span className="font-medium">₹{tax.toFixed(2)}</span>

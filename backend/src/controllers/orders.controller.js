@@ -65,6 +65,7 @@ const createOrder = async (req, res, next) => {
 
     const { order, totalAmount } = await prisma.$transaction(async (tx) => {
       let calcTotal = 0;
+      let totalTax = 0;
       const orderItemsData = [];
 
       for (const item of items) {
@@ -87,16 +88,30 @@ const createOrder = async (req, res, next) => {
         const itemTotal = product.price * item.quantity;
         calcTotal += itemTotal;
 
+        // Per-product GST calculation (default 18% if not set)
+        const gstRate = product.gstRate || 18;
+        const itemTax = Number((itemTotal * gstRate / 100).toFixed(2));
+        const halfTax = Number((itemTax / 2).toFixed(2));
+        totalTax += itemTax;
+
         orderItemsData.push({
           productId: product.id,
           quantity: item.quantity,
-          price: product.price
+          price: product.price,
+          costPrice: product.costPrice || null,
+          hsnCode: product.hsnCode || null,
+          gstRate: gstRate,
+          // Default to intra-state (CGST + SGST) — invoice generation will recalc if inter-state
+          cgst: halfTax,
+          sgst: halfTax,
+          igst: null,
+          taxAmount: itemTax
         });
       }
 
       const distanceCost = Number(((distanceKm || 0) * 10).toFixed(2));
       const hazardousShippingCost = calcTotal > 0 ? 2500 : 0;
-      const taxAmount = Number((calcTotal * 0.18).toFixed(2));
+      const taxAmount = Number(totalTax.toFixed(2));
       calcTotal = Number(calcTotal.toFixed(2));
       const finalTotal = Number((calcTotal + distanceCost + hazardousShippingCost + taxAmount).toFixed(2));
 
@@ -110,6 +125,8 @@ const createOrder = async (req, res, next) => {
           distanceCost: distanceCost,
           hazardousShippingCost: hazardousShippingCost,
           taxAmount: taxAmount,
+          cgstTotal: Number((totalTax / 2).toFixed(2)),
+          sgstTotal: Number((totalTax / 2).toFixed(2)),
           shippingAddress: shippingAddress,
           orderNotes: orderNotes,
           items: {
@@ -461,12 +478,27 @@ const cancelOrder = async (req, res, next) => {
 
     // ── DB Transaction ────────────────────────────────────────────────────
     await prisma.$transaction(async (tx) => {
-      // 1. Restore inventory stock for each cancelled item
+      // 1. Restore inventory stock for each cancelled item + audit trail
       for (const item of order.items) {
         await tx.inventory.updateMany({
           where: { productId: item.productId },
           data: { quantity: { increment: item.quantity } }
         });
+
+        // Create IN transaction record for audit (reverse of dispatch OUT)
+        const inv = await tx.inventory.findFirst({ where: { productId: item.productId } });
+        if (inv) {
+          await tx.inventoryTransaction.create({
+            data: {
+              inventoryId: inv.id,
+              type: 'IN',
+              quantity: item.quantity,
+              remarks: `Order #${id.substring(0, 8).toUpperCase()} cancelled — stock restored`,
+              userId: req.user?.id,
+              createdBy: `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || req.user?.email
+            }
+          }).catch(() => {}); // Don't block cancellation if audit fails
+        }
       }
 
       // 2. Mark order as CANCELLED with tracking fields
@@ -712,12 +744,67 @@ const advanceOrderStatus = async (req, res, next) => {
         }
       });
 
+      // ── SPRINT 2: Inventory deduction on DISPATCHED ────────────────────
+      // When order moves to DISPATCHED, deduct stock for each item.
+      // Creates InventoryTransaction OUT records for audit trail.
+      if (nextStatus === 'DISPATCHED') {
+        const orderItems = await tx.orderItem.findMany({
+          where: { orderId: id },
+          include: { product: { include: { inventory: true } } }
+        });
+
+        for (const item of orderItems) {
+          if (!item.product?.inventory) continue;
+
+          // Verify sufficient stock before deducting
+          if (item.product.inventory.quantity < item.quantity) {
+            throw {
+              status: 400,
+              message: `Insufficient stock for ${item.product.name}. Available: ${item.product.inventory.quantity}, Required: ${item.quantity}. Cannot dispatch.`
+            };
+          }
+
+          // Decrement inventory
+          await tx.inventory.update({
+            where: { id: item.product.inventory.id },
+            data: { quantity: { decrement: item.quantity } }
+          });
+
+          // Create OUT transaction record
+          await tx.inventoryTransaction.create({
+            data: {
+              inventoryId: item.product.inventory.id,
+              type: 'OUT',
+              quantity: item.quantity,
+              remarks: `Order #${id.substring(0, 8).toUpperCase()} dispatched`,
+              userId: req.user?.id,
+              createdBy: `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || req.user?.email
+            }
+          });
+        }
+      }
+
       // Bug 3 Fix: Auto-mark PAY_ON_DELIVERY payment as PAID when order is DELIVERED
       if (nextStatus === 'DELIVERED' && order.payment?.paymentMethod === 'PAY_ON_DELIVERY') {
         await tx.payment.update({
           where: { orderId: id },
           data: { status: 'SUCCESS' }
         });
+      }
+
+      // ── Revenue ledger entry on DELIVERED ───────────────────────────────
+      if (nextStatus === 'DELIVERED') {
+        await tx.financeLedger.create({
+          data: {
+            type: 'CREDIT',
+            category: 'REVENUE',
+            amount: order.total,
+            description: `Order #${id.substring(0, 8).toUpperCase()} delivered — ${order.payment?.paymentMethod || 'Unknown'}`,
+            referenceId: id,
+            isAutomatic: true,
+            createdBy: req.user?.id
+          }
+        }).catch(() => {}); // Don't block order delivery if ledger fails
       }
 
       // Notify customer
@@ -736,7 +823,7 @@ const advanceOrderStatus = async (req, res, next) => {
           updatedBy: req.user.id
         }
       });
-    }, { timeout: 10000 });
+    }, { timeout: 15000 });
 
     // Audit log
     await prisma.auditLog.create({

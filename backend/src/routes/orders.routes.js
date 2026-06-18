@@ -35,5 +35,13 @@ router.post('/:id/cancel', cancelOrder);
 router.put('/:id/verify-cod', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), verifyCodOrder);
 router.post('/:id/advance', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES']), advanceOrderStatus);
 
+// Invoice generation — accessible by admin roles + customer who owns the order
+const { generateInvoice } = require('../controllers/invoice.controller');
+router.get('/:id/invoice', generateInvoice);
+
+// Delivery challan — admin/sales only (transport document)
+const { generateDeliveryChallan } = require('../controllers/challan.controller');
+router.get('/:id/challan', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES']), generateDeliveryChallan);
+
 module.exports = router;
 

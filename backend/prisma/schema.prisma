@@ -147,6 +147,9 @@ model Product {
   safetyNotes String?
   storageInstructions String?
   price       Float
+  costPrice   Float?    // Purchase/landing cost per unit — enables margin & COGS calculation
+  hsnCode     String?   // HSN code for GST (e.g. "28061010" for HCl)
+  gstRate     Float?    // GST percentage (5, 12, 18, 28) — most chemicals are 18%
   isMadeInIndia Boolean @default(false)
   
   @@index([name])
@@ -250,6 +253,13 @@ model Order {
   distanceCost         Float?
   hazardousShippingCost Float?
   taxAmount            Float?
+  // GST breakup — populated at invoice generation
+  cgstTotal            Float?   // Central GST total (intra-state)
+  sgstTotal            Float?   // State GST total (intra-state)
+  igstTotal            Float?   // Integrated GST total (inter-state)
+  isInterState         Boolean  @default(false) // true = IGST, false = CGST+SGST
+  invoiceNumber        String?  @unique // e.g. CC/2026-27/0001
+  invoiceDate          DateTime?
   shippingAddress      String?
   orderNotes           String?
   // Cancellation tracking
@@ -298,7 +308,14 @@ model OrderItem {
   productId String
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Float
+  price     Float     // Selling price per unit (snapshot at order time)
+  costPrice Float?    // Purchase cost per unit (snapshot for margin calc)
+  hsnCode   String?   // HSN code snapshot
+  gstRate   Float?    // GST % snapshot (e.g. 18)
+  cgst      Float?    // CGST amount for this line
+  sgst      Float?    // SGST amount for this line
+  igst      Float?    // IGST amount for this line
+  taxAmount Float?    // Total tax for this line (cgst+sgst or igst)
 }
 
 // ── Refund Model ─────────────────────────────────────────────────────────────

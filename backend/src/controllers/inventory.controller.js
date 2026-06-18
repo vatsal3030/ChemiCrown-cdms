@@ -113,7 +113,7 @@ exports.getCategories = async (req, res, next) => {
 // Add new product
 exports.addProduct = async (req, res, next) => {
   try {
-    const { name, description, unit, packageSize, baseUnit, price, quantity, categoryId, casNumber, sku, supplierId, safetyNotes, storageInstructions, mfgDate, expiryDate, minThreshold, isAvailable, brand, manufacturer, itemForm, purity, grade } = req.body;
+    const { name, description, unit, packageSize, baseUnit, price, costPrice, hsnCode, gstRate, quantity, categoryId, casNumber, sku, supplierId, safetyNotes, storageInstructions, mfgDate, expiryDate, minThreshold, isAvailable, brand, manufacturer, itemForm, purity, grade } = req.body;
     
     if (parseFloat(price) < 0) return res.status(400).json({ error: 'Price cannot be negative.' });
     if (parseInt(quantity) < 0) return res.status(400).json({ error: 'Quantity cannot be negative.' });
@@ -166,6 +166,9 @@ exports.addProduct = async (req, res, next) => {
         itemForm,
         purity,
         grade,
+        costPrice: costPrice ? parseFloat(costPrice) : null,
+        hsnCode: hsnCode || null,
+        gstRate: gstRate ? parseFloat(gstRate) : null,
         imageUrls,
         inventory: {
           create: {
@@ -187,7 +190,7 @@ exports.addProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, unit, packageSize, baseUnit, price, quantity, categoryId, casNumber, sku, supplierId, safetyNotes, storageInstructions, mfgDate, expiryDate, minThreshold, isAvailable, brand, manufacturer, itemForm, purity, grade } = req.body;
+    const { name, description, unit, packageSize, baseUnit, price, costPrice, hsnCode, gstRate, quantity, categoryId, casNumber, sku, supplierId, safetyNotes, storageInstructions, mfgDate, expiryDate, minThreshold, isAvailable, brand, manufacturer, itemForm, purity, grade } = req.body;
     
     if (price !== undefined && parseFloat(price) < 0) return res.status(400).json({ error: 'Price cannot be negative.' });
     if (quantity !== undefined && parseInt(quantity) < 0) return res.status(400).json({ error: 'Quantity cannot be negative.' });
@@ -220,6 +223,9 @@ exports.updateProduct = async (req, res, next) => {
       itemForm,
       purity,
       grade,
+      costPrice: costPrice !== undefined ? (costPrice ? parseFloat(costPrice) : null) : undefined,
+      hsnCode: hsnCode !== undefined ? (hsnCode || null) : undefined,
+      gstRate: gstRate !== undefined ? (gstRate ? parseFloat(gstRate) : null) : undefined,
     };
     
     if (isAvailable !== undefined) {

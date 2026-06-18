@@ -282,8 +282,12 @@ export default function Checkout() {
     });
   };
 
-  const gstAmount = Number((cartTotal * 0.18).toFixed(2));
-  const hazardousFee = cartTotal > 0 ? 500 : 0; // Hazardous material handling fee
+  // Compute GST per item using product's gstRate (default 18% if not set)
+  const gstAmount = cartItems.reduce((acc, item) => {
+    const rate = item.product?.gstRate || 18;
+    return acc + Number(((item.product.price * item.quantity) * rate / 100).toFixed(2));
+  }, 0);
+  const hazardousFee = cartTotal > 0 ? 2500 : 0; // Hazardous material handling fee (matches backend)
   const finalTotal = Number((cartTotal + gstAmount + hazardousFee + distanceCost).toFixed(2));
 
   if (cartItems.length === 0) {
@@ -324,7 +328,10 @@ export default function Checkout() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm truncate">{item.product.name}</h4>
-                    <p className="text-xs text-muted-foreground">₹{item.product.price} / {item.product.unit}</p>
+                    <p className="text-xs text-muted-foreground">
+                      ₹{item.product.price} / {item.product.unit}
+                      <span className="ml-2 px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] font-semibold rounded">GST {item.product.gstRate || 18}%</span>
+                    </p>
                     <div className="flex flex-wrap items-center gap-3 mt-2">
                       <div className="flex items-center border border-border rounded-md overflow-hidden bg-background">
                         <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="px-2 py-0.5 hover:bg-muted text-xs">-</button>
@@ -353,8 +360,12 @@ export default function Checkout() {
                 <span className="font-medium text-foreground">₹{hazardousFee.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">GST (18%)</span>
-                <span className="font-medium text-foreground">₹{gstAmount.toFixed(2)}</span>
+                <span className="text-muted-foreground">CGST</span>
+                <span className="font-medium text-foreground">₹{(gstAmount / 2).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">SGST</span>
+                <span className="font-medium text-foreground">₹{(gstAmount / 2).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Delivery Distance Cost ({distanceKm.toFixed(1)} km × ₹{COST_PER_KM}/km)</span>

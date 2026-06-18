@@ -51,7 +51,10 @@ export default function ProductFormPage() {
       manufacturer: '',
       itemForm: '',
       purity: '',
-      grade: ''
+      grade: '',
+      costPrice: '',
+      hsnCode: '',
+      gstRate: '18'
     };
   });
 
@@ -103,7 +106,10 @@ export default function ProductFormPage() {
               manufacturer: p.manufacturer || '',
               itemForm: p.itemForm || '',
               purity: p.purity || '',
-              grade: p.grade || ''
+              grade: p.grade || '',
+              costPrice: p.costPrice || '',
+              hsnCode: p.hsnCode || '',
+              gstRate: p.gstRate || '18'
             });
             setPreviewUrls(p.imageUrls || []);
           } else {
@@ -200,6 +206,9 @@ export default function ProductFormPage() {
       if (formData.itemForm) data.append('itemForm', formData.itemForm);
       if (formData.purity) data.append('purity', formData.purity);
       if (formData.grade) data.append('grade', formData.grade);
+      if (formData.costPrice) data.append('costPrice', formData.costPrice);
+      if (formData.hsnCode) data.append('hsnCode', formData.hsnCode);
+      if (formData.gstRate) data.append('gstRate', formData.gstRate);
       if (imageFiles.length > 0) {
         imageFiles.forEach(file => data.append('images', file));
       }
@@ -510,6 +519,46 @@ export default function ProductFormPage() {
                     className="text-lg font-bold"
                   />
                 </div>
+
+                {/* Cost Price */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Cost Price (₹)</label>
+                  <Input 
+                    type="number" min="0" step="0.01"
+                    onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
+                    value={formData.costPrice} 
+                    onChange={e=>setFormData({...formData, costPrice: e.target.value})} 
+                    placeholder="Purchase/landing cost" 
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Used for margin & profitability reports.</p>
+                </div>
+
+                {/* HSN & GST */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">HSN Code</label>
+                    <Input 
+                      type="text"
+                      value={formData.hsnCode} 
+                      onChange={e=>setFormData({...formData, hsnCode: e.target.value})} 
+                      placeholder="e.g. 28061010" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">GST Rate (%)</label>
+                    <select 
+                      value={formData.gstRate} 
+                      onChange={e=>setFormData({...formData, gstRate: e.target.value})} 
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <option value="5">5%</option>
+                      <option value="12">12%</option>
+                      <option value="18">18% (Default)</option>
+                      <option value="28">28%</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/50">
                   <label className="block text-sm font-semibold text-amber-700 dark:text-amber-500 mb-1.5">Low Stock Alert Threshold</label>
                   <Input 

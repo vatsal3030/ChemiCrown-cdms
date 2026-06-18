@@ -6,7 +6,8 @@ import {
   Trash2, CheckSquare, Heart, TrendingUp,
   Boxes, ClipboardList,
   FileText, Wallet, CalendarDays,
-  UserCheck, Activity, HelpCircle, Bug, Shield, MessageSquare
+  UserCheck, Activity, HelpCircle, Bug, Shield, MessageSquare,
+  Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
@@ -168,6 +169,11 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
   const [customerMode, setCustomerMode] = useState(() => localStorage.getItem('customerMode') !== 'false');
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const stored = localStorage.getItem('theme');
+    if (stored) return stored === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const switcherRef = useRef(null);
 
   useKeyboardShortcuts(setSearchModalOpen);
@@ -175,6 +181,16 @@ export default function DashboardLayout() {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', collapsed);
   }, [collapsed]);
+
+  // Apply dark mode class to document root
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -403,6 +419,14 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDarkMode(d => !d)}
+              className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <NotificationDropdown />
           </div>
         </header>
