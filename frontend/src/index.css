@@ -1,5 +1,6 @@
 /* ── Google Fonts — MUST come first ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
@@ -10,6 +11,18 @@
 ───────────────────────────────────────────── */
 @theme {
   --font-sans: "Inter", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+
+  /* ── Cinematic palette ── */
+  --color-ink: #0B1220;
+  --color-ink-2: #101A35;
+  --color-paper: #F4F6F9;
+  --color-brand: #FF5A3C;
+  --color-accent-amber: #E8A33D;
+  --color-accent-cobalt: #2F6FED;
+  --color-accent-emerald: #22B27D;
+  --color-accent-crimson: #D6263E;
+
 
   --color-border: var(--border);
   --color-input: var(--input);
@@ -111,13 +124,25 @@
 
   html {
     font-size: 16px;
-    scroll-behavior: smooth;
+    /* scroll-behavior handled by Lenis on public pages */
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', var(--font-sans);
     overflow-y: scroll;
+  }
+
+  /* ── Cinematic typography ── */
+  .font-display {
+    font-family: 'Space Grotesk', var(--font-display);
+  }
+
+  .text-headline {
+    font-family: 'Space Grotesk', var(--font-display);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
   }
 
   /* ── Thin global scrollbar ── */
@@ -342,6 +367,21 @@
 }
 
 /* ─────────────────────────────────────────────
+   PREFERS-REDUCED-MOTION
+   Disable all CSS animations/transitions
+───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─────────────────────────────────────────────
    KEYFRAMES
 ───────────────────────────────────────────── */
 @keyframes float {
@@ -356,6 +396,19 @@
   100% {
     transform: translateY(0px) rotate(0deg);
   }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes shimmer {

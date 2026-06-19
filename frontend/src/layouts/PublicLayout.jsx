@@ -4,6 +4,8 @@ import { Menu, X, MapPin, Phone, Mail, ChevronDown, ArrowRight, ShoppingCart, Su
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import ScrollProvider from '@/components/scroll/ScrollProvider';
+import Reveal from '@/components/scroll/Reveal';
 
 export default function PublicLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -62,6 +64,32 @@ export default function PublicLayout() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const [navbarVisible, setNavbarVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // If we scroll down, hide navbar. If we scroll up, show navbar.
+      // We also keep the navbar visible when close to the top of the page.
+      if (currentScrollY < 50) {
+        setNavbarVisible(true);
+      } else if (currentScrollY > lastScrollY.current) {
+        // Scroll down
+        setNavbarVisible(false);
+      } else {
+        // Scroll up
+        setNavbarVisible(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleQuickLogin = (accountId) => {
     switchAccount(accountId);
     toast.success('Switched account');
@@ -77,7 +105,7 @@ export default function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur-xl supports-backdrop-filter:bg-background/70 shadow-sm">
+      <nav className={`sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur-xl supports-backdrop-filter:bg-background/70 shadow-sm transition-transform duration-500 ease-in-out ${navbarVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="container flex h-16 max-w-screen-2xl items-center px-4 mx-auto justify-between">
           <Link to="/" className="flex items-center space-x-2.5 mr-6 group">
             <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-9 w-9 object-contain group-hover:scale-105 transition-transform" />
@@ -283,12 +311,14 @@ export default function PublicLayout() {
         )}
       </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col">
-        <Outlet />
-      </main>
+      {/* Main Content — wrapped in ScrollProvider for Lenis smooth scroll */}
+      <ScrollProvider>
+        <main className="flex-1">
+          <Outlet />
+        </main>
 
       {/* Footer */}
+      <Reveal direction="up" amount={0.1}>
       <footer className="border-t border-border bg-muted/30 py-8 md:py-12">
         <div className="container px-4 mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
@@ -331,6 +361,8 @@ export default function PublicLayout() {
           © {new Date().getFullYear()} ChemiCrown CDMS. All rights reserved.
         </div>
       </footer>
+      </Reveal>
+      </ScrollProvider>
     </div>
   );
 }

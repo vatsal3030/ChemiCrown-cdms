@@ -9,6 +9,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import useSWR from 'swr';
 import useDebounce from '@/hooks/useDebounce';
+import Reveal from '@/components/scroll/Reveal';
 
 // ─── Hazard / Grade colour maps ───────────────────────────────────────────────
 const HAZARD_COLORS = {
@@ -188,43 +189,54 @@ export default function Catalog() {
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 pb-16 overflow-x-hidden">
 
-      {/* ── Hero / Search ── */}
-      <div className="bg-primary/5 border-b border-border py-8 sm:py-12 px-3 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-            Premium Chemical Catalog
-          </h1>
-          <p className="mt-2 sm:mt-4 text-base sm:text-xl text-muted-foreground mx-auto max-w-5xl">
-            Industrial &amp; laboratory chemicals — direct from manufacturer.
-          </p>
-          <div className="mt-5 sm:mt-8 max-w-5xl mx-auto flex flex-wrap gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-              <input
-                type="text"
-                className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 rounded-full text-sm sm:text-base shadow-sm border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Search by name, CAS number, grade…"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      {/* ── Cinematic Hero / Search ── */}
+      <div className="relative py-16 sm:py-24 px-3 sm:px-6 lg:px-8 overflow-hidden bg-ink">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink-2 to-[#0d1a3a]" />
+        <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-accent-cobalt/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand/5 rounded-full blur-[100px]" />
+
+        <div className="max-w-7xl mx-auto text-center relative z-10">
+          <Reveal delay={0.1}>
+            <h1 className="text-headline text-3xl sm:text-4xl md:text-5xl text-white mb-4">
+              Premium Chemical Catalog
+            </h1>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <p className="mt-2 sm:mt-4 text-base sm:text-xl text-slate-300/90 mx-auto max-w-3xl">
+              Industrial &amp; laboratory chemicals — direct from manufacturer.
+            </p>
+          </Reveal>
+          <Reveal delay={0.35}>
+            <div className="mt-5 sm:mt-8 max-w-5xl mx-auto flex flex-wrap gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 z-10" />
+                <input
+                  type="text"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 rounded-full text-sm sm:text-base shadow-sm border border-white/10 bg-white/5 backdrop-blur-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent-cobalt focus:border-accent-cobalt/30"
+                  placeholder="Search by name, CAS number, grade…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={showFilters ? () => setShowFilters(false) : openFilters}
+                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 sm:py-3 rounded-full font-semibold text-xs sm:text-sm shadow-sm border transition-all whitespace-nowrap ${
+                  hasActiveFilters
+                    ? 'bg-accent-cobalt text-white border-accent-cobalt'
+                    : 'bg-white/5 backdrop-blur-sm border-white/10 text-white hover:border-accent-cobalt/40'
+                }`}
+              >
+                <SlidersHorizontal size={14} className="sm:w-4 sm:h-4" />
+                Filters
+                {hasActiveFilters && (
+                  <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5 font-bold leading-none">
+                    ON
+                  </span>
+                )}
+              </button>
             </div>
-            <button
-              onClick={showFilters ? () => setShowFilters(false) : openFilters}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 sm:py-3 rounded-full font-semibold text-xs sm:text-sm shadow-sm border transition-all whitespace-nowrap ${
-                hasActiveFilters
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
-              }`}
-            >
-              <SlidersHorizontal size={14} className="sm:w-4 sm:h-4" />
-              Filters
-              {hasActiveFilters && (
-                <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5 font-bold leading-none">
-                  ON
-                </span>
-              )}
-            </button>
-          </div>
+          </Reveal>
         </div>
       </div>
 
@@ -416,7 +428,7 @@ export default function Catalog() {
         ) : (
           // 1-col on mobile, 2-col on sm, 3-col on lg — max 3, never 4
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
-            {products.map((product) => {
+            {products.map((product, _cardIdx) => {
               const qty      = product.inventory?.quantity ?? 0;
               const inStock  = qty > 0;
               const lowStock = inStock && qty <= LOW_STOCK_THRESHOLD;
@@ -424,9 +436,9 @@ export default function Catalog() {
               const gradeStyle  = GRADE_COLORS[product.grade] || GRADE_COLORS['Technical'];
 
               return (
+                <Reveal key={product.id} delay={Math.min(_cardIdx * 0.05, 0.3)} direction="up" once={true}>
                 <div
-                  key={product.id}
-                  className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-0.5 cursor-pointer"
+                  className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-0.5 cursor-pointer h-full"
                   onClick={() => {
                     const isDashboard = location.pathname.startsWith('/dashboard');
                     navigate(`${isDashboard ? '/dashboard/catalog' : '/catalog'}/${product.id}`);
@@ -565,6 +577,7 @@ export default function Catalog() {
                     </div>
                   </div>
                 </div>
+                </Reveal>
               );
             })}
           </div>

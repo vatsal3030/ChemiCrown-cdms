@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Reveal from '@/components/scroll/Reveal';
 
 // Simple in-memory rate limiter (resets on page refresh — good enough for frontend guard)
 const RATE_LIMIT_MS = 60_000; // 1 message per minute
@@ -115,12 +116,23 @@ export default function Contact() {
   return (
     <div className="flex flex-col flex-1 pb-24">
       {/* Hero */}
-      <div className="bg-muted py-12 md:py-20 border-b border-border">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">Contact Support</h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-4xl mx-auto">
-            Have a question about our chemicals, bulk pricing, or your recent order? Our team is here to help.
-          </p>
+      <div className="relative py-20 md:py-28 overflow-hidden bg-ink">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink-2 to-[#0d1a3a]" />
+        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-accent-amber/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-brand/5 rounded-full blur-[100px]" />
+
+        <div className="container mx-auto px-6 text-center relative z-10 max-w-4xl">
+          <Reveal delay={0.1}>
+            <h1 className="text-headline text-3xl md:text-5xl lg:text-6xl text-white mb-5">
+              Contact Support
+            </h1>
+          </Reveal>
+          <Reveal delay={0.25}>
+            <p className="text-base md:text-lg text-slate-300/90 max-w-2xl mx-auto leading-relaxed">
+              Have a question about our chemicals, bulk pricing, or your recent order? Our team is here to help.
+            </p>
+          </Reveal>
         </div>
       </div>
 
@@ -128,7 +140,7 @@ export default function Contact() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
           {/* ── Contact Info Sidebar ── */}
-          <div className="space-y-6">
+          <Reveal direction="left" className="space-y-6">
             <div>
               <h2 className="text-xl font-bold text-foreground mb-2">Get in Touch</h2>
               <p className="text-sm text-muted-foreground">
@@ -179,10 +191,10 @@ export default function Contact() {
                 title="ChemiCrown Location"
               />
             </div>
-          </div>
+          </Reveal>
 
           {/* ── Contact Form ── */}
-          <div className="lg:col-span-2">
+          <Reveal direction="right" delay={0.15} className="lg:col-span-2">
             <div className="bg-card border border-border p-6 sm:p-8 rounded-2xl shadow-sm">
               {sent ? (
                 <div className="text-center py-12">
@@ -318,7 +330,7 @@ export default function Contact() {
                 </>
               )}
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
     </div>
