@@ -676,7 +676,9 @@ export default function HRManagement() {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-slate-500">{kpi.label}</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{kpi.value}</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {kpi.value === 0 && kpi.label.includes('Pending') ? 'No pending' : kpi.value}
+                    </p>
                   </div>
                 </button>
               ))
@@ -685,10 +687,10 @@ export default function HRManagement() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-4">Headcount by Department</h3>
-              <div className="h-64">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <PieChart>
-                    <Pie data={deptData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    <Pie data={deptData} cx="50%" cy="50%" innerRadius={65} outerRadius={90} paddingAngle={5} dataKey="value" label={({ name, value }) => `${name} (${value})`}>
                       {deptData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
@@ -702,12 +704,12 @@ export default function HRManagement() {
 
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-4">Employees by Role</h3>
-              <div className="h-64">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <BarChart data={roleData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} allowDecimals={false} label={{ value: 'Employees Count', angle: -90, position: 'insideLeft', fill: '#94A3B8', fontSize: 12 }} />
                     <RechartsTooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0' }} />
                     <Bar dataKey="value" fill="#1F2E54" radius={[4, 4, 0, 0]} />
                   </BarChart>

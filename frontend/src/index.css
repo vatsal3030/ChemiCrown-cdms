@@ -393,7 +393,7 @@
 
 ::view-transition-new(root) {
   z-index: 9999;
-  animation: theme-wave-reveal 5.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: theme-wave-reveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes theme-wave-reveal {

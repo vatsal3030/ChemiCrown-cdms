@@ -128,13 +128,27 @@ app.use((req, res, next) => {
   next();
 });
 
+const prisma = require('./src/config/prisma');
+
 // ── Health check (no auth, no rate limit) ─────────────────────────────────────
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Ping the database to keep Supabase awake on the free tier
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({
+      status: 'ok',
+      db: 'connected',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+    });
+  } catch (error) {
+    console.error('Health Check DB Error:', error);
+    res.status(500).json({
+      status: 'error',
+      db: 'disconnected',
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 

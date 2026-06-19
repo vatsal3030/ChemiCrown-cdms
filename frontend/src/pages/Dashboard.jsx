@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
-  Package, ShoppingCart, Users, DollarSign, TrendingUp, AlertTriangle,
+  Package, ShoppingCart, Users, IndianRupee, TrendingUp, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Activity, Clock, CheckCircle2,
   XCircle, BarChart3, RefreshCw, ExternalLink, Zap, Building2
 } from 'lucide-react';
@@ -185,7 +185,7 @@ export default function Dashboard() {
           title={`Full value: ${formatINRFull(stats.revenue)}`}
           trend={stats.revenueTrend !== null ? (parseFloat(stats.revenueTrend) >= 0 ? 'up' : 'down') : undefined}
           trendValue={stats.revenueTrend !== null ? `${parseFloat(stats.revenueTrend) >= 0 ? '+' : ''}${stats.revenueTrend}% vs last month` : undefined}
-          icon={DollarSign}
+          icon={IndianRupee}
           color="bg-primary/10 text-primary"
         />
         <StatCard
@@ -218,11 +218,11 @@ export default function Dashboard() {
         <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-3">
           <QuickAction label="New Order" icon={ShoppingCart} to="/dashboard/orders" color="bg-primary/10 text-primary" />
-          <QuickAction label="Add Product" icon={Package} to="/dashboard/inventory/product/new" color="bg-emerald-500/10 text-emerald-600" />
-          <QuickAction label="HR & Payroll" icon={Users} to="/dashboard/hr" color="bg-purple-500/10 text-purple-600" />
-          <QuickAction label="Stock History" icon={BarChart3} to="/dashboard/stock-history" color="bg-amber-500/10 text-amber-600" />
-          <QuickAction label="Tasks" icon={CheckCircle2} to="/dashboard/tasks" color="bg-blue-500/10 text-blue-600" />
-          <QuickAction label="Finance" icon={DollarSign} to="/dashboard/finance" color="bg-rose-500/10 text-rose-600" />
+          <QuickAction label="Add Product" icon={Package} to="/dashboard/inventory/product/new" color="bg-secondary/10 text-secondary" />
+          <QuickAction label="HR & Payroll" icon={Users} to="/dashboard/hr" color="bg-primary/10 text-primary" />
+          <QuickAction label="Stock History" icon={BarChart3} to="/dashboard/stock-history" color="bg-secondary/10 text-secondary" />
+          <QuickAction label="Tasks" icon={CheckCircle2} to="/dashboard/tasks" color="bg-primary/10 text-primary" />
+          <QuickAction label="Finance" icon={IndianRupee} to="/dashboard/finance" color="bg-secondary/10 text-secondary" />
         </div>
       </div>
 
@@ -248,7 +248,7 @@ export default function Dashboard() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: '#94A3B8', fontSize: 12 }}
-                  tickFormatter={v => formatCompact(v)}
+                  tickFormatter={v => formatINR(v)}
                   width={55}
                 />
                 <Tooltip
@@ -381,25 +381,34 @@ export default function Dashboard() {
             {!data?.recentOrders?.length && (
               <div className="text-center py-8 text-sm text-muted-foreground">No recent orders.</div>
             )}
-            {data?.recentOrders?.map((order) => (
-              <div key={order.id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition-colors group">
-                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <ShoppingCart size={15} className="text-primary" />
+            {data?.recentOrders?.map((order) => {
+              const companyName = order.customer?.companyName || 'Unknown';
+              const companyInitials = companyName
+                .split(' ')
+                .map(w => w[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase();
+              return (
+                <div key={order.id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition-colors group">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-xs font-bold text-primary uppercase">
+                    {companyInitials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {companyName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleString('en-IN')}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <OrderStatusBadge status={order.status} />
+                    <p className="text-xs font-bold text-foreground mt-1" title={formatINRFull(order.total)}>
+                      {formatINR(order.total)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    {order.customer?.companyName || 'Unknown'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleString('en-IN')}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <OrderStatusBadge status={order.status} />
-                  <p className="text-xs font-bold text-foreground mt-1" title={formatINRFull(order.total)}>
-                    {formatINR(order.total)}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

@@ -11,6 +11,15 @@ export default function RecycleBin() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
 
+  const getDaysRemaining = (deletedAtStr) => {
+    const deletedAt = new Date(deletedAtStr);
+    const expiryDate = new Date(deletedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const diffTime = expiryDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
   const fetchTrash = async () => {
     try {
       setLoading(true);
@@ -156,7 +165,10 @@ export default function RecycleBin() {
                       {item.name} {item.sku && <span className="text-slate-400 text-xs ml-2">({item.sku})</span>}
                     </td>
                     <td className="px-6 py-4 text-slate-500">
-                      {new Date(item.deletedAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      <div>{new Date(item.deletedAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                      <div className="text-[11px] text-amber-600 font-semibold mt-0.5">
+                        Permanently deleted in {getDaysRemaining(item.deletedAt)} days
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

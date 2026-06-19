@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  DollarSign, TrendingUp, Wallet,
+  IndianRupee, TrendingUp, Wallet,
   RefreshCw, Plus, Trash2, Edit3, X, Filter,
   ShoppingCart, Users, Package, AlertTriangle, ChevronDown,
   Receipt, ArrowUpRight, ArrowDownRight, BookOpen
@@ -306,8 +306,8 @@ export default function Finance() {
             {/* Top KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <KPI label="Total Revenue" value={fmtShort(d.revenue)} sub={`${d.orderCount} delivered orders`} icon={TrendingUp} trend="up" color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" />
-              <KPI label="Gross Profit" value={fmtShort(d.grossProfit)} sub={`${d.grossMargin?.toFixed(1)}% margin`} icon={DollarSign} trend={d.grossProfit >= 0 ? 'up' : 'down'} color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" />
-              <KPI label="Net Profit" value={fmtShort(d.netProfit)} sub={`${d.netMargin?.toFixed(1)}% net margin`} icon={Wallet} trend={d.netProfit >= 0 ? 'up' : 'down'} color={d.netProfit >= 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'} />
+              <KPI label="Gross Profit" value={fmtShort(d.grossProfit)} sub={`${d.grossMargin?.toFixed(1)}% margin`} icon={IndianRupee} trend={d.grossProfit >= 0 ? 'up' : 'down'} color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" />
+              <KPI label="Net Profit" value={fmtShort(d.netProfit)} sub={`${d.netMargin?.toFixed(1)}% net margin${d.netMargin < 0 ? ' (includes payroll test data)' : ''}`} icon={Wallet} trend={d.netProfit >= 0 ? 'up' : 'down'} color={d.netProfit >= 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'} />
               <KPI label="Pending Revenue" value={fmtShort(d.pendingRevenue)} sub={`${d.pendingOrderCount} pending orders`} icon={ShoppingCart} color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" />
             </div>
 
@@ -453,26 +453,46 @@ export default function Finance() {
                     <BookOpen size={32} className="mx-auto mb-2 opacity-30" />
                     <p>No ledger entries found. Click "Sync Ledger" to import historical data.</p>
                   </td></tr>
-                ) : ledger.map(entry => (
-                  <tr key={entry.id} onClick={() => navigate(`/dashboard/finance/ledger/${entry.id}`)} className={`hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors ${entry.type === 'DEBIT' ? 'border-l-2 border-l-red-300 dark:border-l-red-800' : 'border-l-2 border-l-emerald-300 dark:border-l-emerald-800'}`}>
-                    <td className="px-5 py-3 text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString('en-IN')}</td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${entry.type === 'CREDIT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                        {entry.type}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3"><span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 text-xs">{entry.category}</span></td>
-                    <td className="px-5 py-3 text-muted-foreground max-w-[200px] truncate">{entry.description}</td>
-                    <td className={`px-5 py-3 text-right font-bold ${entry.type === 'CREDIT' ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {entry.type === 'DEBIT' ? '-' : '+'}{fmt(entry.amount)}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs ${entry.isAutomatic ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/20'}`}>
-                        {entry.isAutomatic ? 'Auto' : 'Manual'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                ) : (
+                  <>
+                    {ledger.map(entry => (
+                      <tr key={entry.id} onClick={() => navigate(`/dashboard/finance/ledger/${entry.id}`)} className={`hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors ${entry.type === 'DEBIT' ? 'border-l-2 border-l-red-300 dark:border-l-red-800' : 'border-l-2 border-l-emerald-300 dark:border-l-emerald-800'}`}>
+                        <td className="px-5 py-3 text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString('en-IN')}</td>
+                        <td className="px-5 py-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${entry.type === 'CREDIT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                            {entry.type}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3"><span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 text-xs">{entry.category}</span></td>
+                        <td className="px-5 py-3 text-muted-foreground max-w-[200px] truncate">{entry.description}</td>
+                        <td className={`px-5 py-3 text-right font-bold ${entry.type === 'CREDIT' ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {entry.type === 'DEBIT' ? '-' : '+'}{fmt(entry.amount)}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={`px-2 py-0.5 rounded text-xs ${entry.isAutomatic ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/20'}`}>
+                            {entry.isAutomatic ? 'Auto' : 'Manual'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {(() => {
+                      const pageTotal = ledger.reduce((sum, entry) => {
+                        if (entry.type === 'CREDIT') return sum + (entry.amount || 0);
+                        if (entry.type === 'DEBIT') return sum - (entry.amount || 0);
+                        return sum;
+                      }, 0);
+                      return (
+                        <tr className="bg-slate-50 dark:bg-slate-900/60 font-bold border-t border-border">
+                          <td colSpan={4} className="px-5 py-4 text-left text-sm text-foreground">Page Net Total</td>
+                          <td className={`px-5 py-4 text-right text-sm ${pageTotal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {pageTotal >= 0 ? '+' : ''}{fmt(pageTotal)}
+                          </td>
+                          <td className="px-5 py-4"></td>
+                        </tr>
+                      );
+                    })()}
+                  </>
+                )}
               </tbody>
             </table>
           </div>

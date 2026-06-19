@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { formatINR } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
+const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN') : '—';
+
 function SalaryStatusBadge({ status, confirmed }) {
   if (status === 'PAID' && confirmed) return <span className="badge badge-success"><ShieldCheck size={12} className="mr-1" /> Paid &amp; Confirmed</span>;
   if (status === 'PAID') return <span className="badge badge-success"><CheckCircle2 size={12} className="mr-1" /> Paid</span>;
@@ -110,8 +112,8 @@ export default function PayrollDetails() {
             </div>
             <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex flex-wrap items-center gap-2"><Calendar size={14} /> <strong>Month:</strong> {slip.month}</div>
-              <div className="flex flex-wrap items-center gap-2"><Calendar size={14} /> <strong>Generated:</strong> {new Date(slip.createdAt).toLocaleDateString()}</div>
-              {slip.paidAt && <div className="flex flex-wrap items-center gap-2"><CheckCircle2 size={14} /> <strong>Paid On:</strong> {new Date(slip.paidAt).toLocaleDateString()}</div>}
+              <div className="flex flex-wrap items-center gap-2"><Calendar size={14} /> <strong>Generated:</strong> {fmt(slip.createdAt)}</div>
+              {slip.paidAt && <div className="flex flex-wrap items-center gap-2"><CheckCircle2 size={14} /> <strong>Paid On:</strong> {fmt(slip.paidAt)}</div>}
             </div>
           </div>
 

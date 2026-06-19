@@ -16,14 +16,59 @@ const COLUMNS = [
   { id: 'COMPLETED',   label: 'Completed',   color: 'bg-emerald-500',badge: 'badge-success' },
 ];
 
+const getTaskPriority = (task) => {
+  const title = (task.title || '').toLowerCase();
+  const desc = (task.description || '').toLowerCase();
+  
+  const urgentKeywords = ['urgent', 'asap', 'critical', 'important', 'immediate', 'highest', 'p1'];
+  const mediumKeywords = ['medium', 'moderate', 'normal', 'p2'];
+  
+  const hasUrgentKeyword = urgentKeywords.some(kw => title.includes(kw) || desc.includes(kw));
+  const hasMediumKeyword = mediumKeywords.some(kw => title.includes(kw) || desc.includes(kw));
+
+  const now = new Date();
+  const due = task.dueDate ? new Date(task.dueDate) : null;
+  
+  let isOverdue = false;
+  let isClose = false;
+  let isUpcoming = false;
+  
+  if (due) {
+    const diffTime = due.getTime() - now.getTime();
+    if (diffTime < 0 && task.status !== 'COMPLETED') {
+      isOverdue = true;
+    } else {
+      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+      if (diffDays <= 1) {
+        isClose = true;
+      } else if (diffDays <= 3) {
+        isUpcoming = true;
+      }
+    }
+  }
+
+  if (hasUrgentKeyword || isOverdue || isClose) {
+    return { level: 'high', label: 'High', color: 'border-l-4 border-l-rose-500', bg: 'bg-rose-500/10 text-rose-700 dark:text-rose-400' };
+  } else if (hasMediumKeyword || isUpcoming) {
+    return { level: 'medium', label: 'Medium', color: 'border-l-4 border-l-amber-500', bg: 'bg-amber-500/10 text-amber-700 dark:text-amber-400' };
+  } else {
+    return { level: 'low', label: 'Low', color: 'border-l-4 border-l-slate-400 dark:border-l-slate-600', bg: 'bg-slate-500/10 text-slate-700 dark:text-slate-450' };
+  }
+};
+
 function TaskCard({ task, user, onDelete, onView, dragging, dragHandleProps }) {
   const assigneeName = task.assignedTo?.user
     ? `${task.assignedTo.user.firstName} ${task.assignedTo.user.lastName}`
     : 'Unassigned';
 
+  const priority = getTaskPriority(task);
+  const now = new Date();
+  const due = task.dueDate ? new Date(task.dueDate) : null;
+  const isOverdue = due && due.getTime() < now.getTime() && task.status !== 'COMPLETED';
+
   return (
     <div
-      className={`bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group ${dragging ? 'opacity-50 ring-2 ring-primary scale-95' : 'hover:-translate-y-0.5'}`}
+      className={`bg-card border border-border ${priority.color} rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group ${dragging ? 'opacity-50 ring-2 ring-primary scale-95' : 'hover:-translate-y-0.5'}`}
       onClick={() => onView(task)}
     >
       <div className="flex items-start gap-2">
@@ -35,6 +80,11 @@ function TaskCard({ task, user, onDelete, onView, dragging, dragHandleProps }) {
           <GripVertical size={16} />
         </div>
         <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${priority.bg}`}>
+              {priority.label}
+            </span>
+          </div>
           <p className="font-semibold text-foreground text-sm leading-snug group-hover:text-primary transition-colors">{task.title}</p>
           {task.description && (
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
@@ -61,9 +111,13 @@ function TaskCard({ task, user, onDelete, onView, dragging, dragHandleProps }) {
           </div>
           <span className="truncate max-w-[100px]">{assigneeName}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-          <Calendar size={11} />
-          {new Date(task.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+        <div className={`flex flex-wrap items-center gap-1 text-xs ${isOverdue ? 'text-rose-600 dark:text-rose-450 font-semibold' : 'text-muted-foreground'}`}>
+          <Calendar size={11} className={isOverdue ? 'text-rose-500' : ''} />
+          {task.dueDate ? (
+            <span>Due {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+          ) : (
+            <span>Created {new Date(task.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+          )}
         </div>
       </div>
     </div>

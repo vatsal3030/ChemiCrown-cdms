@@ -22,6 +22,8 @@ const STATUS_CONFIG = {
 
 const TIMELINE = ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'];
 
+const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN') : '—';
+
 const NEXT_ACTION = {
   REQUESTED:  { label: 'Mark as Pending',   note: 'Payment/COD verification complete. Move to Pending.' },
   PENDING:    { label: 'Start Processing',  note: 'Begin preparing the order.' },
@@ -272,7 +274,7 @@ export default function OrderDetails() {
             Order #{order.id.substring(0, 8).toUpperCase()}
           </h1>
           <p className="text-xs text-muted-foreground">
-            Placed on {new Date(order.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+            Placed on {fmt(order.createdAt)}
           </p>
         </div>
         <span className={`badge ${statusCfg.color} shrink-0`}>
@@ -463,7 +465,7 @@ export default function OrderDetails() {
                       <div>
                         <p className="font-semibold text-sm text-foreground">{STATUS_CONFIG[hStatus]?.label || hStatus}</p>
                         <p className="text-[10px] text-muted-foreground mb-1">
-                          {new Date(history.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                          {fmt(history.changedAt || history.createdAt)}
                         </p>
                         {history.note && (
                           <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded-lg mt-1 border border-border">
@@ -563,7 +565,7 @@ export default function OrderDetails() {
                   {order.history.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED')).note}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  Dispatched on {new Date(order.history.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED')).createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  Dispatched on {fmt(order.history.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED'))?.changedAt || order.history.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED'))?.createdAt)}
                 </p>
               </div>
             </div>

@@ -167,36 +167,102 @@ export default function PayrollConfig() {
             </button>
           ))}
         </div>
-
         <div className="p-6">
           {tab === 'salary' ? (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Base Salary (₹/month) *</label>
-                  <Input type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={baseSalary} onChange={e => setBaseSalary(e.target.value)} placeholder="e.g. 50000" className="h-11" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Annual CTC (₹)</label>
-                  <Input type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={ctc} onChange={e => setCtc(e.target.value)} placeholder="e.g. 600000" className="h-11" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">PF Contribution Rate (%)</label>
-                  <Input type="number" min="0" max="100" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={pfRate} onChange={e => setPfRate(e.target.value)} placeholder="12" className="h-11" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Default is 12% of Basic</p>
-                </div>
-                {isSalesRole && (
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-primary block mb-2">Monthly Sales Target (₹)</label>
-                    <Input type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={salesTarget} onChange={e => setSalesTarget(e.target.value)} placeholder="e.g. 500000" className="h-11 border-primary/30 focus:ring-primary" />
-                    <p className="text-[10px] text-muted-foreground mt-1">For incentive calculations</p>
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Inputs Column */}
+                <div className="lg:col-span-7 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Base Salary (₹/month) *</label>
+                      <Input type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={baseSalary} onChange={e => setBaseSalary(e.target.value)} placeholder="e.g. 50000" className="h-11" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Annual CTC (₹)</label>
+                      <Input type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={ctc} onChange={e => setCtc(e.target.value)} placeholder="e.g. 600000" className="h-11" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">PF Contribution Rate (%)</label>
+                      <Input type="number" min="0" max="100" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={pfRate} onChange={e => setPfRate(e.target.value)} placeholder="12" className="h-11" />
+                      <p className="text-[10px] text-muted-foreground mt-1">Default is 12% of Basic</p>
+                    </div>
+                    {isSalesRole && (
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-primary block mb-2">Monthly Sales Target (₹)</label>
+                        <Input type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} value={salesTarget} onChange={e => setSalesTarget(e.target.value)} placeholder="e.g. 500000" className="h-11 border-primary/30 focus:ring-primary" />
+                        <p className="text-[10px] text-muted-foreground mt-1">For incentive calculations</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <div className="flex justify-end pt-4 border-t border-border mt-6">
-                <Button onClick={saveSalary} disabled={saving} className="gap-2">
-                  <Save size={16} /> {saving ? 'Saving...' : 'Save Salary Config'}
-                </Button>
+                  <div className="flex justify-end pt-4 border-t border-border">
+                    <Button onClick={saveSalary} disabled={saving} className="gap-2">
+                      <Save size={16} /> {saving ? 'Saving...' : 'Save Salary Config'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Salary Breakdown Preview Column */}
+                <div className="lg:col-span-5">
+                  <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-2">
+                      Salary Breakdown Preview
+                    </h3>
+                    
+                    <div className="space-y-2.5 text-sm">
+                      <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                        <span>Basic Salary (Monthly)</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">₹{(parseFloat(baseSalary) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center text-rose-600 dark:text-rose-400">
+                        <span>PF Deduction ({parseFloat(pfRate) || 0}%)</span>
+                        <span className="font-semibold">-₹{((parseFloat(baseSalary) || 0) * (parseFloat(pfRate) || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-2.5 font-bold text-slate-800 dark:text-slate-100 text-base">
+                        <span>Est. Net Take-Home</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          ₹{((parseFloat(baseSalary) || 0) - ((parseFloat(baseSalary) || 0) * (parseFloat(pfRate) || 0) / 100)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-500 dark:text-slate-400">
+                      <h4 className="font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">Annualized Projection</h4>
+                      
+                      <div className="flex justify-between">
+                        <span>Annualized Basic</span>
+                        <span>₹{((parseFloat(baseSalary) || 0) * 12).toLocaleString('en-IN')}</span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span>Annualized PF</span>
+                        <span>₹{(((parseFloat(baseSalary) || 0) * (parseFloat(pfRate) || 0) / 100) * 12).toLocaleString('en-IN')}</span>
+                      </div>
+
+                      <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300 border-t border-dashed border-slate-200 dark:border-slate-800 pt-2">
+                        <span>Total Cost to Company (CTC)</span>
+                        <span>₹{((parseFloat(baseSalary) || 0) * 12).toLocaleString('en-IN')}</span>
+                      </div>
+
+                      {parseFloat(ctc) > 0 && (
+                        <div className="bg-primary/5 border border-primary/10 rounded-lg p-2.5 mt-2 space-y-1">
+                          <div className="flex justify-between font-medium text-primary">
+                            <span>Target Annual CTC:</span>
+                            <span>₹{(parseFloat(ctc) || 0).toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>CTC Difference:</span>
+                            <span className={((parseFloat(ctc) || 0) - ((parseFloat(baseSalary) || 0) * 12)) >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                              ₹{((parseFloat(ctc) || 0) - ((parseFloat(baseSalary) || 0) * 12)).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (

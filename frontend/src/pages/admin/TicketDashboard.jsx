@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 
-const TYPE_ICONS = { BUG: Bug, FEATURE_REQUEST: Lightbulb, DATA_ISSUE: Database, OTHER: AlertTriangle };
+const TYPE_STYLES = {
+  BUG: { icon: Bug, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 border-rose-200 dark:border-rose-900/40' },
+  FEATURE_REQUEST: { icon: Lightbulb, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-450 border-blue-200 dark:border-blue-900/40' },
+  DATA_ISSUE: { icon: Database, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-450 border-amber-200 dark:border-amber-900/40' },
+  OTHER: { icon: AlertTriangle, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-450 border-purple-200 dark:border-purple-900/40' }
+};
+
 const PRIORITY_STYLES = {
   LOW: 'badge-neutral',
   MEDIUM: 'badge-info',
@@ -195,7 +201,7 @@ export default function TicketDashboard() {
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Type</label>
                 <select value={typeFilter} onChange={e => setParam('type', e.target.value)} className="w-full text-sm bg-background border border-input rounded-md px-3 py-2">
                   <option value="ALL">All Types</option>
-                  {Object.keys(TYPE_ICONS).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
+                  {Object.keys(TYPE_STYLES).map(k => <option key={k} value={k}>{k.replace('_', ' ')}</option>)}
                 </select>
               </div>
               <div>
@@ -243,10 +249,17 @@ export default function TicketDashboard() {
               )) : filteredTickets.length === 0 ? (
                 <tr><td colSpan={7} className="py-16 text-center text-muted-foreground">No tickets found matching filters.</td></tr>
               ) : filteredTickets.map(t => {
-                const Icon = TYPE_ICONS[t.type] || AlertTriangle;
                 return (
                   <tr key={t.id} className="data-table-row">
-                    <td className="data-table-cell"><Icon size={16} className="text-muted-foreground" /></td>
+                    <td className="data-table-cell">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${TYPE_STYLES[t.type]?.bg || 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                        {(() => {
+                          const IconComp = TYPE_STYLES[t.type]?.icon || AlertTriangle;
+                          return <IconComp size={12} className={TYPE_STYLES[t.type]?.color || 'text-slate-500'} />;
+                        })()}
+                        {t.type === 'FEATURE_REQUEST' ? 'FEATURE' : t.type?.replace('_', ' ')}
+                      </span>
+                    </td>
                     <td className="data-table-cell">
                       <p className="font-medium text-foreground truncate max-w-[200px]">{t.title}</p>
                       {t.resolution && <p className="text-xs text-emerald-600 mt-0.5 truncate max-w-[200px]">✓ {t.resolution}</p>}

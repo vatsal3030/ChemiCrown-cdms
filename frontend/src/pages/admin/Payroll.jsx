@@ -230,7 +230,7 @@ export default function Payroll() {
             <div className="kpi-card" title={formatINRFull(totalPF)}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total PF Contributions</p>
-                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><DollarSign size={18} /></div>
+                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><IndianRupee size={18} /></div>
               </div>
               <p className="text-2xl font-bold text-foreground mt-2">{formatINR(totalPF)}</p>
               <p className="text-xs text-muted-foreground mt-1">Employer PF liability</p>
@@ -401,7 +401,7 @@ export default function Payroll() {
                     </span>
                   </td>
                   <td className="data-table-cell text-rose-600 font-medium">-₹{slip.deductions.toFixed(2)}</td>
-                  <td className="data-table-cell text-amber-600 font-medium">-₹{slip.pfContribution.toFixed(2)}</td>
+                  <td className="data-table-cell text-rose-700/80 font-medium">-₹{slip.pfContribution.toFixed(2)}</td>
                   <td className="data-table-cell font-bold text-foreground text-base">₹{slip.netPay.toFixed(2)}</td>
                   <td className="data-table-cell"><SalaryStatusBadge status={slip.status} confirmed={slip.confirmedByEmployee} /></td>
                   <td className="data-table-cell">

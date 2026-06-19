@@ -16,6 +16,105 @@ export default function EmployeeDetails() {
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(new Date());
 
+  const handleIssueWarning = async () => {
+    const type = window.prompt("Enter Warning Type (VERBAL, WRITTEN, FINAL):", "WRITTEN");
+    if (!type) return;
+    if (!['VERBAL', 'WRITTEN', 'FINAL'].includes(type.toUpperCase())) {
+      return toast.error("Invalid warning type. Must be VERBAL, WRITTEN, or FINAL.");
+    }
+    const reason = window.prompt("Enter reason for warning:");
+    if (!reason?.trim()) return toast.error("Reason is required.");
+    
+    if (!window.confirm(`Confirm issuing ${type.toUpperCase()} warning to ${employee.firstName}?`)) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.employeeProfile?.id}/warnings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ type: type.toUpperCase(), reason })
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Warning issued successfully");
+      } else {
+        toast.error(json.message || "Failed to issue warning");
+      }
+    } catch {
+      toast.error("Network error");
+    }
+  };
+
+  const handleSuspend = async () => {
+    const from = window.prompt("Enter Start Date (YYYY-MM-DD):", new Date().toISOString().substring(0, 10));
+    if (!from) return;
+    const to = window.prompt("Enter End Date (YYYY-MM-DD):");
+    if (!to) return;
+    const reason = window.prompt("Enter reason for suspension:");
+    if (!reason?.trim()) return toast.error("Reason is required.");
+
+    if (!window.confirm(`Confirm suspending ${employee.firstName} from ${from} to ${to}?`)) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.employeeProfile?.id}/suspend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ from, to, reason })
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Employee suspended successfully");
+        setEmployee(prev => ({ ...prev, employeeProfile: { ...prev.employeeProfile, status: 'SUSPENDED' } }));
+      } else {
+        toast.error(json.message || "Failed to suspend");
+      }
+    } catch {
+      toast.error("Network error");
+    }
+  };
+
+  const handleTerminate = async () => {
+    const reason = window.prompt("Enter reason for termination:");
+    if (!reason?.trim()) return toast.error("Reason is required.");
+    const date = window.prompt("Enter effective date (YYYY-MM-DD):", new Date().toISOString().substring(0, 10));
+    if (!date) return;
+
+    if (!window.confirm(`⚠️ CRITICAL: Are you sure you want to TERMINATE ${employee.firstName} ${employee.lastName} effective ${date}? This cannot be undone.`)) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.employeeProfile?.id}/terminate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason, effectiveDate: date })
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Employee terminated successfully");
+        setEmployee(prev => ({ ...prev, employeeProfile: { ...prev.employeeProfile, status: 'TERMINATED' } }));
+      } else {
+        toast.error(json.message || "Failed to terminate");
+      }
+    } catch {
+      toast.error("Network error");
+    }
+  };
+
+  const getHeatmapData = () => {
+    const days = [];
+    const now = new Date();
+    const startDate = new Date();
+    startDate.setMonth(now.getMonth() - 5); // 6 months total
+    startDate.setDate(1);
+    const dayOfWeek = startDate.getDay();
+    startDate.setDate(startDate.getDate() - dayOfWeek);
+
+    const currentDate = new Date(startDate);
+    while (currentDate <= now) {
+      days.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return days;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -158,6 +257,25 @@ export default function EmployeeDetails() {
             <div className={`h-full rounded-full bg-linear-to-r ${score >= 80 ? 'from-green-400 to-emerald-500' : score >= 50 ? 'from-yellow-400 to-amber-500' : score !== null ? 'from-red-400 to-rose-500' : 'bg-slate-500'}`} style={{ width: `${score !== null ? score : 0}%` }}></div>
           </div>
         </div>
+
+        {user?.role === 'SUPER_ADMIN' && employee.id !== user.id && (
+          <div className="relative z-10 flex flex-col gap-2 w-full md:w-44 bg-black/40 backdrop-blur-md border border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-1">HR Actions</p>
+            <button onClick={handleIssueWarning} className="w-full text-xs font-semibold px-4 py-2 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-300 border border-yellow-500/30 rounded-xl transition-all cursor-pointer">
+              Issue Warning
+            </button>
+            {employee.employeeProfile?.status === 'ACTIVE' && (
+              <button onClick={handleSuspend} className="w-full text-xs font-semibold px-4 py-2 bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 rounded-xl transition-all cursor-pointer">
+                Suspend
+              </button>
+            )}
+            {employee.employeeProfile?.status !== 'TERMINATED' && (
+              <button onClick={handleTerminate} className="w-full text-xs font-semibold px-4 py-2 bg-red-600/25 hover:bg-red-600/40 text-red-300 border border-red-500/30 rounded-xl transition-all cursor-pointer">
+                Terminate
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -172,16 +290,39 @@ export default function EmployeeDetails() {
                 <button disabled={isNextDisabled} onClick={handleNextMonth} className="p-1 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-600"><ChevronRight size={16} /></button>
               </div>
             </div>
-            <div className="h-64 mb-6">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <RechartsTooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                  <Bar dataKey="value" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="mb-6">
+              <div className="flex gap-2">
+                <div className="grid grid-rows-7 text-[10px] text-muted-foreground pr-1 pt-1 h-[98px] justify-between">
+                  <span>Sun</span>
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                </div>
+                <div className="flex-1 overflow-x-auto">
+                  <div className="grid grid-flow-col grid-rows-7 gap-1 h-[98px] w-max">
+                    {getHeatmapData().map((day, idx) => {
+                      const record = attendance.find(a => new Date(a.date).toDateString() === day.toDateString());
+                      let colorClass = "bg-slate-100 dark:bg-slate-800/60";
+                      if (record) {
+                        if (record.status === 'PRESENT') colorClass = "bg-emerald-500 dark:bg-emerald-600";
+                        else if (record.status === 'ABSENT') colorClass = "bg-red-500 dark:bg-red-600";
+                        else if (record.status === 'LEAVE') colorClass = "bg-amber-500 dark:bg-amber-600";
+                        else if (record.status === 'HALF_DAY') colorClass = "bg-blue-500 dark:bg-blue-600";
+                      }
+                      return (
+                        <div
+                          key={idx}
+                          className={`w-3 h-3 rounded-xs transition-all hover:scale-125 ${colorClass}`}
+                          title={`${day.toLocaleDateString('en-IN')}${record ? `: ${record.status}` : ': No Data'}`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Daily Log</h3>

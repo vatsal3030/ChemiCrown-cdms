@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   HelpCircle, ChevronDown, ChevronUp, Mail, Phone, MessageSquare,
   FileText, AlertTriangle, FlaskConical, Shield, BookOpen, ExternalLink
@@ -52,6 +52,26 @@ export default function Support() {
   const [openItems, setOpenItems] = useState({});
   const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [openTicketsCount, setOpenTicketsCount] = useState(0);
+
+  useEffect(() => {
+    if (!token) return;
+    const fetchTickets = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/support`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          const openCount = json.data.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length;
+          setOpenTicketsCount(openCount);
+        }
+      } catch (e) {
+        console.error('Failed to fetch support tickets count', e);
+      }
+    };
+    fetchTickets();
+  }, [token]);
 
   const toggle = (key) => setOpenItems(prev => ({ ...prev, [key]: !prev[key] }));
 
@@ -99,20 +119,29 @@ export default function Support() {
       {/* Quick Links */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { icon: BookOpen, label: 'Documentation', color: 'bg-blue-500/10 text-blue-600', href: '#faq' },
-          { icon: AlertTriangle, label: 'Report Issue', color: 'bg-red-500/10 text-red-600', href: '/dashboard/report-issue' },
-          { icon: MessageSquare, label: 'Contact Team', color: 'bg-green-500/10 text-green-600', href: '#contact' },
-          { icon: Shield, label: 'Safety Guidelines', color: 'bg-amber-500/10 text-amber-600', href: '#safety' },
+          { icon: BookOpen, label: 'Documentation', desc: 'Browse guides and FAQs', color: 'bg-blue-500/10 text-blue-600', href: '#faq' },
+          { 
+            icon: AlertTriangle, 
+            label: 'Report Issue', 
+            desc: openTicketsCount > 0 ? `${openTicketsCount} open ticket${openTicketsCount !== 1 ? 's' : ''}` : 'Report bugs or data issues', 
+            color: 'bg-red-500/10 text-red-600', 
+            href: '/dashboard/report-issue' 
+          },
+          { icon: MessageSquare, label: 'Contact Team', desc: 'Send a direct message', color: 'bg-green-500/10 text-green-600', href: '#contact' },
+          { icon: Shield, label: 'Safety Guidelines', desc: 'Rules & emergency info', color: 'bg-amber-500/10 text-amber-600', href: '#safety' },
         ].map(item => (
           <a
             key={item.label}
             href={item.href}
-            className="kpi-card text-center flex flex-col items-center gap-3 py-5 hover:scale-[1.02] transition-transform"
+            className="kpi-card text-center flex flex-col items-center gap-3 py-4 hover:scale-[1.02] transition-transform"
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.color}`}>
               <item.icon size={20} />
             </div>
-            <span className="text-sm font-semibold text-foreground">{item.label}</span>
+            <div className="space-y-0.5">
+              <span className="text-sm font-bold text-foreground block">{item.label}</span>
+              <span className="text-xs text-muted-foreground block">{item.desc}</span>
+            </div>
           </a>
         ))}
       </div>

@@ -651,11 +651,29 @@ export default function Orders({ isMyOrders = false }) {
                     </td>
                     {isAdmin && (
                       <td className="data-table-cell">
-                        <div className="font-semibold text-foreground text-xs">
-                          {order.customer?.companyName || 'Retail Customer'}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {order.customer?.user?.firstName} {order.customer?.user?.lastName}
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const companyName = order.customer?.companyName || 'Retail Customer';
+                            const initials = companyName
+                              .split(' ')
+                              .map(w => w[0])
+                              .join('')
+                              .slice(0, 2)
+                              .toUpperCase();
+                            return (
+                              <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-xs text-primary uppercase shrink-0">
+                                {initials}
+                              </div>
+                            );
+                          })()}
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground text-xs truncate">
+                              {order.customer?.companyName || 'Retail Customer'}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground truncate">
+                              {order.customer?.user?.firstName} {order.customer?.user?.lastName}
+                            </div>
+                          </div>
                         </div>
                       </td>
                     )}

@@ -304,192 +304,189 @@ export default function ProductFormPage() {
               )}
             </div>
 
-            {/* Top Row: Basic & Packaging */}
+            {/* Unified 2-column details section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Section 1: Basic Info */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
-                <Info className="text-primary" size={20} />
-                Basic Details
-              </h2>
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Product Name *</label>
-                  <Input 
-                    required 
-                    type="text" 
-                    value={formData.name} 
-                    onChange={e=>setFormData({...formData, name: e.target.value})} 
-                    placeholder="e.g. Premium GP Thinner" 
-                    className="text-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Description</label>
-                  <textarea 
-                    value={formData.description} 
-                    onChange={e=>setFormData({...formData, description: e.target.value})} 
-                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[180px] shadow-sm resize-y" 
-                    placeholder="Provide a highly detailed description of the product, its primary uses, applications, appearance, and physical properties. A rich description helps customers understand the product better and improves search visibility..." 
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+                  <Info className="text-primary" size={20} />
+                  Basic Details
+                </h2>
+                <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">CAS Number</label>
-                    <Input type="text" value={formData.casNumber} onChange={e=>setFormData({...formData, casNumber: e.target.value})} placeholder="e.g. 67-64-1" />
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Product Name *</label>
+                    <Input 
+                      required 
+                      type="text" 
+                      value={formData.name} 
+                      onChange={e=>setFormData({...formData, name: e.target.value})} 
+                      placeholder="e.g. Premium GP Thinner" 
+                      className="text-lg"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">SKU Code</label>
-                    <Input type="text" value={formData.sku} onChange={e=>setFormData({...formData, sku: e.target.value})} placeholder="e.g. CHM-THN-001" />
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Description</label>
+                    <textarea 
+                      value={formData.description} 
+                      onChange={e=>setFormData({...formData, description: e.target.value})} 
+                      className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[180px] shadow-sm resize-y" 
+                      placeholder="Provide a highly detailed description of the product, its primary uses, applications, appearance, and physical properties. A rich description helps customers understand the product better and improves search visibility..." 
+                    />
                   </div>
-                </div>
-              </div>
-              </div>
-
-            {/* Section 2: Packaging */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col">
-              <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
-                <Package className="text-blue-500" size={20} />
-                Packaging & Categorization
-              </h2>
-              <div className="space-y-5">
-                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Container Size / Packaging Format *</label>
-                  <div className="flex flex-col gap-4">
-                    <select 
-                      className="w-full rounded-md border border-input bg-white dark:bg-slate-950 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val && val !== 'custom') {
-                          const [size, bUnit, ...unitParts] = val.split(' ');
-                          setFormData({...formData, packageSize: size, baseUnit: bUnit, unit: unitParts.join(' ')});
-                        }
-                      }}
-                    >
-                      <option value="">Select a preset to auto-fill...</option>
-                      <option value="50 Kg Barrel">50 Kg Barrel</option>
-                      <option value="100 Kg Barrel">100 Kg Barrel</option>
-                      <option value="25 L Drum">25 L Drum</option>
-                      <option value="10 L Drum">10 L Drum</option>
-                      <option value="200 L Drum">200 L Drum</option>
-                      <option value="1000 L IBC">1000 L IBC</option>
-                      <option value="5 Kg Bag">5 Kg Bag</option>
-                      <option value="25 Kg Bag">25 Kg Bag</option>
-                      <option value="custom">Custom Format...</option>
-                    </select>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium mb-1 text-slate-500">Size Volume/Weight</label>
-                        <Input type="number" min="0" step="0.01" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} required value={formData.packageSize} onChange={e=>setFormData({...formData, packageSize: e.target.value})} placeholder="e.g. 50" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1 text-slate-500">Base Unit (Kg, L)</label>
-                        <Input type="text" required value={formData.baseUnit} onChange={e=>setFormData({...formData, baseUnit: e.target.value})} placeholder="e.g. Kg" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1 text-slate-500">Container Type</label>
-                        <Input required list="packaging-units" type="text" value={formData.unit} onChange={e=>setFormData({...formData, unit: e.target.value})} placeholder="e.g. Barrel" />
-                        <datalist id="packaging-units">
-                          {availableUnits.map((u, i) => <option key={i} value={u} />)}
-                        </datalist>
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">CAS Number</label>
+                      <Input type="text" value={formData.casNumber} onChange={e=>setFormData({...formData, casNumber: e.target.value})} placeholder="e.g. 67-64-1" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">SKU Code</label>
+                      <Input type="text" value={formData.sku} onChange={e=>setFormData({...formData, sku: e.target.value})} placeholder="e.g. CHM-THN-001" />
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Category</label>
-                    <select value={formData.categoryId} onChange={e=>setFormData({...formData, categoryId: e.target.value})} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                      <option value="">Select Category</option>
-                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+              {/* Section 2: Packaging */}
+              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col">
+                <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+                  <Package className="text-blue-500" size={20} />
+                  Packaging & Categorization
+                </h2>
+                <div className="space-y-5">
+                  <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Container Size / Packaging Format *</label>
+                    <div className="flex flex-col gap-4">
+                      <select 
+                        className="w-full rounded-md border border-input bg-white dark:bg-slate-950 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && val !== 'custom') {
+                            const [size, bUnit, ...unitParts] = val.split(' ');
+                            setFormData({...formData, packageSize: size, baseUnit: bUnit, unit: unitParts.join(' ')});
+                          }
+                        }}
+                      >
+                        <option value="">Select a preset to auto-fill...</option>
+                        <option value="50 Kg Barrel">50 Kg Barrel</option>
+                        <option value="100 Kg Barrel">100 Kg Barrel</option>
+                        <option value="25 L Drum">25 L Drum</option>
+                        <option value="10 L Drum">10 L Drum</option>
+                        <option value="200 L Drum">200 L Drum</option>
+                        <option value="1000 L IBC">1000 L IBC</option>
+                        <option value="5 Kg Bag">5 Kg Bag</option>
+                        <option value="25 Kg Bag">25 Kg Bag</option>
+                        <option value="custom">Custom Format...</option>
+                      </select>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium mb-1 text-slate-500">Size Volume/Weight</label>
+                          <Input type="number" min="0" step="0.01" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }} required value={formData.packageSize} onChange={e=>setFormData({...formData, packageSize: e.target.value})} placeholder="e.g. 50" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium mb-1 text-slate-500">Base Unit (Kg, L)</label>
+                          <Input type="text" required value={formData.baseUnit} onChange={e=>setFormData({...formData, baseUnit: e.target.value})} placeholder="e.g. Kg" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium mb-1 text-slate-500">Container Type</label>
+                          <Input required list="packaging-units" type="text" value={formData.unit} onChange={e=>setFormData({...formData, unit: e.target.value})} placeholder="e.g. Barrel" />
+                          <datalist id="packaging-units">
+                            {availableUnits.map((u, i) => <option key={i} value={u} />)}
+                          </datalist>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Supplier ID (Optional)</label>
-                    <Input type="text" value={formData.supplierId} onChange={e=>setFormData({...formData, supplierId: e.target.value})} placeholder="e.g. SUP-9021" />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Category</label>
+                      <select value={formData.categoryId} onChange={e=>setFormData({...formData, categoryId: e.target.value})} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        <option value="">Select Category</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Supplier ID (Optional)</label>
+                      <Input type="text" value={formData.supplierId} onChange={e=>setFormData({...formData, supplierId: e.target.value})} placeholder="e.g. SUP-9021" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-            {/* Bottom Row: Specifications & Safety */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Section 4: Specifications (moved before safety for better layout flow) */}
+              {/* Section 3: Specifications */}
               <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                   <Beaker className="text-purple-500" size={20} />
                   Product Specifications
                 </h2>
                 <div className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Brand</label>
-                    <Input type="text" value={formData.brand} onChange={e=>setFormData({...formData, brand: e.target.value})} placeholder="e.g. Merck" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Brand</label>
+                      <Input type="text" value={formData.brand} onChange={e=>setFormData({...formData, brand: e.target.value})} placeholder="e.g. Merck" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Manufacturer</label>
+                      <Input type="text" value={formData.manufacturer} onChange={e=>setFormData({...formData, manufacturer: e.target.value})} placeholder="e.g. Sigma-Aldrich" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Item Form</label>
+                      <select value={formData.itemForm} onChange={e=>setFormData({...formData, itemForm: e.target.value})} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        <option value="">Select Form...</option>
+                        <option value="Liquid">Liquid</option>
+                        <option value="Powder">Powder</option>
+                        <option value="Solid">Solid</option>
+                        <option value="Gas">Gas</option>
+                        <option value="Gel">Gel</option>
+                        <option value="Granules">Granules</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Purity</label>
+                      <Input type="text" value={formData.purity} onChange={e=>setFormData({...formData, purity: e.target.value})} placeholder="e.g. 99.9%" />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Manufacturer</label>
-                    <Input type="text" value={formData.manufacturer} onChange={e=>setFormData({...formData, manufacturer: e.target.value})} placeholder="e.g. Sigma-Aldrich" />
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Grade</label>
+                    <Input type="text" list="grades" value={formData.grade} onChange={e=>setFormData({...formData, grade: e.target.value})} placeholder="e.g. AR, LR, EMPLURA" />
+                    <datalist id="grades">
+                      <option value="AR (Analytical Reagent)" />
+                      <option value="LR (Laboratory Reagent)" />
+                      <option value="CP (Chemically Pure)" />
+                      <option value="Technical" />
+                      <option value="EMPLURA" />
+                      <option value="HPLC Grade" />
+                    </datalist>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Item Form</label>
-                    <select value={formData.itemForm} onChange={e=>setFormData({...formData, itemForm: e.target.value})} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                      <option value="">Select Form...</option>
-                      <option value="Liquid">Liquid</option>
-                      <option value="Powder">Powder</option>
-                      <option value="Solid">Solid</option>
-                      <option value="Gas">Gas</option>
-                      <option value="Gel">Gel</option>
-                      <option value="Granules">Granules</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Purity</label>
-                    <Input type="text" value={formData.purity} onChange={e=>setFormData({...formData, purity: e.target.value})} placeholder="e.g. 99.9%" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Grade</label>
-                  <Input type="text" list="grades" value={formData.grade} onChange={e=>setFormData({...formData, grade: e.target.value})} placeholder="e.g. AR, LR, EMPLURA" />
-                  <datalist id="grades">
-                    <option value="AR (Analytical Reagent)" />
-                    <option value="LR (Laboratory Reagent)" />
-                    <option value="CP (Chemically Pure)" />
-                    <option value="Technical" />
-                    <option value="EMPLURA" />
-                    <option value="HPLC Grade" />
-                  </datalist>
-                </div>
                 </div>
               </div>
 
-              {/* Section 3: Safety */}
+              {/* Section 4: Safety & Storage */}
               <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                   <ShieldAlert className="text-red-500" size={20} />
                   Safety & Storage
                 </h2>
                 <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Safety Notes / Hazmat</label>
-                  <textarea 
-                    value={formData.safetyNotes} 
-                    onChange={e=>setFormData({...formData, safetyNotes: e.target.value})} 
-                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[140px] resize-y shadow-sm" 
-                    placeholder="E.g. Highly flammable liquid and vapour. Keep away from heat, sparks, open flames. Causes serious eye irritation. Wear protective gloves/eye protection..." 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Storage Instructions</label>
-                  <textarea 
-                    value={formData.storageInstructions} 
-                    onChange={e=>setFormData({...formData, storageInstructions: e.target.value})} 
-                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[140px] resize-y shadow-sm" 
-                    placeholder="E.g. Store in a well-ventilated, secure place. Keep cool. Keep container tightly closed. Protect from direct sunlight..." 
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Safety Notes / Hazmat</label>
+                    <textarea 
+                      value={formData.safetyNotes} 
+                      onChange={e=>setFormData({...formData, safetyNotes: e.target.value})} 
+                      className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[140px] resize-y shadow-sm" 
+                      placeholder="E.g. Highly flammable liquid and vapour. Keep away from heat, sparks, open flames. Causes serious eye irritation. Wear protective gloves/eye protection..." 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Storage Instructions</label>
+                    <textarea 
+                      value={formData.storageInstructions} 
+                      onChange={e=>setFormData({...formData, storageInstructions: e.target.value})} 
+                      className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[140px] resize-y shadow-sm" 
+                      placeholder="E.g. Store in a well-ventilated, secure place. Keep cool. Keep container tightly closed. Protect from direct sunlight..." 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
