@@ -257,7 +257,7 @@ export default function Dashboard() {
                   cursor={{ fill: 'var(--muted)', radius: 4 }}
                   labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
                 />
-                <Bar dataKey="value" fill="#1F2E54" radius={[6, 6, 0, 0]} barSize={40} />
+                <Bar dataKey="value" fill="var(--primary)" radius={[6, 6, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -360,7 +360,7 @@ export default function Dashboard() {
                   contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--card)' }}
                   cursor={{ fill: 'var(--muted)', radius: 4 }}
                 />
-                <Bar dataKey="stock" fill="#E6513A" radius={[6, 6, 0, 0]} barSize={36} />
+                <Bar dataKey="stock" fill="var(--secondary)" radius={[6, 6, 0, 0]} barSize={36} />
               </BarChart>
             </ResponsiveContainer>
           )}

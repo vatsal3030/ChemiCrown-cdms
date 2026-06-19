@@ -36,12 +36,6 @@ export function SkeletonTableRow({ columns = 5 }) {
           {i === 0 && <Skeleton className="w-full max-w-[80px] h-3 mt-2" />}
         </td>
       ))}
-      <td className="px-4 py-4 text-right">
-        <div className="flex justify-end gap-2">
-          <Skeleton className="w-8 h-8 rounded-lg" />
-          <Skeleton className="w-8 h-8 rounded-lg" />
-        </div>
-      </td>
     </tr>
   );
 }

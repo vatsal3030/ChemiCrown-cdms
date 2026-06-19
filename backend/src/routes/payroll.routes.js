@@ -21,7 +21,7 @@ router.post('/generate',               adminOnly, pc.generateMonthlyPayroll);
 router.post('/bulk-pay',               adminOnly, pc.bulkPay);              // ← NEW: bulk pay all pending
 router.delete('/month/:month',         adminOnly, pc.deleteMonthSlips);    // ← NEW: delete all pending for month
 
-router.get('/:id',       adminOnly, pc.getSlipById);   // ← NEW: get single slip
+router.get('/:id',       allStaff, pc.getSlipById);   // ← NEW: get single slip
 router.post('/:id/pay',  adminOnly, pc.markAsPaid);
 router.put('/:id',       adminOnly, pc.updateSlip);    // ← NEW: edit slip
 router.delete('/:id',    adminOnly, pc.deleteSlip);    // ← NEW: delete single slip

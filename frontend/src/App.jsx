@@ -247,6 +247,7 @@ function App() {
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'INVENTORY_MANAGER', 'MARKETING', 'DIGITAL_MARKETING']} />}>
                     <Route path="me" element={<MyAttendance />} />
                     <Route path="my-payroll" element={<MyPayroll />} />
+                    <Route path="my-payroll/:id" element={<PayrollDetails />} />
                   </Route>
 
                   <Route path="settings" element={<Settings />} />

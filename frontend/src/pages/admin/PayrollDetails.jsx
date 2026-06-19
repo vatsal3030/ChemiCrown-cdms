@@ -23,7 +23,8 @@ function SalaryStatusBadge({ status, confirmed }) {
 export default function PayrollDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(user?.role);
   
   const [slip, setSlip] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,7 @@ export default function PayrollDetails() {
           setSlip(json.data);
         } else {
           toast.error(json.message || 'Failed to load slip details');
-          navigate('/dashboard/payroll');
+          navigate(isAdmin ? '/dashboard/payroll' : '/dashboard/my-payroll');
         }
       } catch (e) {
         toast.error('Network error');
@@ -48,7 +49,7 @@ export default function PayrollDetails() {
       }
     };
     fetchSlip();
-  }, [id, token, navigate]);
+  }, [id, token, navigate, isAdmin]);
 
   const handlePrint = () => {
     window.print();
@@ -56,7 +57,7 @@ export default function PayrollDetails() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+      <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] px-4 md:px-8 mx-auto pb-20">
         <div className="h-8 w-1/4 bg-muted rounded animate-pulse" />
         <div className="h-[400px] bg-card border border-border rounded-2xl animate-pulse" />
       </div>
@@ -66,11 +67,11 @@ export default function PayrollDetails() {
   if (!slip) return null;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto pb-20">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] px-4 md:px-8 mx-auto pb-20">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <button
-            onClick={() => navigate('/dashboard/payroll')}
+            onClick={() => navigate(isAdmin ? '/dashboard/payroll' : '/dashboard/my-payroll')}
             className="p-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl transition-colors print:hidden"
           >
             <ArrowLeft size={20} />
@@ -88,7 +89,7 @@ export default function PayrollDetails() {
           <Button variant="outline" onClick={handlePrint} className="gap-2">
             <Receipt size={16} /> Print Payslip
           </Button>
-          {slip.status === 'PENDING' && (
+          {isAdmin && slip.status === 'PENDING' && (
             <Button onClick={() => navigate(`/dashboard/payroll/pay/${slip.id}`)} className="gap-2">
               <CreditCard size={16} /> Pay Salary
             </Button>

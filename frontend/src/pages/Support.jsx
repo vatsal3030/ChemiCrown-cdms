@@ -43,6 +43,7 @@ const FAQ_ITEMS = [
       { q: 'How do I apply for leave?', a: 'Navigate to My Dashboard (sidebar → My Attendance) and click "Request Leave". Fill in the date, type, and reason. Your manager will be notified and will approve/reject the request.' },
       { q: 'How do I confirm my salary receipt?', a: 'When your salary is paid, you\'ll receive a notification. Go to My Dashboard → Salary History and click "Confirm Receipt" next to the paid month.' },
       { q: 'Who can mark attendance?', a: 'Attendance can only be marked by HR (Manager/Owner/Super Admin). Employees cannot mark their own attendance to prevent fraud. You can submit leave requests which, once approved, auto-update your attendance.' },
+      { q: 'How do I update an employee\'s department, job title, or system role?', a: 'Authorized HR users (Super Admin, Owner, or Manager) can navigate to HR Management, select the employee from the Directory list to view their details page, and click the "Edit Profile" button in the Actions panel. Note: System role updates are restricted based on RBAC rules to prevent privilege escalation.' },
     ]
   },
 ];

@@ -29,8 +29,10 @@ This document defines the software requirements for the ChemiCrown CDMS.
 
 ### 3.4 Human Resources & Task Management
 - HR features allow tracking employee attendance, leaves, and overtime.
-- System dynamically generates monthly payslips based on base salary, incentives, and attendance deductions.
+- System dynamically generates monthly payslips based on positive days present, half days, paid leaves, holidays, and Sunday accumulation, subtracting absent deductions.
 - Assign and track internal tasks with deadlines among company staff.
+- Allow authorized administrators (Super Admin, Owner, Manager) to edit employee profiles (including department, system role, base salary, CTC, and PF configuration) from their profile view.
+
 
 ## 4. Non-Functional Requirements
 - **Security:** Input validation via Zod, Helmet for CSP headers, Rate limiting, custom JWT verification.

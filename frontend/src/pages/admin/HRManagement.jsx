@@ -323,6 +323,19 @@ export default function HRManagement() {
   const [temp, setTemp] = useState({ status: statusFilter, role: roleFilter, dept: deptFilter });
   const [leaveStatusFilter, setLeaveStatusFilter] = useState('PENDING');
   const [leaveSortOrder, setLeaveSortOrder] = useState('desc');
+  const [leaveSearchTerm, setLeaveSearchTerm] = useState('');
+  const [showLeaveFilters, setShowLeaveFilters] = useState(false);
+  const [leaveDeptFilter, setLeaveDeptFilter] = useState('all');
+
+  const [otSearchTerm, setOtSearchTerm] = useState('');
+  const [showOtFilters, setShowOtFilters] = useState(false);
+  const [otEmpFilter, setOtEmpFilter] = useState('all');
+  const [otStatusFilter, setOtStatusFilter] = useState('all');
+
+  const [incSearchTerm, setIncSearchTerm] = useState('');
+  const [incShowFilters, setIncShowFilters] = useState(false);
+  const [incEmpFilter, setIncEmpFilter] = useState('all');
+  const [incStatusFilter, setIncStatusFilter] = useState('all');
 
   // Action modals
   const [warnTarget, setWarnTarget] = useState(null);
@@ -572,6 +585,34 @@ export default function HRManagement() {
 
   const uniqueRoles = [...new Set(employees.map(e => e.role))];
   const uniqueDepts = [...new Set(employees.map(e => e.employeeProfile?.department).filter(Boolean))];
+
+  // Client-side filtered lists for leaves, overtime, incentives
+  const filteredLeaves = leaveRequests.filter(lr => {
+    const fullName = `${lr.employee?.user?.firstName || ''} ${lr.employee?.user?.lastName || ''}`.toLowerCase();
+    const email = (lr.employee?.user?.email || '').toLowerCase();
+    const matchesSearch = fullName.includes(leaveSearchTerm.toLowerCase()) || email.includes(leaveSearchTerm.toLowerCase());
+    const matchesDept = leaveDeptFilter === 'all' || lr.employee?.department === leaveDeptFilter;
+    return matchesSearch && matchesDept;
+  });
+
+  const filteredOvertimesList = overtimes.filter(ot => {
+    const fullName = `${ot.employee?.user?.firstName || ''} ${ot.employee?.user?.lastName || ''}`.toLowerCase();
+    const email = (ot.employee?.user?.email || '').toLowerCase();
+    const matchesSearch = fullName.includes(otSearchTerm.toLowerCase()) || email.includes(otSearchTerm.toLowerCase());
+    const matchesStatus = otStatusFilter === 'all' || ot.status === otStatusFilter;
+    const matchesEmp = otEmpFilter === 'all' || ot.employee?.id === otEmpFilter;
+    return matchesSearch && matchesStatus && matchesEmp;
+  });
+
+  const filteredIncentivesList = incentives.filter(inc => {
+    const fullName = `${inc.employee?.user?.firstName || ''} ${inc.employee?.user?.lastName || ''}`.toLowerCase();
+    const email = (inc.employee?.user?.email || '').toLowerCase();
+    const matchesSearch = fullName.includes(incSearchTerm.toLowerCase()) || email.includes(incSearchTerm.toLowerCase());
+    const matchesStatus = incStatusFilter === 'all' || inc.status === incStatusFilter;
+    const matchesEmp = incEmpFilter === 'all' || inc.employee?.id === incEmpFilter;
+    return matchesSearch && matchesStatus && matchesEmp;
+  });
+
   const activeCount = employees.filter(e => (e.employeeProfile?.status || 'ACTIVE') === 'ACTIVE').length;
   
   const todayStr = new Date().toISOString().substring(0, 10);
@@ -649,34 +690,36 @@ export default function HRManagement() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {loading ? (
               [1,2,3,4,5,6].map(i => (
-                <div key={i} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex flex-wrap items-center gap-4 shadow-sm animate-pulse">
-                  <div className="w-11 h-11 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-20" />
-                    <div className="h-7 bg-slate-200 dark:bg-slate-700 rounded w-10" />
+                <div key={i} className="bg-card border border-border p-5 rounded-2xl animate-pulse space-y-4 min-h-[120px]">
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 bg-muted rounded w-20" />
+                    <div className="w-8 h-8 rounded-lg bg-muted" />
                   </div>
+                  <div className="h-7 bg-muted rounded w-10 mt-3" />
                 </div>
               ))
             ) : (
               [
-                { label: 'Total Employees', value: employees.length, icon: Users, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400', tab: 'directory' },
-                { label: 'Present Today', value: presentTodayCount, icon: UserCheck, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400', tab: 'directory' },
-                { label: 'Pending Leaves', value: leaveRequests.filter(l => l.status === 'PENDING').length, icon: Clock, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400', tab: 'leaves' },
-                { label: 'Pending Overtimes', value: overtimes.filter(o => o.status === 'PENDING').length, icon: AlertCircle, color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400', tab: 'overtime' },
-                { label: 'Terminated', value: terminatedCount, icon: UserX, color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400', tab: 'directory' },
-                { label: 'Pending Incentives', value: incentives.filter(i => i.status === 'PENDING').length, icon: PiggyBank, color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400', tab: 'incentives' },
+                { label: 'Total Employees', value: employees.length, icon: Users, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400', tab: 'directory' },
+                { label: 'Present Today', value: presentTodayCount, icon: UserCheck, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', tab: 'directory' },
+                { label: 'Pending Leaves', value: leaveRequests.filter(l => l.status === 'PENDING').length, icon: Clock, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', tab: 'leaves' },
+                { label: 'Pending Overtimes', value: overtimes.filter(o => o.status === 'PENDING').length, icon: AlertCircle, color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400', tab: 'overtime' },
+                { label: 'Terminated', value: terminatedCount, icon: UserX, color: 'bg-red-500/10 text-red-600 dark:text-red-400', tab: 'directory' },
+                { label: 'Pending Incentives', value: incentives.filter(i => i.status === 'PENDING').length, icon: PiggyBank, color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', tab: 'incentives' },
               ].map(kpi => (
                 <button 
                   key={kpi.label} 
                   onClick={() => setActiveTab(kpi.tab)}
-                  className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex flex-wrap items-center gap-4 shadow-sm hover:border-primary/50 transition-colors text-left"
+                  className="bg-card border border-border p-5 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md hover:border-primary/50 transition-all text-left group min-h-[120px]"
                 >
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${kpi.color}`}>
-                    <kpi.icon size={22} />
+                  <div className="flex items-start justify-between w-full gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground line-clamp-2">{kpi.label}</span>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${kpi.color}`}>
+                      <kpi.icon size={16} />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-medium text-slate-500">{kpi.label}</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  <div className="mt-3">
+                    <p className="text-2xl font-black text-foreground">
                       {kpi.value === 0 && kpi.label.includes('Pending') ? 'No pending' : kpi.value}
                     </p>
                   </div>
@@ -687,7 +730,7 @@ export default function HRManagement() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-4">Headcount by Department</h3>
-              <div className="h-80">
+              <div className="h-80 w-full relative">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <PieChart>
                     <Pie data={deptData} cx="50%" cy="50%" innerRadius={65} outerRadius={90} paddingAngle={5} dataKey="value" label={({ name, value }) => `${name} (${value})`}>
@@ -704,14 +747,14 @@ export default function HRManagement() {
 
             <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-4">Employees by Role</h3>
-              <div className="h-80">
+              <div className="h-80 w-full relative">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                  <BarChart data={roleData}>
+                  <BarChart data={roleData} margin={{ bottom: 25, left: 15 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} allowDecimals={false} label={{ value: 'Employees Count', angle: -90, position: 'insideLeft', fill: '#94A3B8', fontSize: 12 }} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={50} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} width={40} label={{ value: 'Employees Count', angle: -90, position: 'insideLeft', offset: -5, fill: '#94A3B8', fontSize: 12 }} />
                     <RechartsTooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0' }} />
-                    <Bar dataKey="value" fill="#1F2E54" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -869,7 +912,14 @@ export default function HRManagement() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {loading ? (
-                  <SkeletonTableBody rows={5} columns={6} />
+                  <SkeletonTableBody 
+                    rows={5} 
+                    columns={
+                      activeTab === 'directory' ? 5 :
+                      activeTab === 'payroll' ? 5 :
+                      activeTab === 'warnings' ? 3 : 5
+                    } 
+                  />
                 ) : filteredEmployees.length === 0 ? (
                   <tr><td colSpan="6" className="p-12 text-center text-slate-400">
                     <Users size={36} className="mx-auto mb-3 opacity-30" />
@@ -1037,85 +1087,106 @@ export default function HRManagement() {
       {/* ── Leave Requests Tab ── */}
       {activeTab === 'leaves' && (
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <h3 className="font-semibold text-foreground">Leave Requests</h3>
-            <div className="flex flex-wrap items-center gap-2">
+          {/* Toolbar */}
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+            <div className="relative flex-1 sm:max-w-5xl">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Input placeholder="Search leaves by employee name or email..." value={leaveSearchTerm}
+                onChange={e => setLeaveSearchTerm(e.target.value)} className="pl-9" />
+            </div>
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => setShowFilters(v => !v)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm border transition-all ${
-                  leaveStatusFilter !== 'all'
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-white dark:bg-slate-900 border-border hover:border-primary text-foreground'
+                onClick={() => setShowLeaveFilters(v => !v)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
+                  leaveStatusFilter !== 'all' || leaveDeptFilter !== 'all'
+                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                    : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
                 }`}
               >
-                <Filter size={14} /> Filters
-                {leaveStatusFilter !== 'all' && <span className="bg-white/30 text-white text-xs rounded-full px-1.5 py-0.5">1</span>}
+                <SlidersHorizontal size={15} />
+                Filters
+                {(leaveStatusFilter !== 'all' || leaveDeptFilter !== 'all' ? 1 : 0) > 0 && (
+                  <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
+                    {[leaveStatusFilter !== 'all', leaveDeptFilter !== 'all'].filter(Boolean).length}
+                  </span>
+                )}
               </button>
-              <button onClick={fetchLeaves} className="p-2 rounded-lg border border-input hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
-                <RefreshCw size={14} />
+              <button
+                onClick={fetchLeaves}
+                className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw size={18} className={leavesLoading ? "animate-spin" : ""} />
               </button>
             </div>
           </div>
 
-          {showFilters && (
-            <div className="border-b border-border bg-muted/20 px-6 py-4 flex flex-wrap gap-4 items-end">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Leave Status</label>
-                <select
-                  value={leaveStatusFilter}
-                  onChange={e => setLeaveStatusFilter(e.target.value)}
-                  className="w-full sm:w-48 text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="all">All Status</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="APPROVED">Approved</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
+          {/* Expanded filter panel */}
+          {showLeaveFilters && (
+            <div className="border-b border-border bg-muted/20 px-6 py-5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm"><Filter size={15} /> Leave Filters</h3>
+                <div className="flex flex-wrap gap-3">
+                  {(leaveStatusFilter !== 'all' || leaveDeptFilter !== 'all') && (
+                    <button onClick={() => { setLeaveStatusFilter('all'); setLeaveDeptFilter('all'); }} className="text-xs text-destructive hover:underline">
+                      <X size={12} className="inline mr-0.5" />Clear all
+                    </button>
+                  )}
+                  <button onClick={() => setShowLeaveFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Sort Order</label>
-                <select
-                  value={leaveSortOrder}
-                  onChange={e => setLeaveSortOrder(e.target.value)}
-                  className="w-full sm:w-48 text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="desc">Newest First</option>
-                  <option value="asc">Oldest First</option>
-                </select>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Leave Status</label>
+                  <select value={leaveStatusFilter} onChange={e => setLeaveStatusFilter(e.target.value)}
+                    className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="all">All Status</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Sort Order</label>
+                  <select value={leaveSortOrder} onChange={e => setLeaveSortOrder(e.target.value)}
+                    className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="desc">Newest First</option>
+                    <option value="asc">Oldest First</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Department</label>
+                  <select value={leaveDeptFilter} onChange={e => setLeaveDeptFilter(e.target.value)}
+                    className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="all">All Departments</option>
+                    {uniqueDepts.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
           )}
-          {leavesLoading ? (
-            <div className="w-full">
-              <div className="animate-pulse space-y-4 px-4 py-2">
-                {[1,2,3].map(i => (
-                  <div key={i} className="flex gap-4 p-4 border rounded-xl">
-                    <Skeleton className="w-12 h-12 rounded-full shrink-0" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-4 w-1/3" />
-                      <Skeleton className="h-3 w-1/4" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : leaveRequests.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">
-              <CheckCircle2 size={40} className="mx-auto mb-3 text-emerald-400 opacity-50" />
-              <p className="font-medium">All clear! No pending leave requests.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  {['Employee','Date','Type','Reason','Submitted','Status',''].map(h => (
+                    <th key={h} className={`px-6 py-3 ${h === 'Status' ? 'text-right' : ''}`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {leavesLoading ? (
+                  <SkeletonTableBody rows={3} columns={7} />
+                ) : filteredLeaves.length === 0 ? (
                   <tr>
-                    {['Employee','Date','Type','Reason','Submitted','Status',''].map(h => (
-                      <th key={h} className={`px-6 py-3 ${h === 'Status' ? 'text-right' : ''}`}>{h}</th>
-                    ))}
+                    <td colSpan={7} className="p-12 text-center text-muted-foreground">
+                      <CheckCircle2 size={40} className="mx-auto mb-3 text-emerald-400 opacity-50" />
+                      <p className="font-medium">All clear! No leave requests match your search/filters.</p>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {[...leaveRequests].sort((a, b) => {
+                ) : (
+                  [...filteredLeaves].sort((a, b) => {
                     const diff = new Date(b.createdAt) - new Date(a.createdAt);
                     return leaveSortOrder === 'desc' ? diff : -diff;
                   }).map(lr => (
@@ -1166,11 +1237,10 @@ export default function HRManagement() {
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  )))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -1245,7 +1315,83 @@ export default function HRManagement() {
           )}
 
           {/* Overtime Records Table */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+            {/* Toolbar */}
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+              <div className="relative flex-1 sm:max-w-5xl">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input placeholder="Search overtime by employee name..." value={otSearchTerm}
+                  onChange={e => setOtSearchTerm(e.target.value)} className="pl-9" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setShowOtFilters(v => !v)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
+                    otStatusFilter !== 'all' || otEmpFilter !== 'all'
+                      ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                      : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                  }`}
+                >
+                  <SlidersHorizontal size={15} />
+                  Filters
+                  {(otStatusFilter !== 'all' || otEmpFilter !== 'all' ? 1 : 0) > 0 && (
+                    <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
+                      {[otStatusFilter !== 'all', otEmpFilter !== 'all'].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={fetchOvertimes}
+                  className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Refresh"
+                >
+                  <RefreshCw size={18} className={otLoading ? "animate-spin" : ""} />
+                </button>
+              </div>
+            </div>
+
+            {/* Expanded filter panel */}
+            {showOtFilters && (
+              <div className="border-b border-border bg-muted/20 px-6 py-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                  <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm"><Filter size={15} /> Overtime Filters</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {(otStatusFilter !== 'all' || otEmpFilter !== 'all') && (
+                      <button onClick={() => { setOtStatusFilter('all'); setOtEmpFilter('all'); }} className="text-xs text-destructive hover:underline">
+                        <X size={12} className="inline mr-0.5" />Clear all
+                      </button>
+                    )}
+                    <button onClick={() => setShowOtFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Overtime Status</label>
+                    <select value={otStatusFilter} onChange={e => setOtStatusFilter(e.target.value)}
+                      className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option value="all">All Status</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="APPROVED">Approved</option>
+                      <option value="REJECTED">Rejected</option>
+                      <option value="PAID">Paid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Employee</label>
+                    <select value={otEmpFilter} onChange={e => setOtEmpFilter(e.target.value)}
+                      className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option value="all">All Employees</option>
+                      {employees.filter(e => e.employeeProfile).map(e => (
+                        <option key={e.employeeProfile.id} value={e.employeeProfile.id}>
+                          {e.firstName} {e.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
@@ -1262,19 +1408,18 @@ export default function HRManagement() {
                 <tbody>
                   <SkeletonTableBody rows={3} columns={7} />
                 </tbody>
-              ) : overtimes.length === 0 ? (
+              ) : filteredOvertimesList.length === 0 ? (
                 <tbody>
                   <tr>
                     <td colSpan={7} className="p-8 text-center">
                       <Timer size={32} className="mx-auto mb-3 text-muted-foreground/40" />
-                      <p className="text-muted-foreground">No overtime records found.</p>
-                      <p className="text-xs text-muted-foreground mt-1">Click "Log Overtime" to add the first entry.</p>
+                      <p className="text-muted-foreground">No overtime records match your search/filters.</p>
                     </td>
                   </tr>
                 </tbody>
               ) : (
                 <tbody className="divide-y divide-border">
-                  {overtimes.map(ot => (
+                  {filteredOvertimesList.map(ot => (
                     <tr key={ot.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3">
                         <p className="font-medium text-foreground">{ot.employee?.user?.firstName} {ot.employee?.user?.lastName}</p>
@@ -1397,7 +1542,83 @@ export default function HRManagement() {
             </div>
           )}
 
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+            {/* Toolbar */}
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+              <div className="relative flex-1 sm:max-w-5xl">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input placeholder="Search incentives by employee name..." value={incSearchTerm}
+                  onChange={e => setIncSearchTerm(e.target.value)} className="pl-9" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setIncShowFilters(v => !v)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
+                    incStatusFilter !== 'all' || incEmpFilter !== 'all'
+                      ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                      : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                  }`}
+                >
+                  <SlidersHorizontal size={15} />
+                  Filters
+                  {(incStatusFilter !== 'all' || incEmpFilter !== 'all' ? 1 : 0) > 0 && (
+                    <span className="bg-white/20 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] ml-1">
+                      {[incStatusFilter !== 'all', incEmpFilter !== 'all'].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={fetchIncentives}
+                  className="p-2 border border-border text-foreground rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Refresh"
+                >
+                  <RefreshCw size={18} className={incLoading ? "animate-spin" : ""} />
+                </button>
+              </div>
+            </div>
+
+            {/* Expanded filter panel */}
+            {incShowFilters && (
+              <div className="border-b border-border bg-muted/20 px-6 py-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                  <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm"><Filter size={15} /> Incentive Filters</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {(incStatusFilter !== 'all' || incEmpFilter !== 'all') && (
+                      <button onClick={() => { setIncStatusFilter('all'); setIncEmpFilter('all'); }} className="text-xs text-destructive hover:underline">
+                        <X size={12} className="inline mr-0.5" />Clear all
+                      </button>
+                    )}
+                    <button onClick={() => setIncShowFilters(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Incentive Status</label>
+                    <select value={incStatusFilter} onChange={e => setIncStatusFilter(e.target.value)}
+                      className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option value="all">All Status</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="APPROVED">Approved</option>
+                      <option value="REJECTED">Rejected</option>
+                      <option value="PAID">Paid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Employee</label>
+                    <select value={incEmpFilter} onChange={e => setIncEmpFilter(e.target.value)}
+                      className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option value="all">All Employees</option>
+                      {employees.filter(e => e.employeeProfile).map(e => (
+                        <option key={e.employeeProfile.id} value={e.employeeProfile.id}>
+                          {e.firstName} {e.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
@@ -1413,19 +1634,18 @@ export default function HRManagement() {
                 <tbody>
                   <SkeletonTableBody rows={3} columns={6} />
                 </tbody>
-              ) : incentives.length === 0 ? (
+              ) : filteredIncentivesList.length === 0 ? (
                 <tbody>
                   <tr>
                     <td colSpan={6} className="p-8 text-center">
                       <Award size={32} className="mx-auto mb-3 text-muted-foreground/40" />
-                      <p className="text-muted-foreground">No incentives recorded yet.</p>
-                      <p className="text-xs text-muted-foreground mt-1">Click "Add Incentive" to log the first one.</p>
+                      <p className="text-muted-foreground">No incentives match your search/filters.</p>
                     </td>
                   </tr>
                 </tbody>
               ) : (
                 <tbody className="divide-y divide-border">
-                  {incentives.map(inc => (
+                  {filteredIncentivesList.map(inc => (
                     <tr key={inc.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3">
                         <p className="font-medium text-foreground">{inc.employee?.user?.firstName} {inc.employee?.user?.lastName}</p>

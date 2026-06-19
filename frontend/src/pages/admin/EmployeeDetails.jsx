@@ -2,19 +2,34 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { ArrowLeft, User, Phone, Mail, Building, Briefcase, Calendar as CalendarIcon, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, Building, Briefcase, Calendar as CalendarIcon, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, Trophy, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import toast from 'react-hot-toast';
 
 export default function EmployeeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [employee, setEmployee] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(new Date());
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    role: '',
+    department: '',
+    jobTitle: '',
+    joiningDate: '',
+    isActive: true,
+    baseSalary: '',
+    ctc: '',
+    pfRate: '12'
+  });
 
   const handleIssueWarning = async () => {
     const type = window.prompt("Enter Warning Type (VERBAL, WRITTEN, FINAL):", "WRITTEN");
@@ -115,38 +130,86 @@ export default function EmployeeDetails() {
     return days;
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Fetch employee details (by getting all and filtering for now)
-        const empRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr`, { headers: { Authorization: `Bearer ${token}` }});
-        const empData = await empRes.json();
-        if (empData.success) {
-          const found = empData.data.find(e => e.id === id);
-          if (found) setEmployee(found);
-        }
-
-        // Fetch attendance
-        const attRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${id}/attendance`, { headers: { Authorization: `Bearer ${token}` }});
-        const attData = await attRes.json();
-        if (attData.success) setAttendance(attData.data);
-
-        // Fetch salaries
-        const salRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${id}/salary`, { headers: { Authorization: `Bearer ${token}` }});
-        const salData = await salRes.json();
-        if (salData.success) setSalaries(salData.data);
-      } catch {
-        toast.error("Failed to load employee details");
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      // Fetch employee details (by getting all and filtering for now)
+      const empRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr`, { headers: { Authorization: `Bearer ${token}` }});
+      const empData = await empRes.json();
+      if (empData.success) {
+        const found = empData.data.find(e => e.id === id);
+        if (found) setEmployee(found);
       }
-    };
-    fetchData();
+
+      // Fetch attendance
+      const attRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${id}/attendance`, { headers: { Authorization: `Bearer ${token}` }});
+      const attData = await attRes.json();
+      if (attData.success) setAttendance(attData.data);
+
+      // Fetch salaries
+      const salRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${id}/salary`, { headers: { Authorization: `Bearer ${token}` }});
+      const salData = await salRes.json();
+      if (salData.success) setSalaries(salData.data);
+    } catch {
+      toast.error("Failed to load employee details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id && token) {
+      fetchData();
+    }
   }, [id, token]);
 
+  const openEditModal = () => {
+    if (!employee) return;
+    setEditForm({
+      firstName: employee.firstName || '',
+      lastName: employee.lastName || '',
+      phone: employee.phone || '',
+      role: employee.role || '',
+      department: employee.employeeProfile?.department || '',
+      jobTitle: employee.employeeProfile?.jobTitle || '',
+      joiningDate: employee.employeeProfile?.joiningDate ? employee.employeeProfile.joiningDate.substring(0, 10) : '',
+      isActive: employee.employeeProfile?.isActive !== undefined ? employee.employeeProfile.isActive : true,
+      baseSalary: employee.employeeProfile?.baseSalary || '',
+      ctc: employee.employeeProfile?.ctc || '',
+      pfRate: employee.employeeProfile?.pfRate || '12'
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setEditLoading(true);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(editForm)
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success('Employee updated successfully');
+        setEditModalOpen(false);
+        fetchData();
+      } else {
+        toast.error(json.message || 'Failed to update employee');
+      }
+    } catch {
+      toast.error('Network error occurred');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   if (loading) return (
-    <div className="space-y-6 animate-pulse p-4">
+    <div className="space-y-6 animate-pulse max-w-[1600px] px-4 md:px-8 mx-auto pb-10">
       <div className="flex items-center gap-6 mb-8">
         <Skeleton className="w-24 h-24 rounded-full" />
         <div className="space-y-3">
@@ -215,7 +278,7 @@ export default function EmployeeDetails() {
   const isNextDisabled = viewDate.getFullYear() === new Date().getFullYear() && viewDate.getMonth() === new Date().getMonth();
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto pb-10">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] px-4 md:px-8 mx-auto pb-10">
       <button onClick={() => navigate(-1)} className="mb-4 text-sm text-slate-500 hover:text-slate-800 flex items-center">
         <ArrowLeft size={16} className="mr-1" /> Go Back
       </button>
@@ -258,21 +321,28 @@ export default function EmployeeDetails() {
           </div>
         </div>
 
-        {user?.role === 'SUPER_ADMIN' && employee.id !== user.id && (
+        {['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(user?.role) && (
           <div className="relative z-10 flex flex-col gap-2 w-full md:w-44 bg-black/40 backdrop-blur-md border border-white/10 p-4 rounded-2xl">
-            <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-1">HR Actions</p>
-            <button onClick={handleIssueWarning} className="w-full text-xs font-semibold px-4 py-2 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-300 border border-yellow-500/30 rounded-xl transition-all cursor-pointer">
-              Issue Warning
+            <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-1">Actions</p>
+            <button onClick={openEditModal} className="w-full text-xs font-semibold px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 rounded-xl transition-all cursor-pointer">
+              Edit Profile
             </button>
-            {employee.employeeProfile?.status === 'ACTIVE' && (
-              <button onClick={handleSuspend} className="w-full text-xs font-semibold px-4 py-2 bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 rounded-xl transition-all cursor-pointer">
-                Suspend
-              </button>
-            )}
-            {employee.employeeProfile?.status !== 'TERMINATED' && (
-              <button onClick={handleTerminate} className="w-full text-xs font-semibold px-4 py-2 bg-red-600/25 hover:bg-red-600/40 text-red-300 border border-red-500/30 rounded-xl transition-all cursor-pointer">
-                Terminate
-              </button>
+            {employee.id !== user.id && user?.role === 'SUPER_ADMIN' && (
+              <>
+                <button onClick={handleIssueWarning} className="w-full text-xs font-semibold px-4 py-2 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-300 border border-yellow-500/30 rounded-xl transition-all cursor-pointer mt-1">
+                  Issue Warning
+                </button>
+                {employee.employeeProfile?.status === 'ACTIVE' && (
+                  <button onClick={handleSuspend} className="w-full text-xs font-semibold px-4 py-2 bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 rounded-xl transition-all cursor-pointer">
+                    Suspend
+                  </button>
+                )}
+                {employee.employeeProfile?.status !== 'TERMINATED' && (
+                  <button onClick={handleTerminate} className="w-full text-xs font-semibold px-4 py-2 bg-red-600/25 hover:bg-red-600/40 text-red-300 border border-red-500/30 rounded-xl transition-all cursor-pointer">
+                    Terminate
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}
@@ -335,12 +405,12 @@ export default function EmployeeDetails() {
               ))}
               {monthDays.map((date, i) => {
                 const record = attendance.find(a => new Date(a.date).toDateString() === date.toDateString());
-                let colorClass = "bg-slate-100 text-slate-400";
+                let colorClass = "bg-slate-50 text-slate-400 border border-slate-200 dark:bg-slate-900/50 dark:text-slate-600 dark:border-slate-800";
                 if (record) {
-                  if (record.status === 'PRESENT') colorClass = "bg-green-100 text-green-600 border border-green-200";
-                  else if (record.status === 'ABSENT') colorClass = "bg-red-100 text-red-600 border border-red-200";
-                  else if (record.status === 'LEAVE') colorClass = "bg-orange-100 text-orange-600 border border-orange-200";
-                  else if (record.status === 'HALF_DAY') colorClass = "bg-blue-100 text-blue-600 border border-blue-200";
+                  if (record.status === 'PRESENT') colorClass = "bg-emerald-50 text-emerald-700 border border-emerald-200/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20";
+                  else if (record.status === 'ABSENT') colorClass = "bg-rose-50 text-rose-700 border border-rose-200/30 dark:bg-rose-500/10 dark:text-rose-450 dark:border-rose-500/20";
+                  else if (record.status === 'LEAVE') colorClass = "bg-amber-50 text-amber-700 border border-amber-200/30 dark:bg-amber-500/10 dark:text-amber-450 dark:border-amber-500/20";
+                  else if (record.status === 'HALF_DAY') colorClass = "bg-blue-50 text-blue-700 border border-blue-200/30 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20";
                 }
                 
                 return (
@@ -362,11 +432,21 @@ export default function EmployeeDetails() {
               })}
             </div>
             <div className="flex flex-wrap gap-4 mt-6 text-xs text-slate-500 justify-center font-medium">
-              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-green-50 rounded-md"><div className="w-3 h-3 rounded bg-green-400 border border-green-500 shadow-inner"></div> Present</span>
-              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-red-50 rounded-md"><div className="w-3 h-3 rounded bg-red-400 border border-red-500 shadow-inner"></div> Absent</span>
-              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-orange-50 rounded-md"><div className="w-3 h-3 rounded bg-orange-400 border border-orange-500 shadow-inner"></div> Leave</span>
-              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-md"><div className="w-3 h-3 rounded bg-blue-400 border border-blue-500 shadow-inner"></div> Half Day</span>
-              <span className="flex flex-wrap items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-md"><div className="w-3 h-3 rounded bg-slate-200 border border-slate-300"></div> No Data</span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20 rounded-md">
+                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500 dark:bg-emerald-400"></div> Present
+              </span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200/30 dark:bg-rose-500/10 dark:text-rose-450 dark:border-rose-500/20 rounded-md">
+                <div className="w-2.5 h-2.5 rounded-sm bg-rose-500 dark:bg-rose-400"></div> Absent
+              </span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200/30 dark:bg-amber-500/10 dark:text-amber-450 dark:border-amber-500/20 rounded-md">
+                <div className="w-2.5 h-2.5 rounded-sm bg-amber-500 dark:bg-amber-400"></div> Leave
+              </span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200/30 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 rounded-md">
+                <div className="w-2.5 h-2.5 rounded-sm bg-blue-500 dark:bg-blue-400"></div> Half Day
+              </span>
+              <span className="flex flex-wrap items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-600 border border-slate-200 dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800 rounded-md">
+                <div className="w-2.5 h-2.5 rounded-sm bg-slate-200 dark:bg-slate-700"></div> No Data
+              </span>
             </div>
           </div>
         </div>
@@ -411,6 +491,162 @@ export default function EmployeeDetails() {
           </div>
         </div>
       </div>
+
+      {editModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                Edit Employee Profile
+              </h2>
+              <button onClick={() => setEditModalOpen(false)} className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-650">
+                <X size={18} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">First Name</label>
+                  <input 
+                    required
+                    type="text" 
+                    value={editForm.firstName}
+                    onChange={e => setEditForm({...editForm, firstName: e.target.value})}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</label>
+                  <input 
+                    required
+                    type="text" 
+                    value={editForm.lastName}
+                    onChange={e => setEditForm({...editForm, lastName: e.target.value})}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Phone Number</label>
+                <input 
+                  type="tel" 
+                  value={editForm.phone}
+                  onChange={e => setEditForm({...editForm, phone: e.target.value})}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">System Role</label>
+                  <select 
+                    value={editForm.role}
+                    onChange={e => setEditForm({...editForm, role: e.target.value})}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                  >
+                    <option value="OWNER">Owner</option>
+                    <option value="SUPER_ADMIN">Super Admin</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="INVENTORY_MANAGER">Inventory Manager</option>
+                    <option value="SALES">Sales Rep</option>
+                    <option value="MARKETING">Marketing</option>
+                    <option value="DIGITAL_MARKETING">Digital Marketing</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Department</label>
+                  <input 
+                    required
+                    type="text" 
+                    value={editForm.department}
+                    onChange={e => setEditForm({...editForm, department: e.target.value})}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Job Title</label>
+                  <input 
+                    required
+                    type="text" 
+                    value={editForm.jobTitle}
+                    onChange={e => setEditForm({...editForm, jobTitle: e.target.value})}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Joining Date</label>
+                  <input 
+                    type="date"
+                    value={editForm.joiningDate}
+                    onChange={e => setEditForm({...editForm, joiningDate: e.target.value})}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Payroll & Compensation</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Base Salary (₹)</label>
+                    <input 
+                      type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
+                      value={editForm.baseSalary}
+                      onChange={e => setEditForm({...editForm, baseSalary: e.target.value})}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">CTC (₹)</label>
+                    <input 
+                      type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
+                      value={editForm.ctc}
+                      onChange={e => setEditForm({...editForm, ctc: e.target.value})}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">PF Rate (%)</label>
+                    <input 
+                      type="number" min="0" max="100" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
+                      value={editForm.pfRate}
+                      onChange={e => setEditForm({...editForm, pfRate: e.target.value})}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-4">
+                <input 
+                  type="checkbox" 
+                  id="editIsActive"
+                  checked={editForm.isActive}
+                  onChange={e => setEditForm({...editForm, isActive: e.target.checked})}
+                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                />
+                <label htmlFor="editIsActive" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Active Employee
+                </label>
+              </div>
+
+              <div className="pt-4 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800 mt-6">
+                <button type="button" onClick={() => setEditModalOpen(false)} disabled={editLoading} className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 text-sm font-semibold transition-all">
+                  Cancel
+                </button>
+                <button type="submit" disabled={editLoading} className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold shadow-sm transition-all disabled:opacity-50">
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

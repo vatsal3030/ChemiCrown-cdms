@@ -138,25 +138,60 @@ exports.updateSalary = async (req, res, next) => {
     const [yearNum, monthNum] = targetMonth.split('-').map(Number);
     const monthStart = new Date(yearNum, monthNum - 1, 1);
     const monthEnd = new Date(yearNum, monthNum, 1);
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
+
+    // Sundays count
+    let sundayDaysCount = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      if (new Date(yearNum, monthNum - 1, d).getDay() === 0) sundayDaysCount++;
+    }
+
+    // Holidays count
+    const holidays = await prisma.holidayCalendar.findMany({
+      where: {
+        date: { gte: monthStart, lt: monthEnd },
+        type: { in: ['NATIONAL', 'FESTIVAL'] }
+      }
+    });
+    const holidayDates = holidays.filter(h => new Date(h.date).getDay() !== 0);
+    const holidayDaysCount = holidayDates.length;
+
+    // Attendance positive days
     const monthAttendance = employee.attendances.filter(a => a.date >= monthStart && a.date < monthEnd);
-    let absentDays = 0;
+    let presentDays = 0;
+    let halfDays = 0;
+    let leaveDays = 0;
+
     monthAttendance.forEach(a => {
-      if (a.status === 'ABSENT') absentDays += 1;
-      if (a.status === 'HALF_DAY') absentDays += 0.5;
+      const dayOfWeek = new Date(a.date).getDay();
+      const isSunday = dayOfWeek === 0;
+      const isHoliday = holidayDates.some(h => 
+        new Date(h.date).toDateString() === new Date(a.date).toDateString()
+      );
+      if (!isSunday && !isHoliday) {
+        if (a.status === 'PRESENT') presentDays += 1;
+        else if (a.status === 'HALF_DAY') halfDays += 1;
+        else if (a.status === 'LEAVE') leaveDays += 1;
+      }
     });
 
-    const deductions = baseSalary > 0 ? (baseSalary / 30) * absentDays : 0;
+    const paidDays = Math.min(daysInMonth, presentDays + (0.5 * halfDays) + leaveDays + holidayDaysCount + sundayDaysCount);
+    const grossBasePay = baseSalary > 0 ? (baseSalary / daysInMonth) * paidDays : 0;
+    const deductions = baseSalary > 0 ? Math.max(0, baseSalary - grossBasePay) : 0;
     const pfContribution = baseSalary > 0 ? (baseSalary * pfRate) / 100 : 0;
-    const netPay = baseSalary - deductions - pfContribution;
+    const netPay = grossBasePay - pfContribution;
 
     const newSalary = await prisma.salary.create({
       data: {
         employeeId: employee.id,
         amount: baseSalary,
+        absentDeduction: deductions,
         deductions,
         pfContribution,
-        netPay: Math.max(0, netPay),
-        absentDays,
+        netPay: Math.max(0, Number(netPay.toFixed(2))),
+        absentDays: Math.round(daysInMonth - paidDays),
+        workingDays: Math.round(paidDays),
+        holidayDays: holidayDaysCount,
         month: targetMonth,
         status: 'PAID',
         paidAt: new Date()

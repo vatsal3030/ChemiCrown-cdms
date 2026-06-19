@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, MapPin, Phone, Mail, ChevronDown, ArrowRight, ShoppingCart } from 'lucide-react';
+import { Menu, X, MapPin, Phone, Mail, ChevronDown, ArrowRight, ShoppingCart, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
@@ -12,6 +12,43 @@ export default function PublicLayout() {
   const navigate = useNavigate();
   const { storedAccounts, switchAccount, user } = useAuth();
   const { cartItems } = useCart();
+
+  const [darkMode, setDarkMode] = useState(() => {
+    const stored = localStorage.getItem('theme');
+    if (stored) return stored === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  const themeToggleRef = useRef(null);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
+  const handleThemeToggle = () => {
+    const newDark = !darkMode;
+    const rect = themeToggleRef.current?.getBoundingClientRect();
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth - 40;
+    const y = rect ? rect.top + rect.height / 2 : 32;
+
+    document.documentElement.style.setProperty('--tt-x', `${x}px`);
+    document.documentElement.style.setProperty('--tt-y', `${y}px`);
+
+    const applyTheme = () => {
+      document.documentElement.classList.toggle('dark', newDark);
+    };
+
+    if (document.startViewTransition) {
+      const transition = document.startViewTransition(applyTheme);
+      transition.finished.then(() => {
+        document.documentElement.style.removeProperty('--tt-x');
+        document.documentElement.style.removeProperty('--tt-y');
+      });
+    } else {
+      applyTheme();
+    }
+    setDarkMode(newDark);
+  };
 
   const menuRef = useRef(null);
 
@@ -44,7 +81,7 @@ export default function PublicLayout() {
         <div className="container flex h-16 max-w-screen-2xl items-center px-4 mx-auto justify-between">
           <Link to="/" className="flex items-center space-x-2.5 mr-6 group">
             <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-9 w-9 object-contain group-hover:scale-105 transition-transform" />
-            <span className="font-extrabold text-xl tracking-tight" style={{ color: '#1F2E54' }}>ChemiCrown</span>
+            <span className="font-extrabold text-xl tracking-tight text-[#1F2E54] dark:text-white">ChemiCrown</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -68,6 +105,15 @@ export default function PublicLayout() {
             <div className="h-6 w-px bg-border mx-2"></div> {/* Separator */}
 
             <nav className="flex items-center space-x-3 relative">
+              <button
+                ref={themeToggleRef}
+                onClick={handleThemeToggle}
+                className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground mr-1"
+                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {darkMode ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-slate-500" />}
+              </button>
+              
               <Link to={user ? "/dashboard/cart" : "/login"} className="relative p-2 text-foreground/80 hover:text-primary transition-colors">
                 <ShoppingCart className="w-5 h-5" />
                 {cartItems?.length > 0 && (
@@ -178,6 +224,25 @@ export default function PublicLayout() {
                 {link.name}
               </Link>
             ))}
+            <div className="flex items-center justify-between p-2 border-t border-border/60 pt-4">
+              <span className="text-base font-semibold text-foreground">Theme Mode</span>
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-foreground transition-all hover:bg-muted"
+              >
+                {darkMode ? (
+                  <>
+                    <Sun size={16} className="text-amber-500" />
+                    <span className="text-xs font-medium">Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon size={16} className="text-indigo-400" />
+                    <span className="text-xs font-medium">Dark Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
             <div className="h-px w-full bg-border my-2"></div>
             {storedAccounts && storedAccounts.length > 0 ? (
               <div className="space-y-2">

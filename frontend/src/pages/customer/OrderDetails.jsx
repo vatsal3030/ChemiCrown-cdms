@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   ArrowLeft, Package, MapPin, Truck, CheckCircle2,
   Clock, XCircle, RefreshCw, Star, ChevronRight, AlertTriangle,
@@ -230,7 +230,7 @@ export default function OrderDetails() {
   };
 
   if (loading) return (
-    <div className="space-y-4 max-w-5xl mx-auto animate-pulse px-2 sm:px-4">
+    <div className="space-y-4 max-w-[1600px] px-4 md:px-8 mx-auto animate-pulse">
       <div className="h-8 w-64 bg-muted rounded-xl" />
       <div className="h-40 bg-muted rounded-2xl" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -241,7 +241,7 @@ export default function OrderDetails() {
   );
 
   if (!order) return (
-    <div className="max-w-5xl mx-auto text-center py-16">
+    <div className="max-w-[1600px] px-4 md:px-8 mx-auto text-center py-16">
       <Package size={48} className="mx-auto mb-4 text-muted-foreground/40" />
       <p className="font-semibold text-foreground">Order not found.</p>
       <Button variant="outline" onClick={() => navigate('/dashboard/orders')} className="mt-4">
@@ -262,7 +262,7 @@ export default function OrderDetails() {
   const total = order.total || subtotal;
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto px-2 sm:px-0 animate-in fade-in duration-500">
+    <div className="space-y-4 max-w-[1600px] px-4 md:px-8 mx-auto animate-in fade-in duration-500">
 
       {/* ── Header bar ── */}
       <div className="flex flex-wrap items-center gap-3">
@@ -284,21 +284,21 @@ export default function OrderDetails() {
         <div className="flex flex-wrap gap-2 shrink-0">
           {/* Invoice — available from PROCESSING onwards */}
           {['PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'].includes(order.status) && (
-            <Button variant="outline" size="sm" asChild
-              className="border-primary/30 text-primary hover:bg-primary/5 text-xs h-8 px-3">
-              <Link to={`/dashboard/orders/${order.id}/invoice`}>
-                <FileText size={13} className="mr-1" /> Invoice
-              </Link>
-            </Button>
+            <Link
+              to={`/dashboard/orders/${order.id}/invoice`}
+              className={`${buttonVariants({ variant: 'outline', size: 'sm' })} border-primary/30 text-primary hover:bg-primary/5 text-xs h-8 px-3`}
+            >
+              <FileText size={13} className="mr-1" /> Invoice
+            </Link>
           )}
           {/* Delivery Challan — admin only, from PACKAGED onwards */}
           {isAdmin && ['PACKAGED', 'DISPATCHED', 'DELIVERED'].includes(order.status) && (
-            <Button variant="outline" size="sm" asChild
-              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/30 text-xs h-8 px-3">
-              <Link to={`/dashboard/orders/${order.id}/challan`}>
-                <Truck size={13} className="mr-1" /> Challan
-              </Link>
-            </Button>
+            <Link
+              to={`/dashboard/orders/${order.id}/challan`}
+              className={`${buttonVariants({ variant: 'outline', size: 'sm' })} border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/30 text-xs h-8 px-3`}
+            >
+              <Truck size={13} className="mr-1" /> Challan
+            </Link>
           )}
           {/* Cancel — available before dispatched */}
           {!isCancelled && !isDelivered && order.status !== 'DISPATCHED' && (

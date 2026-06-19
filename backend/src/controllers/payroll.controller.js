@@ -47,6 +47,13 @@ exports.getSlipById = async (req, res, next) => {
       }
     });
     if (!slip) return res.status(404).json({ success: false, message: 'Slip not found' });
+
+    // Restrict regular employees to their own payslips
+    const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(req.user.role);
+    if (!isAdmin && slip.employee.userId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied: You can only view your own payslips' });
+    }
+
     res.json({ success: true, data: slip });
   } catch (error) {
     next(error);
@@ -207,22 +214,33 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
       }
 
       const pfRate = emp.pfRate || 12;
-      const perDaySalary = baseSalary / totalWorkingDays;
 
-      // Count absent days and half days (only on actual working days)
-      let absentDays = 0;
+      // Count positive days (Present, Half Day, Leave) on working days
+      let presentDays = 0;
+      let halfDays = 0;
+      let leaveDays = 0;
+
       emp.attendances.forEach(a => {
         const dayOfWeek = new Date(a.date).getDay();
         const isSunday = dayOfWeek === 0;
         const isHoliday = holidayDates.some(h => 
           new Date(h.date).toDateString() === new Date(a.date).toDateString()
         );
-        // Don't count absences on Sundays or holidays
+        // We only count marked attendance status on non-Sunday, non-Holiday days
         if (!isSunday && !isHoliday) {
-          if (a.status === 'ABSENT') absentDays += 1;
-          else if (a.status === 'HALF_DAY') absentDays += 0.5;
+          if (a.status === 'PRESENT') presentDays += 1;
+          else if (a.status === 'HALF_DAY') halfDays += 1;
+          else if (a.status === 'LEAVE') leaveDays += 1;
         }
       });
+
+      // Positive accumulation of paid days
+      const paidDays = Math.min(daysInMonth, presentDays + (0.5 * halfDays) + leaveDays + holidayDays + sundaysCount);
+      const grossBasePay = (baseSalary / daysInMonth) * paidDays;
+
+      // Deductions
+      const absentDeduction = Number(Math.max(0, baseSalary - grossBasePay).toFixed(2));
+      const pfContribution = Number(((baseSalary * pfRate) / 100).toFixed(2));
 
       // Overtime payout (sum of all approved overtime for the month)
       const overtimePayout = emp.overtimes.reduce((sum, ot) => sum + (ot.amount || 0), 0);
@@ -230,13 +248,11 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
       // Incentive payout (sales/marketing commission)
       const incentivePayout = emp.salesIncentives.reduce((sum, si) => sum + (si.incentiveAmount || 0), 0);
 
-      const absentDeduction = Number((perDaySalary * absentDays).toFixed(2));
-      const pfContribution = Number(((baseSalary * pfRate) / 100).toFixed(2));
+      // Net Pay = grossBasePay + overtime + incentive - pfContribution
       const netPay = Number(Math.max(0,
-        baseSalary
+        grossBasePay
         + overtimePayout
         + incentivePayout
-        - absentDeduction
         - pfContribution
       ).toFixed(2));
 
@@ -253,8 +269,8 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
               deductions: absentDeduction, // for compatibility
               pfContribution,
               netPay,
-              absentDays,
-              workingDays: totalWorkingDays,
+              absentDays: Math.round(daysInMonth - paidDays),
+              workingDays: Math.round(paidDays),
               holidayDays,
               status: 'PENDING'
             }

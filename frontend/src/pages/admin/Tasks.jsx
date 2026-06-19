@@ -228,7 +228,6 @@ export default function Tasks() {
   const updateStatus = async (id, status) => {
     // Optimistic update
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
-    if (viewingTask?.id === id) setViewingTask(prev => ({ ...prev, status }));
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${id}/status`, {
         method: 'PATCH',
