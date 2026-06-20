@@ -80,7 +80,7 @@ export default function DeliveryChallanPage() {
       </div>
 
       {/* Challan Document */}
-      <div className="bg-white dark:bg-slate-950 border border-border rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 
         {/* Header */}
         <div className="px-8 pt-8 pb-6 border-b border-border">

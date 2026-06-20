@@ -38,6 +38,10 @@ export default function ProductFormPage() {
       baseUnit: 'Litre',
       price: '',
       casNumber: '',
+      unNumber: '',
+      hazardClasses: '',
+      packingGroup: '',
+      sdsUrl: '',
       sku: '',
       supplierId: '',
       safetyNotes: '',
@@ -93,6 +97,10 @@ export default function ProductFormPage() {
               baseUnit: p.baseUnit || '',
               price: p.price || '',
               casNumber: p.casNumber || '',
+              unNumber: p.unNumber || '',
+              hazardClasses: Array.isArray(p.hazardClasses) ? p.hazardClasses.join(', ') : '',
+              packingGroup: p.packingGroup || '',
+              sdsUrl: p.sdsUrl || '',
               sku: p.sku || '',
               supplierId: p.supplierId || '',
               safetyNotes: p.safetyNotes || '',
@@ -192,6 +200,10 @@ export default function ProductFormPage() {
       if (formData.baseUnit) data.append('baseUnit', formData.baseUnit);
       data.append('price', formData.price);
       if (formData.casNumber) data.append('casNumber', formData.casNumber);
+      if (formData.unNumber) data.append('unNumber', formData.unNumber);
+      if (formData.hazardClasses) data.append('hazardClasses', JSON.stringify(formData.hazardClasses.split(',').map(s=>s.trim())));
+      if (formData.packingGroup) data.append('packingGroup', formData.packingGroup);
+      if (formData.sdsUrl) data.append('sdsUrl', formData.sdsUrl);
       if (formData.sku) data.append('sku', formData.sku);
       if (formData.supplierId) data.append('supplierId', formData.supplierId);
       if (formData.safetyNotes) data.append('safetyNotes', formData.safetyNotes);
@@ -265,10 +277,10 @@ export default function ProductFormPage() {
           <div className="xl:col-span-3 space-y-6">
             
             {/* Images Card (Moved to top priority) */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
               <h2 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-200">Product Images (Priority)</h2>
               <div 
-                className="w-full h-40 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-500 hover:text-primary hover:border-primary cursor-pointer transition-colors overflow-hidden relative group mb-4 bg-slate-50 dark:bg-slate-900/50"
+                className="w-full h-40 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-500 hover:text-primary hover:border-primary cursor-pointer transition-colors overflow-hidden relative group mb-4 bg-muted/50"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload size={32} className="mb-2" />
@@ -282,7 +294,7 @@ export default function ProductFormPage() {
                   {previewUrls.map((url, i) => (
                     <div 
                       key={i} 
-                      className="relative w-32 h-32 rounded-lg overflow-hidden group cursor-grab active:cursor-grabbing border border-slate-200 dark:border-slate-800 hover:border-primary transition-colors bg-slate-100 dark:bg-slate-900 shadow-sm"
+                      className="relative w-32 h-32 rounded-lg overflow-hidden group cursor-grab active:cursor-grabbing border border-border hover:border-primary transition-colors bg-muted shadow-sm"
                       draggable
                       onDragStart={(e) => handleDragStart(e, i)}
                       onDragOver={handleDragOver}
@@ -297,7 +309,7 @@ export default function ProductFormPage() {
                   ))}
                 </div>
               ) : (
-                <div className="py-6 flex flex-col items-center justify-center border rounded-lg border-dashed bg-slate-50/50 dark:bg-slate-900/20">
+                <div className="py-6 flex flex-col items-center justify-center border rounded-lg border-dashed bg-muted/30">
                   <p className="text-sm text-slate-500 font-medium">No images uploaded yet.</p>
                   <p className="text-xs text-slate-400 mt-1">Upload at least one image to help customers identify this product.</p>
                 </div>
@@ -307,7 +319,7 @@ export default function ProductFormPage() {
             {/* Unified 2-column details section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Section 1: Basic Info */}
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                   <Info className="text-primary" size={20} />
                   Basic Details
@@ -339,25 +351,35 @@ export default function ProductFormPage() {
                       <Input type="text" value={formData.casNumber} onChange={e=>setFormData({...formData, casNumber: e.target.value})} placeholder="e.g. 67-64-1" />
                     </div>
                     <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">UN Number</label>
+                      <Input type="text" value={formData.unNumber} onChange={e=>setFormData({...formData, unNumber: e.target.value})} placeholder="e.g. UN 1090" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
                       <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">SKU Code</label>
                       <Input type="text" value={formData.sku} onChange={e=>setFormData({...formData, sku: e.target.value})} placeholder="e.g. CHM-THN-001" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Safety Data Sheet (SDS) URL</label>
+                      <Input type="url" value={formData.sdsUrl} onChange={e=>setFormData({...formData, sdsUrl: e.target.value})} placeholder="https://..." />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Section 2: Packaging */}
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col">
                 <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                   <Package className="text-blue-500" size={20} />
                   Packaging & Categorization
                 </h2>
                 <div className="space-y-5">
-                  <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <div className="bg-muted p-4 rounded-xl border border-border">
                     <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Container Size / Packaging Format *</label>
                     <div className="flex flex-col gap-4">
                       <select 
-                        className="w-full rounded-md border border-input bg-white dark:bg-slate-950 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         onChange={(e) => {
                           const val = e.target.value;
                           if (val && val !== 'custom') {
@@ -415,7 +437,7 @@ export default function ProductFormPage() {
               </div>
 
               {/* Section 3: Specifications */}
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                   <Beaker className="text-purple-500" size={20} />
                   Product Specifications
@@ -463,12 +485,27 @@ export default function ProductFormPage() {
               </div>
 
               {/* Section 4: Safety & Storage */}
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                   <ShieldAlert className="text-red-500" size={20} />
                   Safety & Storage
                 </h2>
                 <div className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Hazard Classes (Comma separated)</label>
+                      <Input type="text" value={formData.hazardClasses} onChange={e=>setFormData({...formData, hazardClasses: e.target.value})} placeholder="e.g. Class 3, Class 8" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Packing Group</label>
+                      <select value={formData.packingGroup} onChange={e=>setFormData({...formData, packingGroup: e.target.value})} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        <option value="">Select Group...</option>
+                        <option value="I">I (High Danger)</option>
+                        <option value="II">II (Medium Danger)</option>
+                        <option value="III">III (Low Danger)</option>
+                      </select>
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Safety Notes / Hazmat</label>
                     <textarea 
@@ -496,7 +533,7 @@ export default function ProductFormPage() {
           <div className="space-y-6 xl:col-span-1 sticky top-24 self-start">
             
             {/* Action Card */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
               <h2 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
                 <Save className="text-primary" size={20} />
                 Publish Details
@@ -565,12 +602,12 @@ export default function ProductFormPage() {
                     value={formData.minThreshold} 
                     onChange={e=>setFormData({...formData, minThreshold: e.target.value})} 
                     placeholder="e.g. 10" 
-                    className="bg-white dark:bg-slate-900"
+                    className="bg-card"
                   />
                   <p className="text-xs text-amber-600 dark:text-amber-600 mt-2">Alerts will trigger when inventory drops below this number.</p>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-muted rounded-xl border border-border">
                   <div>
                     <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200">Active & Available</label>
                     <p className="text-xs text-slate-500 mt-1">If disabled, this product cannot be ordered by customers.</p>

@@ -113,7 +113,7 @@ export default function AuditLogDetails() {
             <div className="space-y-3">
               <div>
                 <span className="text-xs text-muted-foreground block mb-1">Action Performed</span>
-                <span className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-bold font-mono">
+                <span className="inline-block px-3 py-1 bg-muted rounded-lg text-sm font-bold font-mono">
                   {log.action}
                 </span>
               </div>
@@ -173,7 +173,7 @@ export default function AuditLogDetails() {
                 </div>
               </div>
             ) : (
-              <div className="text-slate-500 italic p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+              <div className="text-slate-500 italic p-4 bg-muted rounded-xl border border-dashed border-border">
                 System or unknown actor
               </div>
             )}

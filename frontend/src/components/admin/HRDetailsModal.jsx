@@ -124,7 +124,7 @@ export default function HRDetailsModal({ type, data, onClose }) {
               <FileText size={16} className="text-primary" /> 
               {isLeave ? 'Reason for Leave' : isOvertime ? 'Overtime Context' : 'Performance Notes'}
             </h3>
-            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-border text-sm text-foreground leading-relaxed whitespace-pre-wrap min-h-[80px]">
+            <div className="bg-muted p-4 rounded-2xl border border-border text-sm text-foreground leading-relaxed whitespace-pre-wrap min-h-[80px]">
               {data.reason || data.notes || <span className="text-muted-foreground italic">No context provided.</span>}
             </div>
           </div>

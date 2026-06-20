@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const cloudinary = require('../config/cloudinary');
 const stream = require('stream');
+const { logAudit } = require('../services/audit.service');
 
 // Get all inventory with sorting, filtering, and searching
 exports.getInventory = async (req, res, next) => {
@@ -113,7 +114,7 @@ exports.getCategories = async (req, res, next) => {
 // Add new product
 exports.addProduct = async (req, res, next) => {
   try {
-    const { name, description, unit, packageSize, baseUnit, price, costPrice, hsnCode, gstRate, quantity, categoryId, casNumber, sku, supplierId, safetyNotes, storageInstructions, mfgDate, expiryDate, minThreshold, isAvailable, brand, manufacturer, itemForm, purity, grade } = req.body;
+    const { name, description, unit, packageSize, baseUnit, price, costPrice, hsnCode, gstRate, quantity, categoryId, casNumber, unNumber, hazardClasses, packingGroup, sdsUrl, sku, supplierId, safetyNotes, storageInstructions, mfgDate, expiryDate, minThreshold, isAvailable, brand, manufacturer, itemForm, purity, grade } = req.body;
     
     if (parseFloat(price) < 0) return res.status(400).json({ error: 'Price cannot be negative.' });
     if (parseInt(quantity) < 0) return res.status(400).json({ error: 'Quantity cannot be negative.' });
@@ -154,6 +155,10 @@ exports.addProduct = async (req, res, next) => {
         price: parseFloat(price),
         categoryId: categoryId || null,
         casNumber,
+        unNumber,
+        hazardClasses: hazardClasses ? JSON.parse(hazardClasses) : [],
+        packingGroup,
+        sdsUrl,
         sku,
         supplierId: supplierId || null,
         safetyNotes,
@@ -180,6 +185,16 @@ exports.addProduct = async (req, res, next) => {
       include: { inventory: true }
     });
 
+    if (req.user) {
+      await logAudit({
+        userId: req.user.id,
+        action: 'CREATED_PRODUCT',
+        entity: 'Product',
+        entityId: newProduct.id,
+        details: { name: newProduct.name, sku: newProduct.sku }
+      });
+    }
+
     res.status(201).json({ success: true, data: newProduct });
   } catch (error) {
     next(error);
@@ -190,7 +205,7 @@ exports.addProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, unit, packageSize, baseUnit, price, costPrice, hsnCode, gstRate, quantity, categoryId, casNumber, sku, supplierId, safetyNotes, storageInstructions, mfgDate, expiryDate, minThreshold, isAvailable, brand, manufacturer, itemForm, purity, grade } = req.body;
+    const { name, description, unit, packageSize, baseUnit, price, costPrice, hsnCode, gstRate, quantity, categoryId, casNumber, unNumber, hazardClasses, packingGroup, sdsUrl, sku, supplierId, safetyNotes, storageInstructions, mfgDate, expiryDate, minThreshold, isAvailable, brand, manufacturer, itemForm, purity, grade } = req.body;
     
     if (price !== undefined && parseFloat(price) < 0) return res.status(400).json({ error: 'Price cannot be negative.' });
     if (quantity !== undefined && parseInt(quantity) < 0) return res.status(400).json({ error: 'Quantity cannot be negative.' });
@@ -212,6 +227,10 @@ exports.updateProduct = async (req, res, next) => {
       price: price !== undefined ? parseFloat(price) : undefined, 
       categoryId: categoryId || null, 
       casNumber: casNumber || null,
+      unNumber: unNumber || null,
+      hazardClasses: hazardClasses ? JSON.parse(hazardClasses) : undefined,
+      packingGroup: packingGroup || null,
+      sdsUrl: sdsUrl || null,
       sku: sku || null,
       supplierId: supplierId || null,
       safetyNotes,
@@ -270,6 +289,16 @@ exports.updateProduct = async (req, res, next) => {
       updatedProduct.inventory.minThreshold = parseInt(minThreshold);
     }
 
+    if (req.user) {
+      await logAudit({
+        userId: req.user.id,
+        action: 'UPDATED_PRODUCT',
+        entity: 'Product',
+        entityId: updatedProduct.id,
+        details: { updatedFields: Object.keys(updateData) }
+      });
+    }
+
     res.status(200).json({ success: true, data: updatedProduct });
   } catch (error) {
     next(error);
@@ -285,6 +314,15 @@ exports.deleteProduct = async (req, res, next) => {
       where: { id },
       data: { deletedAt: new Date() }
     });
+
+    if (req.user) {
+      await logAudit({
+        userId: req.user.id,
+        action: 'DELETED_PRODUCT',
+        entity: 'Product',
+        entityId: id,
+      });
+    }
 
     res.status(200).json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
@@ -357,6 +395,16 @@ exports.addStock = async (req, res, next) => {
         });
       }
     });
+
+    if (req.user) {
+      await logAudit({
+        userId: req.user.id,
+        action: 'ADJUSTED_STOCK',
+        entity: 'Inventory',
+        entityId: inventory.id,
+        details: { change: qtyChange, type: qtyChange > 0 ? 'IN' : 'OUT' }
+      });
+    }
 
     res.status(200).json({ success: true, message: 'Stock added successfully' });
   } catch (error) {

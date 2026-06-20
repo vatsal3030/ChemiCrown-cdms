@@ -37,10 +37,10 @@ export default function StockLogsModal({ isOpen, onClose, product, token }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+      <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+        <div className="flex items-center justify-between p-6 border-b border-border bg-slate-50/50 dark:bg-slate-900/50">
           <div>
             <h2 className="text-xl font-bold flex items-center gap-2">
               <History className="text-primary" />
@@ -54,7 +54,7 @@ export default function StockLogsModal({ isOpen, onClose, product, token }) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900/20">
+        <div className="flex-1 overflow-y-auto p-6 bg-muted/20">
           {loading ? (
             <div className="flex items-center justify-center h-48">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -66,7 +66,7 @@ export default function StockLogsModal({ isOpen, onClose, product, token }) {
           ) : (
             <div className="space-y-4">
               {logs.map((log) => (
-                <div key={log.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
+                <div key={log.id} className="bg-card border border-border rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-4">
                     <div className={`p-3 rounded-full shrink-0 ${log.type === 'IN' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
                       {log.type === 'IN' ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
@@ -86,7 +86,7 @@ export default function StockLogsModal({ isOpen, onClose, product, token }) {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col md:items-end text-sm text-slate-500 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-3 md:pt-0 md:pl-4">
+                  <div className="flex flex-col md:items-end text-sm text-slate-500 border-t md:border-t-0 md:border-l border-border pt-3 md:pt-0 md:pl-4">
                     <div className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300 mb-1">
                       <User size={14} />
                       {log.createdBy || 'System'}
@@ -105,7 +105,7 @@ export default function StockLogsModal({ isOpen, onClose, product, token }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 flex justify-end">
+        <div className="p-4 border-t border-border bg-card flex justify-end">
           <Button onClick={onClose} variant="outline">Close</Button>
         </div>
       </div>

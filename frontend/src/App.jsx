@@ -31,6 +31,8 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 // Dashboard Pages
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
+import Lots from './pages/admin/Lots';
+import CreateLotPage from './pages/admin/CreateLotPage';
 import ProductFormPage from './pages/admin/ProductFormPage';
 import CustomerVerification from './pages/admin/CustomerVerification';
 import HRManagement from './pages/admin/HRManagement';
@@ -60,6 +62,7 @@ import OvertimeDetails from './pages/admin/OvertimeDetails';
 import LeaveDetails from './pages/admin/LeaveDetails';
 import IncentiveDetails from './pages/admin/IncentiveDetails';
 import HolidayManagement from './pages/admin/HolidayManagement';
+import AnalyticsHub from './pages/admin/AnalyticsHub';
 import Finance from './pages/admin/Finance';
 import LogExpense from './pages/admin/LogExpense';
 import LedgerDetails from './pages/admin/LedgerDetails';
@@ -187,12 +190,15 @@ function App() {
 
                   {/* Super Admin, Owner, & Manager */}
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
+                    <Route path="analytics" element={<AnalyticsHub />} />
                     <Route path="recycle-bin" element={<RecycleBin />} />
                   </Route>
 
                   {/* Admin & Manager */}
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER']} />}>
                     <Route path="inventory" element={<Inventory />} />
+                    <Route path="inventory/lots" element={<Lots />} />
+                    <Route path="inventory/lots/new" element={<CreateLotPage />} />
                     <Route path="inventory/product/new" element={<ProductFormPage />} />
                     <Route path="inventory/product/:id" element={<ProductFormPage />} />
                     <Route path="stock-history" element={<StockHistory />} />

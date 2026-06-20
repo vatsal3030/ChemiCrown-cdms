@@ -56,8 +56,8 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+      <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+        <div className="p-4 border-b border-border flex justify-between items-center bg-muted/50">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
             Add New Employee
           </h2>
@@ -76,7 +76,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 placeholder="e.g. Raj"
                 value={formData.firstName}
                 onChange={e => setFormData({...formData, firstName: e.target.value})}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
             <div className="space-y-2">
@@ -87,7 +87,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 placeholder="e.g. Patel"
                 value={formData.lastName}
                 onChange={e => setFormData({...formData, lastName: e.target.value})}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 placeholder="employee@company.com"
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
             <div className="space-y-2">
@@ -111,7 +111,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 placeholder="+91 98765 43210"
                 value={formData.phone}
                 onChange={e => setFormData({...formData, phone: e.target.value})}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
           </div>
@@ -125,7 +125,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 minLength={6}
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
-                className="w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full pl-3 pr-10 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <button
                 type="button"
@@ -144,7 +144,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
               <select 
                 value={formData.role}
                 onChange={e => setFormData({...formData, role: e.target.value})}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 <option value="OWNER">Owner</option>
                 <option value="MANAGER">Manager</option>
@@ -162,7 +162,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 placeholder="e.g. Sales, Logistics"
                 value={formData.department}
                 onChange={e => setFormData({...formData, department: e.target.value})}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
           </div>
@@ -176,7 +176,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 placeholder="e.g. Sales Executive"
                 value={formData.jobTitle}
                 onChange={e => setFormData({...formData, jobTitle: e.target.value})}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
             <div className="space-y-2">
@@ -185,12 +185,12 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                 type="date" max={new Date().toISOString().split('T')[0]}
                 value={formData.joiningDate}
                 onChange={e => setFormData({...formData, joiningDate: e.target.value})}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4">
+          <div className="border-t border-border pt-4 mt-4">
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Payroll & Compensation</h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -199,7 +199,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                   type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                   value={formData.baseSalary}
                   onChange={e => setFormData({...formData, baseSalary: e.target.value})}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
               <div className="space-y-2">
@@ -208,7 +208,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                   type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                   value={formData.ctc}
                   onChange={e => setFormData({...formData, ctc: e.target.value})}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
               <div className="space-y-2">
@@ -217,7 +217,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
                   type="number" min="0" max="100" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                   value={formData.pfRate}
                   onChange={e => setFormData({...formData, pfRate: e.target.value})}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
             </div>
@@ -236,7 +236,7 @@ export default function EmployeeModal({ isOpen, onClose, token, onSuccess }) {
             </label>
           </div>
 
-          <div className="pt-4 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800 mt-6">
+          <div className="pt-4 flex justify-end gap-2 border-t border-border mt-6">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel
             </Button>

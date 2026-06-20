@@ -90,11 +90,11 @@ export default function NavbarSearch() {
       />
       
       {(isFocused && (history.length > 0 || suggestions.length > 0)) && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
           
           {suggestions.length > 0 && (
             <>
-              <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+              <div className="p-2 border-b border-border bg-muted/50">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2">Suggestions</span>
               </div>
               <ul className="max-h-64 overflow-y-auto p-1">
@@ -121,7 +121,7 @@ export default function NavbarSearch() {
 
           {history.length > 0 && (
             <>
-              <div className="p-2 border-t border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+              <div className="p-2 border-t border-b border-border bg-muted/50">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2">Recent Searches</span>
               </div>
               <ul className="max-h-64 overflow-y-auto p-1">

@@ -330,7 +330,7 @@ export default function MyAttendance() {
               <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-red-100 border border-red-200 dark:bg-red-900/40 dark:border-red-800"></div> Absent</span>
               <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-orange-100 border border-orange-200 dark:bg-orange-900/40 dark:border-orange-800"></div> Half Day</span>
               <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-blue-100 border border-blue-200 dark:bg-blue-900/40 dark:border-blue-800"></div> Leave</span>
-              <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-slate-100 dark:bg-slate-800"></div> No Data</span>
+              <span className="flex flex-wrap items-center gap-1.5"><div className="w-3 h-3 rounded-md bg-muted"></div> No Data</span>
             </div>
           </div>
 

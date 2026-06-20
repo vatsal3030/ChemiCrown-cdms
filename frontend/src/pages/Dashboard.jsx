@@ -155,7 +155,7 @@ export default function Dashboard() {
   const attendanceData = data?.attendanceData || [];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5 animate-in fade-in duration-500">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -178,7 +178,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label="Total Revenue"
           value={formatINR(stats.revenue)}
@@ -213,10 +213,9 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* Quick Actions */}
       <div>
-        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-2">
           <QuickAction label="New Order" icon={ShoppingCart} to="/dashboard/orders" color="bg-primary/10 text-primary" />
           <QuickAction label="Add Product" icon={Package} to="/dashboard/inventory/product/new" color="bg-secondary/10 text-secondary" />
           <QuickAction label="HR & Payroll" icon={Users} to="/dashboard/hr" color="bg-primary/10 text-primary" />
@@ -227,10 +226,10 @@ export default function Dashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Revenue Trend */}
-        <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div className="lg:col-span-2 bg-card rounded-xl border border-border p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="font-bold text-foreground">Revenue Trend</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Monthly revenue year-to-date</p>
@@ -240,7 +239,7 @@ export default function Dashboard() {
           {revenueData.length === 0 ? (
             <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">No revenue data yet</div>
           ) : (
-            <ResponsiveContainer width="100%" minHeight={260} height={260} minWidth={0}>
+            <ResponsiveContainer width="100%" minHeight={220} height={220} minWidth={0}>
               <BarChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={8} />
@@ -264,14 +263,14 @@ export default function Dashboard() {
         </div>
 
         {/* Attendance Pie */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <div className="mb-4">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
+          <div className="mb-3">
             <h3 className="font-bold text-foreground">Today's Attendance</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Staff present vs absent</p>
           </div>
           {attendanceData?.some(d => d.value > 0) ? (
             <>
-              <ResponsiveContainer width="100%" height={200} minWidth={0} minHeight={0}>
+              <ResponsiveContainer width="100%" height={170} minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
                     data={attendanceData}
@@ -305,12 +304,12 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Low Stock Items List */}
         {stats.lowStockProducts?.length > 0 && (
-          <div className="bg-card rounded-2xl border border-rose-200 dark:border-rose-900/50 p-6 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div className="bg-card rounded-xl border border-rose-200 dark:border-rose-900/50 p-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
               <div>
                 <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2">
                   <AlertTriangle size={18} className="text-rose-500" /> Action Required: Low Stock
@@ -341,8 +340,8 @@ export default function Dashboard() {
           </div>
         )}
         {/* Inventory Bar Chart */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="font-bold text-foreground">Top Products – Stock Level</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Current inventory quantities</p>
@@ -367,8 +366,8 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+        <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
             <div>
               <h3 className="font-bold text-foreground">Recent Orders</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Latest customer transactions</p>

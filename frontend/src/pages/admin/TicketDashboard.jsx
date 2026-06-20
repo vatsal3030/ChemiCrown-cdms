@@ -141,9 +141,9 @@ export default function TicketDashboard() {
         ))}
       </div>
 
-      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between">
           <div className="relative flex-1 sm:max-w-5xl">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input 
@@ -159,7 +159,7 @@ export default function TicketDashboard() {
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                 hasFilters
                   ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                  : 'bg-card border-border text-foreground hover:border-primary'
               }`}
             >
               <Filter size={15} />
@@ -182,7 +182,7 @@ export default function TicketDashboard() {
 
         {/* Advanced Filters Panel */}
         {showFilters && (
-          <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900/50">
+          <div className="p-4 border-b border-border bg-muted/50">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <h3 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm">
                 <Filter size={15} /> Advanced Filters
@@ -232,7 +232,7 @@ export default function TicketDashboard() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+            <thead className="bg-muted text-slate-500 dark:text-slate-400 font-medium border-b border-border">
               <tr>
                 <th className="data-table-cell text-left">Type</th>
                 <th className="data-table-cell text-left">Title</th>

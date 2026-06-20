@@ -177,8 +177,8 @@ export default function AttendanceCalendar() {
         </div>
         
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-sm">
-            <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400"><ChevronLeft size={18} /></button>
+          <div className="flex flex-wrap items-center gap-2 bg-card border border-border rounded-xl p-1 shadow-sm">
+            <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><ChevronLeft size={18} /></button>
             <input 
               type="month" 
               value={`${targetYear}-${String(targetMonth + 1).padStart(2, '0')}`}
@@ -191,7 +191,7 @@ export default function AttendanceCalendar() {
               }}
               className="text-sm font-bold text-center text-slate-800 dark:text-slate-200 bg-transparent border-0 focus:ring-0 cursor-pointer w-36"
             />
-            <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400"><ChevronRight size={18} /></button>
+            <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><ChevronRight size={18} /></button>
           </div>
           
           {isSuperAdmin && (
@@ -202,21 +202,21 @@ export default function AttendanceCalendar() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="p-4 space-y-2 animate-pulse bg-white dark:bg-slate-900">
+          <div className="p-4 space-y-2 animate-pulse bg-card">
             {/* Skeleton header row */}
             <div className="flex gap-1">
-              <div className="h-10 w-[200px] bg-slate-200 dark:bg-slate-850 rounded-lg shrink-0" />
+              <div className="h-10 w-[200px] bg-muted rounded-lg shrink-0" />
               {Array.from({ length: Math.min(daysInMonth, 15) }).map((_, i) => (
-                <div key={i} className="h-10 w-8 bg-slate-100 dark:bg-slate-850/60 rounded shrink-0" />
+                <div key={i} className="h-10 w-8 bg-muted/60 rounded shrink-0" />
               ))}
-              <div className="h-10 flex-1 bg-slate-100 dark:bg-slate-850/60 rounded" />
+              <div className="h-10 flex-1 bg-muted/60 rounded" />
             </div>
             {/* Skeleton data rows */}
             {Array.from({ length: 6 }).map((_, row) => (
               <div key={row} className="flex gap-1">
-                <div className="h-12 w-[200px] bg-slate-100 dark:bg-slate-800 rounded-lg shrink-0">
+                <div className="h-12 w-[200px] bg-muted rounded-lg shrink-0">
                   <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded mt-3 ml-3" />
                   <div className="h-2 w-16 bg-slate-200/60 dark:bg-slate-700/60 rounded mt-1.5 ml-3" />
                 </div>
@@ -236,13 +236,13 @@ export default function AttendanceCalendar() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse min-w-max">
-              <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10">
-                <tr className="border-b border-slate-200 dark:border-slate-850">
-                  <th className="px-3 sm:px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-850 sticky left-0 bg-slate-50 dark:bg-slate-800 z-20 min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
+              <thead className="bg-muted/80 sticky top-0 z-10">
+                <tr className="border-b border-border">
+                  <th className="px-3 sm:px-4 py-3 text-left font-bold text-foreground border-r border-border sticky left-0 bg-muted z-20 min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
                     Employee
                   </th>
                   {daysArray.map(day => (
-                    <th key={day} className="px-1 py-2 text-center font-semibold text-slate-500 dark:text-slate-450 border-b border-slate-200 dark:border-slate-850 min-w-[32px]">
+                    <th key={day} className="px-1 py-2 text-center font-semibold text-muted-foreground border-b border-border min-w-[32px]">
                       <div className="text-[10px] uppercase">{new Date(targetYear, targetMonth, day).toLocaleDateString('en-US', { weekday: 'narrow' })}</div>
                       <div className="mt-1">{day}</div>
                     </th>
@@ -251,10 +251,10 @@ export default function AttendanceCalendar() {
               </thead>
               <tbody>
                 {employees?.filter(e => e.employeeProfile).map(emp => (
-                  <tr key={emp.id} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 group">
-                    <td className="px-3 sm:px-4 py-2 border-r border-slate-100 dark:border-slate-850 sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 z-10 transition-colors min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
-                      <div className="font-semibold text-slate-800 dark:text-slate-200 truncate text-xs sm:text-sm">{emp.firstName || emp.lastName ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : emp.email?.split('@')[0] || 'Unknown User'}</div>
-                      <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">{emp.employeeProfile?.department || 'No Dept'} • {emp.employeeProfile?.jobTitle}</div>
+                  <tr key={emp.id} className="border-b border-border hover:bg-muted/30 group">
+                    <td className="px-3 sm:px-4 py-2 border-r border-border sticky left-0 bg-card group-hover:bg-muted/40 z-10 transition-colors min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
+                      <div className="font-semibold text-foreground truncate text-xs sm:text-sm">{emp.firstName || emp.lastName ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : emp.email?.split('@')[0] || 'Unknown User'}</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground truncate">{emp.employeeProfile?.department || 'No Dept'} • {emp.employeeProfile?.jobTitle}</div>
                     </td>
                     {daysArray.map(day => {
                       const empId = emp.id;
@@ -265,7 +265,7 @@ export default function AttendanceCalendar() {
                       const isWeekend = [0, 6].includes(new Date(targetYear, targetMonth, day).getDay());
                       
                       return (
-                        <td key={day} className={`p-0.5 border-r border-slate-100 dark:border-slate-850 text-center ${isWeekend ? 'bg-slate-50/50 dark:bg-slate-800/30' : ''}`}>
+                        <td key={day} className={`p-0.5 border-r border-border text-center ${isWeekend ? 'bg-muted/10' : ''}`}>
                           <button
                             disabled={!isSuperAdmin}
                             onClick={() => handleCellClick(empId, day)}
@@ -292,7 +292,7 @@ export default function AttendanceCalendar() {
         )}
       </div>
       
-      <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-850 shadow-sm">
+      <div className="flex flex-wrap gap-4 text-xs font-semibold text-muted-foreground bg-card p-4 rounded-xl border border-border shadow-sm">
         <div className="flex flex-wrap items-center gap-2"><div className="w-4 h-4 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 flex items-center justify-center">P</div> Present</div>
         <div className="flex flex-wrap items-center gap-2"><div className="w-4 h-4 rounded bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400 flex items-center justify-center">A</div> Absent</div>
         <div className="flex flex-wrap items-center gap-2"><div className="w-4 h-4 rounded bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 flex items-center justify-center">H</div> Half Day</div>

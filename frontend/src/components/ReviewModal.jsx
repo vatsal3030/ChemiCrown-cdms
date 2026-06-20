@@ -66,8 +66,8 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+      <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-5 border-b border-border flex justify-between items-center bg-muted/50">
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">
             {isEdit ? 'Edit Your Review' : 'Write a Review'}
           </h2>
@@ -78,11 +78,11 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
-            <div className="w-16 h-16 bg-white dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="w-16 h-16 bg-card rounded-lg overflow-hidden border border-border">
               {orderItem.product.imageUrls && orderItem.product.imageUrls.length > 0 ? (
                 <img src={orderItem.product.imageUrls[0]} alt={orderItem.product.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-300">
+                <div className="w-full h-full flex items-center justify-center bg-muted text-slate-300">
                   No Image
                 </div>
               )}
@@ -118,7 +118,7 @@ export default function ReviewModal({ isOpen, onClose, orderItem, token, onSucce
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="What did you like or dislike about this product?"
-              className="w-full h-32 px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+              className="w-full h-32 px-3 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
             />
           </div>
 

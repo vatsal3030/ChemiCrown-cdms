@@ -351,7 +351,7 @@ export default function EmployeeDetails() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Attendance Stats & Calendar */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <h2 className="text-xl font-bold">Attendance Overview</h2>
               <div className="flex flex-wrap items-center gap-3">
@@ -375,7 +375,7 @@ export default function EmployeeDetails() {
                   <div className="grid grid-flow-col grid-rows-7 gap-1 h-[98px] w-max">
                     {getHeatmapData().map((day, idx) => {
                       const record = attendance.find(a => new Date(a.date).toDateString() === day.toDateString());
-                      let colorClass = "bg-slate-100 dark:bg-slate-800/60";
+                      let colorClass = "bg-muted/60";
                       if (record) {
                         if (record.status === 'PRESENT') colorClass = "bg-emerald-500 dark:bg-emerald-600";
                         else if (record.status === 'ABSENT') colorClass = "bg-red-500 dark:bg-red-600";
@@ -453,7 +453,7 @@ export default function EmployeeDetails() {
 
         {/* Salary History */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
             <h2 className="text-xl font-bold mb-4">Payroll History</h2>
             {salaries.length === 0 ? (
               <p className="text-slate-500 text-sm">No salary records found for this employee.</p>
@@ -474,7 +474,7 @@ export default function EmployeeDetails() {
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Recent Transactions</h3>
                   {salaries.slice(0, 5).map(salary => (
-                    <div key={salary.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                    <div key={salary.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-lg bg-muted border border-border">
                       <div>
                         <p className="font-medium">{salary.month}</p>
                         <p className="text-xs text-slate-500">{new Date(salary.paidAt || Date.now()).toLocaleDateString()}</p>
@@ -494,8 +494,8 @@ export default function EmployeeDetails() {
 
       {editModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+          <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-border flex justify-between items-center bg-muted/50">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                 Edit Employee Profile
               </h2>
@@ -513,7 +513,7 @@ export default function EmployeeDetails() {
                     type="text" 
                     value={editForm.firstName}
                     onChange={e => setEditForm({...editForm, firstName: e.target.value})}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                   />
                 </div>
                 <div className="space-y-2">
@@ -523,7 +523,7 @@ export default function EmployeeDetails() {
                     type="text" 
                     value={editForm.lastName}
                     onChange={e => setEditForm({...editForm, lastName: e.target.value})}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                   />
                 </div>
               </div>
@@ -534,7 +534,7 @@ export default function EmployeeDetails() {
                   type="tel" 
                   value={editForm.phone}
                   onChange={e => setEditForm({...editForm, phone: e.target.value})}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                 />
               </div>
 
@@ -544,7 +544,7 @@ export default function EmployeeDetails() {
                   <select 
                     value={editForm.role}
                     onChange={e => setEditForm({...editForm, role: e.target.value})}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                   >
                     <option value="OWNER">Owner</option>
                     <option value="SUPER_ADMIN">Super Admin</option>
@@ -562,7 +562,7 @@ export default function EmployeeDetails() {
                     type="text" 
                     value={editForm.department}
                     onChange={e => setEditForm({...editForm, department: e.target.value})}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                   />
                 </div>
               </div>
@@ -575,7 +575,7 @@ export default function EmployeeDetails() {
                     type="text" 
                     value={editForm.jobTitle}
                     onChange={e => setEditForm({...editForm, jobTitle: e.target.value})}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                   />
                 </div>
                 <div className="space-y-2">
@@ -584,12 +584,12 @@ export default function EmployeeDetails() {
                     type="date"
                     value={editForm.joiningDate}
                     onChange={e => setEditForm({...editForm, joiningDate: e.target.value})}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                   />
                 </div>
               </div>
 
-              <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4">
+              <div className="border-t border-border pt-4 mt-4">
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Payroll & Compensation</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
@@ -598,7 +598,7 @@ export default function EmployeeDetails() {
                       type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                       value={editForm.baseSalary}
                       onChange={e => setEditForm({...editForm, baseSalary: e.target.value})}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                      className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                     />
                   </div>
                   <div className="space-y-2">
@@ -607,7 +607,7 @@ export default function EmployeeDetails() {
                       type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                       value={editForm.ctc}
                       onChange={e => setEditForm({...editForm, ctc: e.target.value})}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                      className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                     />
                   </div>
                   <div className="space-y-2">
@@ -616,7 +616,7 @@ export default function EmployeeDetails() {
                       type="number" min="0" max="100" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
                       value={editForm.pfRate}
                       onChange={e => setEditForm({...editForm, pfRate: e.target.value})}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
+                      className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
                     />
                   </div>
                 </div>
@@ -635,8 +635,8 @@ export default function EmployeeDetails() {
                 </label>
               </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800 mt-6">
-                <button type="button" onClick={() => setEditModalOpen(false)} disabled={editLoading} className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 text-sm font-semibold transition-all">
+              <div className="pt-4 flex justify-end gap-2 border-t border-border mt-6">
+                <button type="button" onClick={() => setEditModalOpen(false)} disabled={editLoading} className="px-4 py-2 border border-border rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 text-sm font-semibold transition-all">
                   Cancel
                 </button>
                 <button type="submit" disabled={editLoading} className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold shadow-sm transition-all disabled:opacity-50">

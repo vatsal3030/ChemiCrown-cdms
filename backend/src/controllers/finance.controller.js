@@ -9,11 +9,38 @@ exports.getOverview = async (req, res, next) => {
     const { from, to } = req.query;
     const dateFilter = buildDateFilter(from, to);
 
-    // Revenue — from DELIVERED orders
-    const orders = await prisma.order.findMany({
-      where: { status: 'DELIVERED', createdAt: dateFilter },
-      include: { items: { include: { product: true } } }
-    });
+    const [
+      orders,
+      paidSalaries,
+      expenses,
+      pendingOrders,
+      monthlyRevenue,
+      recentLedger
+    ] = await Promise.all([
+      prisma.order.findMany({
+        where: { status: 'DELIVERED', createdAt: dateFilter },
+        include: { items: { include: { product: true } } }
+      }),
+      prisma.salary.findMany({
+        where: { status: 'PAID', paidAt: dateFilter }
+      }),
+      prisma.expense.findMany({
+        where: { date: dateFilter },
+        orderBy: { date: 'desc' }
+      }),
+      prisma.order.findMany({
+        where: {
+          status: { in: ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED'] },
+          createdAt: dateFilter
+        }
+      }),
+      getMonthlyRevenueTrend(from, to),
+      prisma.financeLedger.findMany({
+        where: { date: dateFilter },
+        orderBy: { date: 'desc' },
+        take: 20
+      })
+    ]);
 
     const revenue = orders.reduce((s, o) => s + (o.total || 0), 0);
     const shippingRevenue = orders.reduce((s, o) => s + (o.distanceCost || 0), 0);
@@ -28,17 +55,8 @@ exports.getOverview = async (req, res, next) => {
     const grossProfit = revenue - cogs;
     const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
 
-    // Payroll costs — PAID salaries
-    const paidSalaries = await prisma.salary.findMany({
-      where: { status: 'PAID', paidAt: dateFilter }
-    });
     const payrollCost = paidSalaries.reduce((s, sl) => s + (sl.netPay || 0), 0);
 
-    // Manual expenses
-    const expenses = await prisma.expense.findMany({
-      where: { date: dateFilter },
-      orderBy: { date: 'desc' }
-    });
     const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
 
     // Tax collected (from orders — VAT/GST placeholder)
@@ -48,17 +66,7 @@ exports.getOverview = async (req, res, next) => {
     const netProfit = grossProfit - payrollCost - totalExpenses;
     const netMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
 
-    // Pending revenue (orders not yet delivered)
-    const pendingOrders = await prisma.order.findMany({
-      where: {
-        status: { in: ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED'] },
-        createdAt: dateFilter
-      }
-    });
     const pendingRevenue = pendingOrders.reduce((s, o) => s + (o.total || 0), 0);
-
-    // Monthly revenue trend (for chart — all months from first order)
-    const monthlyRevenue = await getMonthlyRevenueTrend(from, to);
 
     // Expense breakdown by category
     const expenseByCategory = expenses.reduce((acc, e) => {
@@ -71,13 +79,6 @@ exports.getOverview = async (req, res, next) => {
       acc[s.month] = (acc[s.month] || 0) + s.netPay;
       return acc;
     }, {});
-
-    // Recent ledger entries (last 20)
-    const recentLedger = await prisma.financeLedger.findMany({
-      where: { date: dateFilter },
-      orderBy: { date: 'desc' },
-      take: 20
-    });
 
     res.json({
       success: true,

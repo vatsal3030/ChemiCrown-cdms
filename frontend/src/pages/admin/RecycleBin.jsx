@@ -120,11 +120,11 @@ export default function RecycleBin() {
         )}
       </div>
 
-      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         {loading ? (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                <tr className="bg-muted/50 border-b border-border">
                   <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Entity Type</th>
                   <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Description</th>
                   <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Deleted At</th>
@@ -145,7 +145,7 @@ export default function RecycleBin() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50 dark:bg-slate-900/50">
+              <thead className="bg-muted/50">
                 <tr>
                   <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Name / ID</th>

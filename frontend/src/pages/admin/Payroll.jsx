@@ -242,7 +242,7 @@ export default function Payroll() {
       {/* Table */}
       <div className="data-table-wrapper">
         {/* Toolbar */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between">
           <div className="relative flex-1 sm:max-w-5xl">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
@@ -259,7 +259,7 @@ export default function Payroll() {
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                 hasActiveFilters
                   ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                  : 'bg-card border-border text-foreground hover:border-primary'
               }`}
             >
               <SlidersHorizontal size={15} />

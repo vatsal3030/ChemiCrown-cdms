@@ -198,7 +198,7 @@ export default function Wishlist() {
               
               return (
                 <div key={fav.id} className="p-6 flex flex-col sm:flex-row items-center gap-6 hover:bg-muted/50 transition-colors">
-                  <div className="w-24 h-24 bg-white dark:bg-slate-900 border border-border rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-24 h-24 bg-card border border-border rounded-xl flex items-center justify-center overflow-hidden shrink-0">
                     {product.imageUrls?.[0] ? (
                       <img src={product.imageUrls[0]} alt={product.name} className="w-full h-full object-contain p-2" />
                     ) : (

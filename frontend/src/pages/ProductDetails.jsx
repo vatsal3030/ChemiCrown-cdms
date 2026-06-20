@@ -107,17 +107,17 @@ export default function ProductDetails() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start relative">
           {/* Left Column Skeleton */}
           <div className="md:col-span-5 lg:col-span-4 space-y-4">
-            <div className="aspect-square bg-slate-200 dark:bg-slate-800 rounded-2xl w-full border border-slate-100 dark:border-slate-800"></div>
+            <div className="aspect-square bg-slate-200 dark:bg-slate-800 rounded-2xl w-full border border-border"></div>
             <div className="flex flex-wrap gap-2 overflow-hidden pb-2">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0 border-2 border-slate-100 dark:border-slate-800"></div>
+                <div key={i} className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0 border-2 border-border"></div>
               ))}
             </div>
           </div>
           
           {/* Middle Column Skeleton */}
           <div className="md:col-span-7 lg:col-span-5 space-y-6">
-            <div className="border-b border-slate-100 dark:border-slate-800 pb-6">
+            <div className="border-b border-border pb-6">
               <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20 mb-2"></div>
               <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded w-full mb-2"></div>
               <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded w-2/3"></div>
@@ -244,18 +244,18 @@ export default function ProductDetails() {
             </div>
             <p className="text-sm text-muted-foreground">Inclusive of all taxes</p>
 
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-3 sm:p-5 rounded-xl border border-slate-100 dark:border-slate-800 text-xs sm:text-sm overflow-x-auto">
+            <div className="bg-muted/50 p-3 sm:p-5 rounded-xl border border-border text-xs sm:text-sm overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-0">
                 <tbody>
-                  {product.brand && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Brand</th><td className="py-2 text-foreground font-semibold break-words">{product.brand}</td></tr>}
-                  {product.manufacturer && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Manufacturer</th><td className="py-2 text-foreground break-words">{product.manufacturer}</td></tr>}
-                  {product.itemForm && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Item Form</th><td className="py-2 text-foreground">{product.itemForm}</td></tr>}
-                  {product.purity && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Purity</th><td className="py-2 text-foreground">{product.purity}</td></tr>}
-                  {product.grade && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Grade</th><td className="py-2 text-foreground">{product.grade}</td></tr>}
-                  {product.mfgDate && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Mfg Date</th><td className="py-2 text-foreground">{new Date(product.mfgDate).toLocaleDateString()}</td></tr>}
-                  {product.expiryDate && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Expiry</th><td className="py-2 text-foreground">{new Date(product.expiryDate).toLocaleDateString()}</td></tr>}
-                  {product.casNumber && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">CAS</th><td className="py-2 font-mono text-foreground break-all">{product.casNumber}</td></tr>}
-                  {product.sku && <tr className="border-b border-slate-200 dark:border-slate-800 last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">SKU</th><td className="py-2 font-mono text-foreground break-all text-[10px] sm:text-xs">{product.sku}</td></tr>}
+                  {product.brand && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Brand</th><td className="py-2 text-foreground font-semibold break-words">{product.brand}</td></tr>}
+                  {product.manufacturer && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Manufacturer</th><td className="py-2 text-foreground break-words">{product.manufacturer}</td></tr>}
+                  {product.itemForm && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Item Form</th><td className="py-2 text-foreground">{product.itemForm}</td></tr>}
+                  {product.purity && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Purity</th><td className="py-2 text-foreground">{product.purity}</td></tr>}
+                  {product.grade && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Grade</th><td className="py-2 text-foreground">{product.grade}</td></tr>}
+                  {product.mfgDate && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Mfg Date</th><td className="py-2 text-foreground">{new Date(product.mfgDate).toLocaleDateString()}</td></tr>}
+                  {product.expiryDate && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">Expiry</th><td className="py-2 text-foreground">{new Date(product.expiryDate).toLocaleDateString()}</td></tr>}
+                  {product.casNumber && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">CAS</th><td className="py-2 font-mono text-foreground break-all">{product.casNumber}</td></tr>}
+                  {product.sku && <tr className="border-b border-border last:border-0"><th className="py-2 text-muted-foreground font-medium w-1/3 pr-3">SKU</th><td className="py-2 font-mono text-foreground break-all text-[10px] sm:text-xs">{product.sku}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -431,7 +431,7 @@ export default function ProductDetails() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-dashed border-border">
+                <div className="text-center py-12 bg-muted/50 rounded-3xl border border-dashed border-border">
                   <Star className="w-12 h-12 mx-auto text-slate-300 mb-4" />
                   <h3 className="text-lg font-medium">No reviews yet</h3>
                   <p className="text-muted-foreground">Only customers who have had this product delivered can leave a review.</p>
@@ -457,7 +457,7 @@ export default function ProductDetails() {
                   window.scrollTo(0,0);
                 }}
               >
-                <div className="aspect-square bg-slate-100 dark:bg-slate-900 rounded-xl mb-4 overflow-hidden flex items-center justify-center">
+                <div className="aspect-square bg-muted rounded-xl mb-4 overflow-hidden flex items-center justify-center">
                   {rel.imageUrls?.length > 0 ? (
                     <img src={rel.imageUrls[0]} alt={rel.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   ) : rel.imageUrl ? (

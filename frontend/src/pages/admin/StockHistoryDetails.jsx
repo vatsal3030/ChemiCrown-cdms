@@ -158,7 +158,7 @@ export default function StockHistoryDetails() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+                    <thead className="bg-muted text-slate-500 dark:text-slate-400 font-medium border-b border-border">
                       <tr>
                         <th className="px-3 py-2">Type</th>
                         <th className="px-3 py-2">Quantity</th>

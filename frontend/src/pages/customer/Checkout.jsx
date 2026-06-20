@@ -319,7 +319,7 @@ export default function Checkout() {
             <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
               {cartItems.map(item => (
                 <div key={item.product.id} className="flex flex-wrap gap-4">
-                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-lg overflow-hidden shrink-0">
+                  <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden shrink-0">
                     {item.product.imageUrls && item.product.imageUrls.length > 0 ? (
                       <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-full h-full object-cover" />
                     ) : (

@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import useSWR from 'swr';
 import useDebounce from '@/hooks/useDebounce';
 import AddStockModal from '@/components/AddStockModal';
+import PrintGHSModal from '@/components/PrintGHSModal';
 
 export default function Inventory() {
   const { token } = useAuth();
@@ -42,6 +43,8 @@ export default function Inventory() {
   const [categories, setCategories]       = useState([]);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [stockProduct, setStockProduct]         = useState(null);
+  const [isGHSModalOpen, setIsGHSModalOpen]     = useState(false);
+  const [ghsProduct, setGhsProduct]             = useState(null);
   const [showFilters, setShowFilters]           = useState(false);
   const [totalPages, setTotalPages]             = useState(1);
 
@@ -151,10 +154,10 @@ export default function Inventory() {
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
 
         {/* Toolbar */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between">
           <div className="relative flex-1 sm:max-w-5xl">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
@@ -172,7 +175,7 @@ export default function Inventory() {
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                 hasActiveFilters
                   ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                  : 'bg-card border-border text-foreground hover:border-primary'
               }`}
             >
               <SlidersHorizontal size={15} />
@@ -321,7 +324,7 @@ export default function Inventory() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+            <thead className="bg-muted text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-border">
               <tr>
                 <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('name')}>
                   <div className="flex flex-wrap items-center gap-1">Product <ArrowUpDown size={12} /></div>
@@ -358,6 +361,11 @@ export default function Inventory() {
                       <td className="data-table-cell">
                         <div className="font-semibold text-slate-900 dark:text-slate-50">{product.name}</div>
                         <div className="text-xs text-slate-500 truncate max-w-[220px]">{product.description}</div>
+                        {product.sdsUrl && (
+                          <a href={product.sdsUrl} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-blue-600 hover:underline mt-1 inline-block">
+                            View SDS
+                          </a>
+                        )}
                       </td>
                       <td className="data-table-cell font-mono text-xs text-muted-foreground">{product.casNumber || 'N/A'}</td>
                       <td className="data-table-cell">
@@ -393,6 +401,11 @@ export default function Inventory() {
                             <Plus size={14} />
                             <span className="hidden sm:inline">Stock</span>
                           </Button>
+                          <Button variant="outline" size="sm" className="gap-1 h-8 px-2 md:px-3 border-amber-300 hover:bg-amber-50 text-amber-700 dark:border-amber-800 dark:hover:bg-amber-900/30 dark:text-amber-500" title="Print GHS Label"
+                            onClick={() => { setGhsProduct(product); setIsGHSModalOpen(true); }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            <span className="hidden sm:inline">GHS</span>
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10"
                             onClick={() => navigate(`/dashboard/inventory/product/${product.id}`)}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -415,7 +428,7 @@ export default function Inventory() {
 
         {/* Pagination */}
         {!loading && products.length > 0 && (
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-4 border-t border-border flex items-center justify-between">
             <span className="text-sm text-slate-500">
               Page {page} of {totalPages || 1}
               {data?.pagination?.total ? ` · ${data.pagination.total} products` : ''}
@@ -450,6 +463,12 @@ export default function Inventory() {
             }, false);
           }
         }}
+      />
+
+      <PrintGHSModal 
+        isOpen={isGHSModalOpen}
+        onClose={() => setIsGHSModalOpen(false)}
+        product={ghsProduct}
       />
 
     </div>

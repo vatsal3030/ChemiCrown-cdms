@@ -3,33 +3,33 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
+  directUrl    = env("DIRECT_URL")
   relationMode = "prisma"
 }
 
 model User {
-  id                  String   @id @default(uuid()) // Links to Supabase Auth UID
-  email               String   @unique
-  password            String?  // Hashed password for local auth
-  role                Role     @default(CUSTOMER)
-  firstName           String?
-  lastName            String?
-  phone               String?
-  profileImageUrl     String?
-  resetPasswordOtp    String?
+  id                   String    @id @default(uuid()) // Links to Supabase Auth UID
+  email                String    @unique
+  password             String? // Hashed password for local auth
+  role                 Role      @default(CUSTOMER)
+  firstName            String?
+  lastName             String?
+  phone                String?
+  profileImageUrl      String?
+  resetPasswordOtp     String?
   resetPasswordExpires DateTime?
-  createdAt           DateTime @default(now())
-  deletedAt           DateTime?
-  
-  employeeProfile Employee?
-  customerProfile Customer?
-  auditLogs       AuditLog[]
-  tasksAssigned   Task[]   @relation("TaskAssigner")
-  favorites       Favorite[]
+  createdAt            DateTime  @default(now())
+  deletedAt            DateTime?
+
+  employeeProfile       Employee?
+  customerProfile       Customer?
+  auditLogs             AuditLog[]
+  tasksAssigned         Task[]                 @relation("TaskAssigner")
+  favorites             Favorite[]
   inventoryTransactions InventoryTransaction[] @relation("InventoryTxUser")
-  orderStateChanges   OrderStatusHistory[]   @relation("OrderStateChanger")
+  orderStateChanges     OrderStatusHistory[]   @relation("OrderStateChanger")
 }
 
 enum Role {
@@ -44,39 +44,39 @@ enum Role {
 }
 
 model Employee {
-  id            String          @id @default(uuid())
-  userId        String          @unique
-  user          User            @relation(fields: [userId], references: [id])
-  jobTitle      String?
-  department    String?
-  joiningDate   DateTime        @default(now())
-  isActive      Boolean         @default(true)
-  status        EmployeeStatus  @default(ACTIVE)
-  terminatedAt  DateTime?
+  id                String            @id @default(uuid())
+  userId            String            @unique
+  user              User              @relation(fields: [userId], references: [id])
+  jobTitle          String?
+  department        String?
+  joiningDate       DateTime          @default(now())
+  isActive          Boolean           @default(true)
+  status            EmployeeStatus    @default(ACTIVE)
+  terminatedAt      DateTime?
   terminationReason String?
-  suspendedFrom DateTime?
-  suspendedTo   DateTime?
-  attendances   Attendance[]
-  salaries      Salary[]
-  deletedAt     DateTime?
-  tasks         Task[]          @relation("TaskAssignee")
-  baseSalary    Float?          // Monthly base salary set by HR
-  ctc           Float?          // Cost to Company (annual)
-  pfRate        Float?          // e.g. 12.0 (percentage)
-  pfLedger      PFLedger?
-  leaveRequests LeaveRequest[]
-  warnings      EmployeeWarning[]
+  suspendedFrom     DateTime?
+  suspendedTo       DateTime?
+  attendances       Attendance[]
+  salaries          Salary[]
+  deletedAt         DateTime?
+  tasks             Task[]            @relation("TaskAssignee")
+  baseSalary        Float? // Monthly base salary set by HR
+  ctc               Float? // Cost to Company (annual)
+  pfRate            Float? // e.g. 12.0 (percentage)
+  pfLedger          PFLedger?
+  leaveRequests     LeaveRequest[]
+  warnings          EmployeeWarning[]
   // Bank & payment details for salary transfers
-  bankAccountNumber  String?    // e.g. 1234567890123
-  bankIFSC           String?    // e.g. SBIN0001234
-  bankName           String?    // e.g. State Bank of India
-  bankAccountName    String?    // Account holder name
-  upiId              String?    // e.g. 9876543210@ybl
-  paymentPreference  String?    // CASH | BANK_TRANSFER | UPI | CHEQUE
+  bankAccountNumber String? // e.g. 1234567890123
+  bankIFSC          String? // e.g. SBIN0001234
+  bankName          String? // e.g. State Bank of India
+  bankAccountName   String? // Account holder name
+  upiId             String? // e.g. 9876543210@ybl
+  paymentPreference String? // CASH | BANK_TRANSFER | UPI | CHEQUE
   // Role-specific
-  salesTarget        Float?     // Monthly sales target (SALES role)
-  overtimes          Overtime[]
-  salesIncentives    SalesIncentive[]
+  salesTarget       Float? // Monthly sales target (SALES role)
+  overtimes         Overtime[]
+  salesIncentives   SalesIncentive[]
 }
 
 enum EmployeeStatus {
@@ -86,112 +86,146 @@ enum EmployeeStatus {
 }
 
 model Customer {
-  id               String @id @default(uuid())
-  userId           String @unique
-  user             User   @relation(fields: [userId], references: [id])
-  companyName      String
-  gstNumber        String?
-  address          String?
-  isVerified       Boolean @default(false) // Admin must verify before ordering
-  isActive         Boolean @default(true) // Deprecated: use deletedAt
-  deletedAt        DateTime?
-  orders           Order[]
-  inquiries        Inquiry[]
-  reviews          Review[]
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id])
+  companyName     String
+  gstNumber       String?
+  address         String?
+  isVerified      Boolean   @default(false) // Admin must verify before ordering
+  isActive        Boolean   @default(true) // Deprecated: use deletedAt
+  deletedAt       DateTime?
+  orders          Order[]
+  inquiries       Inquiry[]
+  reviews         Review[]
   // Assigned account manager (sales person) for commission tracking
-  assignedSalesId  String?  // Employee.id of the SALES person managing this account
+  assignedSalesId String? // Employee.id of the SALES person managing this account
 
   @@index([isVerified, isActive])
 }
 
 model Supplier {
-  id          String @id @default(uuid())
-  name        String
-  phone       String?
-  email       String?
-  isActive    Boolean @default(true) // Deprecated: use deletedAt
-  deletedAt   DateTime?
+  id           String                 @id @default(uuid())
+  name         String
+  phone        String?
+  email        String?
+  isActive     Boolean                @default(true) // Deprecated: use deletedAt
+  deletedAt    DateTime?
   transactions InventoryTransaction[]
-  products    Product[]
+  products     Product[]
+  Lot          Lot[]
 }
 
 model Category {
-  id       String @id @default(uuid())
-  name     String @unique
+  id       String    @id @default(uuid())
+  name     String    @unique
   products Product[]
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  sku         String?  @unique
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id])
-  supplierId  String?
-  supplier    Supplier? @relation(fields: [supplierId], references: [id])
-  name        String   // e.g., GP Thinner
-  description String
-  unit        String   // Packaging type: Litre, Kg, Drum, Barrel
-  packageSize Float?   // e.g., 50, 25
-  baseUnit    String?  // e.g., "Kg", "Litre"
-  imageUrls   String[] // Array of product images
-  datasheetUrl String? // Link to PDF datasheet in Supabase Storage
-  casNumber   String?
-  unNumber    String?
-  brand       String?
-  manufacturer String?
-  itemForm    String?  // e.g., Liquid, Powder, Solid
-  purity      String?  // e.g., 99.9%
-  grade       String?  // e.g., AR, LR, Technical
-  mfgDate     DateTime? // Manufacturing Date
-  expiryDate  DateTime? // Expiry Date
-  safetyNotes String?
+  id                  String    @id @default(uuid())
+  sku                 String?   @unique
+  categoryId          String?
+  category            Category? @relation(fields: [categoryId], references: [id])
+  supplierId          String?
+  supplier            Supplier? @relation(fields: [supplierId], references: [id])
+  name                String // e.g., GP Thinner
+  description         String
+  unit                String // Packaging type: Litre, Kg, Drum, Barrel
+  packageSize         Float? // e.g., 50, 25
+  baseUnit            String? // e.g., "Kg", "Litre"
+  imageUrls           String[] // Array of product images
+  datasheetUrl        String? // Link to PDF datasheet in Supabase Storage
+  casNumber           String?
+  unNumber            String?
+  hazardClasses       String[] // e.g., "Class 3", "Class 8"
+  packingGroup        String? // "I", "II", "III"
+  sdsUrl              String? // Link to Safety Data Sheet PDF
+  brand               String?
+  manufacturer        String?
+  itemForm            String? // e.g., Liquid, Powder, Solid
+  purity              String? // e.g., 99.9%
+  grade               String? // e.g., AR, LR, Technical
+  mfgDate             DateTime? // Manufacturing Date (default for product, though Lot overrides)
+  expiryDate          DateTime? // Expiry Date
+  safetyNotes         String?
   storageInstructions String?
-  price       Float
-  costPrice   Float?    // Purchase/landing cost per unit — enables margin & COGS calculation
-  hsnCode     String?   // HSN code for GST (e.g. "28061010" for HCl)
-  gstRate     Float?    // GST percentage (5, 12, 18, 28) — most chemicals are 18%
-  isMadeInIndia Boolean @default(false)
-  
+  price               Float
+  costPrice           Float? // Purchase/landing cost per unit — enables margin & COGS calculation
+  hsnCode             String? // HSN code for GST (e.g. "28061010" for HCl)
+  gstRate             Float? // GST percentage (5, 12, 18, 28) — most chemicals are 18%
+  isMadeInIndia       Boolean   @default(false)
+  isActive            Boolean   @default(true) // Deprecated: use deletedAt
+  isAvailable         Boolean   @default(true) // Admin toggle for availability
+  deletedAt           DateTime?
+  createdBy           String? // Auditability
+  updatedBy           String? // Auditability
+
+  inventory  Inventory?
+  lots       Lot[]
+  orderItems OrderItem[]
+  reviews    Review[]
+  favorites  Favorite[]
+
   @@index([name])
   @@index([casNumber])
   @@index([deletedAt])
-  isActive    Boolean  @default(true) // Deprecated: use deletedAt
-  isAvailable Boolean  @default(true) // Admin toggle for availability
-  deletedAt   DateTime?
-  createdBy   String?  // Auditability
-  updatedBy   String?  // Auditability
-  
-  inventory   Inventory?
-  orderItems  OrderItem[]
-  reviews     Review[]
-  favorites   Favorite[]
-  
   @@index([categoryId, isActive])
 }
 
 model Inventory {
-  id           String @id @default(uuid())
-  productId    String @unique
-  product      Product @relation(fields: [productId], references: [id])
+  id           String                 @id @default(uuid())
+  productId    String                 @unique
+  product      Product                @relation(fields: [productId], references: [id])
   quantity     Int
   minThreshold Int
   transactions InventoryTransaction[]
 }
 
+model Lot {
+  id           String                 @id @default(uuid())
+  lotNumber    String                 @unique
+  productId    String
+  product      Product                @relation(fields: [productId], references: [id])
+  quantity     Int                    @default(0)
+  mfgDate      DateTime?
+  expiryDate   DateTime?
+  supplierId   String?
+  supplier     Supplier?              @relation(fields: [supplierId], references: [id])
+  location     String? // Warehouse bin/location
+  coaUrl       String? // Certificate of Analysis URL
+  status       LotStatus              @default(QUARANTINED) // ERP QC workflow
+  notes        String?
+  transactions InventoryTransaction[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([productId, status])
+}
+
+enum LotStatus {
+  QUARANTINED
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
 model InventoryTransaction {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  inventory   Inventory       @relation(fields: [inventoryId], references: [id])
+  lotId       String?
+  lot         Lot?            @relation(fields: [lotId], references: [id])
   type        TransactionType // IN, OUT, ADJUSTMENT
   quantity    Int
   supplierId  String?
-  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
   remarks     String?
   userId      String?
-  user        User?    @relation("InventoryTxUser", fields: [userId], references: [id])
-  createdBy   String?  // Auditability (Name string)
-  updatedBy   String?  // Auditability
-  createdAt   DateTime @default(now())
+  user        User?           @relation("InventoryTxUser", fields: [userId], references: [id])
+  createdBy   String? // Auditability (Name string)
+  updatedBy   String? // Auditability
+  createdAt   DateTime        @default(now())
 }
 
 enum TransactionType {
@@ -210,13 +244,13 @@ model ContactMessage {
 }
 
 model Inquiry {
-  id          String   @id @default(uuid())
-  customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id])
-  subject     String
-  message     String
-  status      InquiryStatus @default(PENDING)
-  createdAt   DateTime @default(now())
+  id         String        @id @default(uuid())
+  customerId String
+  customer   Customer      @relation(fields: [customerId], references: [id])
+  subject    String
+  message    String
+  status     InquiryStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
 }
 
 enum InquiryStatus {
@@ -226,11 +260,11 @@ enum InquiryStatus {
 }
 
 model Quotation {
-  id         String   @id @default(uuid())
-  orderId    String   @unique
-  order      Order    @relation(fields: [orderId], references: [id])
+  id         String      @id @default(uuid())
+  orderId    String      @unique
+  order      Order       @relation(fields: [orderId], references: [id])
   amount     Float
-  fileUrl    String?  // Generated PDF stored in Supabase Storage
+  fileUrl    String? // Generated PDF stored in Supabase Storage
   validUntil DateTime
   status     QuoteStatus @default(DRAFT)
 }
@@ -243,38 +277,38 @@ enum QuoteStatus {
 }
 
 model Order {
-  id                   String   @id @default(uuid())
-  customerId           String
-  customer             Customer @relation(fields: [customerId], references: [id])
-  status               OrderStatus @default(PENDING)
-  total                Float
-  baseCost             Float?
-  distanceKm           Float?
-  distanceCost         Float?
+  id                    String               @id @default(uuid())
+  customerId            String
+  customer              Customer             @relation(fields: [customerId], references: [id])
+  status                OrderStatus          @default(PENDING)
+  total                 Float
+  baseCost              Float?
+  distanceKm            Float?
+  distanceCost          Float?
   hazardousShippingCost Float?
-  taxAmount            Float?
+  taxAmount             Float?
   // GST breakup — populated at invoice generation
-  cgstTotal            Float?   // Central GST total (intra-state)
-  sgstTotal            Float?   // State GST total (intra-state)
-  igstTotal            Float?   // Integrated GST total (inter-state)
-  isInterState         Boolean  @default(false) // true = IGST, false = CGST+SGST
-  invoiceNumber        String?  @unique // e.g. CC/2026-27/0001
-  invoiceDate          DateTime?
-  shippingAddress      String?
-  orderNotes           String?
+  cgstTotal             Float? // Central GST total (intra-state)
+  sgstTotal             Float? // State GST total (intra-state)
+  igstTotal             Float? // Integrated GST total (inter-state)
+  isInterState          Boolean              @default(false) // true = IGST, false = CGST+SGST
+  invoiceNumber         String?              @unique // e.g. CC/2026-27/0001
+  invoiceDate           DateTime?
+  shippingAddress       String?
+  orderNotes            String?
   // Cancellation tracking
-  cancellationReason   String?
-  cancelledAt          DateTime?
-  cancelledBy          String?  // Role string: CUSTOMER | MANAGER | OWNER | SUPER_ADMIN
-  createdBy            String?  // Auditability
-  updatedBy            String?  // Auditability
-  items                OrderItem[]
-  quotation            Quotation?
-  payment              Payment?
-  refund               Refund?
-  history              OrderStatusHistory[]
-  createdAt            DateTime @default(now())
-  deletedAt            DateTime?
+  cancellationReason    String?
+  cancelledAt           DateTime?
+  cancelledBy           String? // Role string: CUSTOMER | MANAGER | OWNER | SUPER_ADMIN
+  createdBy             String? // Auditability
+  updatedBy             String? // Auditability
+  items                 OrderItem[]
+  quotation             Quotation?
+  payment               Payment?
+  refund                Refund?
+  history               OrderStatusHistory[]
+  createdAt             DateTime             @default(now())
+  deletedAt             DateTime?
 
   @@index([customerId, status])
 }
@@ -290,15 +324,15 @@ enum OrderStatus {
 }
 
 model OrderStatusHistory {
-  id        String      @id @default(uuid())
-  orderId   String
-  order     Order       @relation(fields: [orderId], references: [id])
-  oldStatus OrderStatus
-  newStatus OrderStatus
-  note      String?     // Optional note (tracking number, logistics partner, etc.)
-  changedById String?     // Track who changed the order state
+  id          String      @id @default(uuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id])
+  oldStatus   OrderStatus
+  newStatus   OrderStatus
+  note        String? // Optional note (tracking number, logistics partner, etc.)
+  changedById String? // Track who changed the order state
   user        User?       @relation("OrderStateChanger", fields: [changedById], references: [id])
-  changedAt DateTime    @default(now())
+  changedAt   DateTime    @default(now())
 }
 
 model OrderItem {
@@ -307,15 +341,16 @@ model OrderItem {
   order     Order   @relation(fields: [orderId], references: [id])
   productId String
   product   Product @relation(fields: [productId], references: [id])
+  lotId     String? // Traceability: which batch was shipped
   quantity  Int
-  price     Float     // Selling price per unit (snapshot at order time)
-  costPrice Float?    // Purchase cost per unit (snapshot for margin calc)
-  hsnCode   String?   // HSN code snapshot
-  gstRate   Float?    // GST % snapshot (e.g. 18)
-  cgst      Float?    // CGST amount for this line
-  sgst      Float?    // SGST amount for this line
-  igst      Float?    // IGST amount for this line
-  taxAmount Float?    // Total tax for this line (cgst+sgst or igst)
+  price     Float // Selling price per unit (snapshot at order time)
+  costPrice Float? // Purchase cost per unit (snapshot for margin calc)
+  hsnCode   String? // HSN code snapshot
+  gstRate   Float? // GST % snapshot (e.g. 18)
+  cgst      Float? // CGST amount for this line
+  sgst      Float? // SGST amount for this line
+  igst      Float? // IGST amount for this line
+  taxAmount Float? // Total tax for this line (cgst+sgst or igst)
 }
 
 // ── Refund Model ─────────────────────────────────────────────────────────────
@@ -323,30 +358,30 @@ model OrderItem {
 // Tracks the full refund lifecycle from initiation to settlement.
 model Refund {
   id               String       @id @default(uuid())
-  orderId          String       @unique  // One refund per order
+  orderId          String       @unique // One refund per order
   order            Order        @relation(fields: [orderId], references: [id])
-  amount           Float        // Net refund amount (after cancellation fee)
+  amount           Float // Net refund amount (after cancellation fee)
   cancellationFee  Float        @default(0) // Amount withheld as cancellation charge
   originalAmount   Float        @default(0) // Total paid amount before deduction
   status           RefundStatus @default(PENDING)
-  reason           String?      // Reason for cancellation/refund
-  paymentMethod    String?      // How refund will be processed: RAZORPAY | MANUAL_BANK | MANUAL_UPI | COD_NOT_PAID
-  razorpayRefundId String?      // Razorpay refund ID if initiated via API
-  initiatedBy      String       // userId of who triggered cancellation
-  processedBy      String?      // userId of admin who manually processed
-  processedAt      DateTime?    // When refund was completed
-  notes            String?      // Admin notes
+  reason           String? // Reason for cancellation/refund
+  paymentMethod    String? // How refund will be processed: RAZORPAY | MANUAL_BANK | MANUAL_UPI | COD_NOT_PAID
+  razorpayRefundId String? // Razorpay refund ID if initiated via API
+  initiatedBy      String // userId of who triggered cancellation
+  processedBy      String? // userId of admin who manually processed
+  processedAt      DateTime? // When refund was completed
+  notes            String? // Admin notes
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 }
 
 enum RefundStatus {
-  NOT_APPLICABLE  // Order was not paid (COD pending, etc.)
-  PENDING         // Refund needs to be processed
-  PROCESSING      // Razorpay refund initiated, awaiting confirmation
-  PROCESSED       // Refund completed successfully
-  FAILED          // Refund failed (needs manual retry)
-  MANUAL_PENDING  // No Razorpay ID — admin must manually transfer
+  NOT_APPLICABLE // Order was not paid (COD pending, etc.)
+  PENDING // Refund needs to be processed
+  PROCESSING // Razorpay refund initiated, awaiting confirmation
+  PROCESSED // Refund completed successfully
+  FAILED // Refund failed (needs manual retry)
+  MANUAL_PENDING // No Razorpay ID — admin must manually transfer
 }
 
 model Notification {
@@ -362,18 +397,18 @@ model AuditLog {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  action    String   // e.g., "UPDATED_INVENTORY"
-  entity    String   // e.g., "Inventory"
+  action    String // e.g., "UPDATED_INVENTORY"
+  entity    String // e.g., "Inventory"
   entityId  String
-  details   String?  // JSON string with extra context
+  details   String? // JSON string with extra context
   createdAt DateTime @default(now())
 }
 
 model Attendance {
-  id         String   @id @default(uuid())
+  id         String           @id @default(uuid())
   employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id])
-  date       DateTime @default(now())
+  employee   Employee         @relation(fields: [employeeId], references: [id])
+  date       DateTime         @default(now())
   status     AttendanceStatus @default(PRESENT)
 }
 
@@ -388,32 +423,32 @@ model Salary {
   id                  String       @id @default(uuid())
   employeeId          String
   employee            Employee     @relation(fields: [employeeId], references: [id])
-  month               String       // e.g., "YYYY-MM"
-  amount              Float        // Base amount processed
+  month               String // e.g., "YYYY-MM"
+  amount              Float // Base amount processed
   bonus               Float        @default(0)
-  overtime            Float        @default(0)  // Overtime payout for the month
-  incentive           Float        @default(0)  // Sales/Marketing commission
-  allowances          Float        @default(0)  // HRA, travel, etc.
+  overtime            Float        @default(0) // Overtime payout for the month
+  incentive           Float        @default(0) // Sales/Marketing commission
+  allowances          Float        @default(0) // HRA, travel, etc.
   deductions          Float        @default(0)
-  absentDeduction     Float        @default(0)  // Calculated from absent days
-  tds                 Float        @default(0)  // Tax Deducted at Source
+  absentDeduction     Float        @default(0) // Calculated from absent days
+  tds                 Float        @default(0) // Tax Deducted at Source
   pfContribution      Float        @default(0)
   netPay              Float        @default(0)
   absentDays          Int          @default(0)
   workingDays         Int          @default(26) // Total working days in month
-  holidayDays         Int          @default(0)  // Govt/festival holidays in month
+  holidayDays         Int          @default(0) // Govt/festival holidays in month
   status              SalaryStatus @default(PENDING)
   // Payment details — enhanced
-  paymentMethod       String?      // CASH | BANK_TRANSFER | UPI | CHEQUE
-  transactionRef      String?      // UTR / NEFT ref / Cheque no.
-  bankUsed            String?      // Which bank account was used for transfer
-  chequeDate          DateTime?    // Date on cheque if paid by cheque
-  chequeBank          String?      // Issuing bank of cheque
-  paidById            String?      // userId of admin who marked as paid
+  paymentMethod       String? // CASH | BANK_TRANSFER | UPI | CHEQUE
+  transactionRef      String? // UTR / NEFT ref / Cheque no.
+  bankUsed            String? // Which bank account was used for transfer
+  chequeDate          DateTime? // Date on cheque if paid by cheque
+  chequeBank          String? // Issuing bank of cheque
+  paidById            String? // userId of admin who marked as paid
   confirmedByEmployee Boolean      @default(false)
   confirmedAt         DateTime?
   paidAt              DateTime?
-  remarks             String?      // HR notes
+  remarks             String? // HR notes
 }
 
 enum SalaryStatus {
@@ -424,14 +459,14 @@ enum SalaryStatus {
 }
 
 model PFLedger {
-  id                String   @id @default(uuid())
-  employeeId        String   @unique
-  employee          Employee @relation(fields: [employeeId], references: [id])
-  balance           Float    @default(0)
-  lastUpdatedMonth  String?  // "YYYY-MM" of last contribution
-  settledAt         DateTime? // Set when employee leaves & PF is disbursed
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String    @id @default(uuid())
+  employeeId       String    @unique
+  employee         Employee  @relation(fields: [employeeId], references: [id])
+  balance          Float     @default(0)
+  lastUpdatedMonth String? // "YYYY-MM" of last contribution
+  settledAt        DateTime? // Set when employee leaves & PF is disbursed
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Favorite {
@@ -446,45 +481,45 @@ model Favorite {
 }
 
 model Payment {
-  id                 String   @id @default(uuid())
-  orderId            String   @unique
-  order              Order    @relation(fields: [orderId], references: [id])
-  paymentMethod      String   // e.g., "RAZORPAY", "PAY_ON_DELIVERY", "UPI"
-  razorpayOrderId    String?
-  razorpayPaymentId  String?
-  razorpaySignature  String?
-  utrNumber          String?  // UTR / UPI transaction reference for direct UPI payments
-  upiTransactionId   String?  // UPI Transaction ID from the payment app
-  upiVpa             String?  // Customer's UPI VPA that was used
-  amount             Float
-  status             PaymentStatus @default(PENDING)
-  verifiedAt         DateTime?
-  verifiedBy         String?  // Admin user ID who verified
-  rejectionReason    String?  // If payment was rejected
-  createdAt          DateTime @default(now())
+  id                String        @id @default(uuid())
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id])
+  paymentMethod     String // e.g., "RAZORPAY", "PAY_ON_DELIVERY", "UPI"
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  utrNumber         String? // UTR / UPI transaction reference for direct UPI payments
+  upiTransactionId  String? // UPI Transaction ID from the payment app
+  upiVpa            String? // Customer's UPI VPA that was used
+  amount            Float
+  status            PaymentStatus @default(PENDING)
+  verifiedAt        DateTime?
+  verifiedBy        String? // Admin user ID who verified
+  rejectionReason   String? // If payment was rejected
+  createdAt         DateTime      @default(now())
 }
 
 enum PaymentStatus {
   PENDING
-  PENDING_VERIFICATION  // UPI payment submitted, awaiting admin verification
+  PENDING_VERIFICATION // UPI payment submitted, awaiting admin verification
   SUCCESS
   FAILED
   REJECTED
 }
 
 model Task {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  dueDate     DateTime?
-  status      TaskStatus @default(PENDING)
+  id           String     @id @default(uuid())
+  title        String
+  description  String?
+  dueDate      DateTime?
+  status       TaskStatus @default(PENDING)
   assignedToId String
-  assignedTo   Employee @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  assignedTo   Employee   @relation("TaskAssignee", fields: [assignedToId], references: [id])
   assignedById String
-  assignedBy   User     @relation("TaskAssigner", fields: [assignedById], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  assignedBy   User       @relation("TaskAssigner", fields: [assignedById], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
 }
 
 enum TaskStatus {
@@ -494,30 +529,30 @@ enum TaskStatus {
 }
 
 model Review {
-  id        String   @id @default(uuid())
-  rating    Int
-  comment   String?
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  id         String   @id @default(uuid())
+  rating     Int
+  comment    String?
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
   customerId String
-  customer  Customer @relation(fields: [customerId], references: [id])
-  createdAt DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  createdAt  DateTime @default(now())
 }
 
 // Leave Request — Employee submits, HR approves/rejects
 model LeaveRequest {
-  id          String   @id @default(uuid())
-  employeeId  String
-  employee    Employee @relation(fields: [employeeId], references: [id])
-  date        DateTime
-  endDate     DateTime? // Added to support multi-day leaves
-  type        LeaveType @default(FULL_DAY)
-  reason      String
-  status      LeaveStatus @default(PENDING)
-  reviewedBy  String?  // userId of the HR/Manager who reviewed
-  reviewNote  String?  // HR's note on decision
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String      @id @default(uuid())
+  employeeId String
+  employee   Employee    @relation(fields: [employeeId], references: [id])
+  date       DateTime
+  endDate    DateTime? // Added to support multi-day leaves
+  type       LeaveType   @default(FULL_DAY)
+  reason     String
+  status     LeaveStatus @default(PENDING)
+  reviewedBy String? // userId of the HR/Manager who reviewed
+  reviewNote String? // HR's note on decision
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 }
 
 enum LeaveType {
@@ -533,17 +568,17 @@ enum LeaveStatus {
 
 // Support Tickets — Staff reports bugs or requests help
 model SupportTicket {
-  id          String   @id @default(uuid())
-  submittedBy String   // userId
-  type        TicketType @default(BUG)
+  id          String         @id @default(uuid())
+  submittedBy String // userId
+  type        TicketType     @default(BUG)
   priority    TicketPriority @default(MEDIUM)
   title       String
   description String
-  status      TicketStatus @default(OPEN)
+  status      TicketStatus   @default(OPEN)
   resolution  String?
   resolvedBy  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
 
 enum TicketType {
@@ -574,7 +609,7 @@ model EmployeeWarning {
   employee   Employee    @relation(fields: [employeeId], references: [id])
   type       WarningType @default(VERBAL)
   reason     String
-  issuedBy   String      // userId of HR/Manager
+  issuedBy   String // userId of HR/Manager
   createdAt  DateTime    @default(now())
 }
 
@@ -589,74 +624,74 @@ enum WarningType {
 model FinanceLedger {
   id          String          @id @default(uuid())
   type        LedgerEntryType
-  category    String          // e.g. "REVENUE","COGS","PAYROLL","SHIPPING","UTILITIES","MAINTENANCE","RENT","TAX","REFUND","OTHER"
+  category    String // e.g. "REVENUE","COGS","PAYROLL","SHIPPING","UTILITIES","MAINTENANCE","RENT","TAX","REFUND","OTHER"
   amount      Float
   description String
-  referenceId String?         // orderId / salaryId / expenseId / refundId — for traceability
+  referenceId String? // orderId / salaryId / expenseId / refundId — for traceability
   date        DateTime        @default(now())
-  createdBy   String?         // userId — null = system-generated
+  createdBy   String? // userId — null = system-generated
   isAutomatic Boolean         @default(false) // true = generated by system (orders, payroll, refunds)
   createdAt   DateTime        @default(now())
 }
 
 enum LedgerEntryType {
-  CREDIT  // income / revenue
-  DEBIT   // cost / expense
+  CREDIT // income / revenue
+  DEBIT // cost / expense
 }
 
 // Manual expense entry (maps to FinanceLedger DEBIT rows)
 model Expense {
-  id          String    @id @default(uuid())
-  category    String    // "UTILITIES","MAINTENANCE","RENT","MARKETING","TRAVEL","OTHER"
+  id          String   @id @default(uuid())
+  category    String // "UTILITIES","MAINTENANCE","RENT","MARKETING","TRAVEL","OTHER"
   amount      Float
   description String
   date        DateTime
-  receiptUrl  String?   // optional attachment
-  createdBy   String    // userId
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  receiptUrl  String? // optional attachment
+  createdBy   String // userId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ── Holiday Calendar ────────────────────────────────────────────────────────
 model HolidayCalendar {
   id          String      @id @default(uuid())
-  name        String      // e.g. "Diwali", "Republic Day"
+  name        String // e.g. "Diwali", "Republic Day"
   date        DateTime
-  year        Int         // e.g. 2025 — for quick filtering
+  year        Int // e.g. 2025 — for quick filtering
   type        HolidayType @default(FESTIVAL)
-  description String?     // Optional notes
+  description String? // Optional notes
   isReadOnly  Boolean     @default(false) // National holidays are read-only
   createdAt   DateTime    @default(now())
 }
 
 enum HolidayType {
-  NATIONAL   // Republic Day, Independence Day, Gandhi Jayanti
-  FESTIVAL   // Diwali, Holi, Eid, Christmas, etc.
-  COMPANY    // Custom company holiday
+  NATIONAL // Republic Day, Independence Day, Gandhi Jayanti
+  FESTIVAL // Diwali, Holi, Eid, Christmas, etc.
+  COMPANY // Custom company holiday
 }
 
 // ── Sales Incentive / Commission ────────────────────────────────────────────
 model SalesIncentive {
-  id              String           @id @default(uuid())
+  id              String          @id @default(uuid())
   employeeId      String
-  employee        Employee         @relation(fields: [employeeId], references: [id])
-  month           String           // YYYY-MM
-  targetAmount    Float            @default(0)  // Monthly sales target
-  achievedAmount  Float            @default(0)  // Actual sales value from orders
-  commissionRate  Float            @default(2.5) // Percentage e.g. 2.5%
-  incentiveAmount Float            @default(0)  // Calculated payout
-  notes           String?          // Manager notes
-  status          IncentiveStatus  @default(PENDING)
-  salaryId        String?          // Linked when added to salary
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  employee        Employee        @relation(fields: [employeeId], references: [id])
+  month           String // YYYY-MM
+  targetAmount    Float           @default(0) // Monthly sales target
+  achievedAmount  Float           @default(0) // Actual sales value from orders
+  commissionRate  Float           @default(2.5) // Percentage e.g. 2.5%
+  incentiveAmount Float           @default(0) // Calculated payout
+  notes           String? // Manager notes
+  status          IncentiveStatus @default(PENDING)
+  salaryId        String? // Linked when added to salary
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 enum IncentiveStatus {
-  PENDING   // Calculated, waiting for payroll
-  APPROVED  // Manager approved, will be in next payroll
-  PAID      // Added to salary and paid
-  REJECTED  // Not approved
+  PENDING // Calculated, waiting for payroll
+  APPROVED // Manager approved, will be in next payroll
+  PAID // Added to salary and paid
+  REJECTED // Not approved
 }
 
 // ── Overtime Tracking ───────────────────────────────────────────────────────
@@ -664,15 +699,15 @@ model Overtime {
   id           String         @id @default(uuid())
   employeeId   String
   employee     Employee       @relation(fields: [employeeId], references: [id])
-  date         DateTime       // Date overtime was worked
-  hours        Float          // Extra hours worked (e.g. 2.5)
-  hourlyRate   Float          // Auto-calculated: baseSalary / 26 / 8
+  date         DateTime // Date overtime was worked
+  hours        Float // Extra hours worked (e.g. 2.5)
+  hourlyRate   Float // Auto-calculated: baseSalary / 26 / 8
   multiplier   Float          @default(1.5) // 1.5x weekday, 2.0x Sunday/holiday
-  amount       Float          // hours * hourlyRate * multiplier
-  reason       String?        // What was worked on
-  approvedById String?        // userId of manager who approved
+  amount       Float // hours * hourlyRate * multiplier
+  reason       String? // What was worked on
+  approvedById String? // userId of manager who approved
   status       OvertimeStatus @default(PENDING)
-  salaryId     String?        // Linked when added to salary
+  salaryId     String? // Linked when added to salary
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 }
@@ -684,7 +719,6 @@ enum OvertimeStatus {
   CANCELLED
   PAID
 }
-
 
 model IdempotencyKey {
   key       String   @id

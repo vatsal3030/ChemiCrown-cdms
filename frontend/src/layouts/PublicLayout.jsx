@@ -176,8 +176,8 @@ export default function PublicLayout() {
                   
                   {accountMenuOpen && (
                     <div className="absolute right-0 top-full pt-2 w-64 z-50">
-                      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 py-2">
-                        <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+                      <div className="bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 py-2">
+                        <div className="px-3 py-2 border-b border-border mb-1">
                           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Quick Login</span>
                         </div>
                       <div className="max-h-64 overflow-y-auto">
@@ -204,7 +204,7 @@ export default function PublicLayout() {
                           </button>
                         ))}
                       </div>
-                      <div className="border-t border-slate-100 dark:border-slate-800 mt-1 p-2 pb-0">
+                      <div className="border-t border-border mt-1 p-2 pb-0">
                         <Link to="/login" className="w-full text-center block py-2 text-sm text-primary font-medium hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
                           Add another account
                         </Link>
@@ -279,7 +279,7 @@ export default function PublicLayout() {
                   <button 
                     key={account.id}
                     onClick={() => { setMobileMenuOpen(false); handleQuickLogin(account.id); }}
-                    className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
+                    className="w-full flex items-center justify-between p-3 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden shrink-0">

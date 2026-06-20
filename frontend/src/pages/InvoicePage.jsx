@@ -83,7 +83,7 @@ export default function InvoicePage() {
       </div>
 
       {/* ── Invoice Document ── */}
-      <div className="bg-white dark:bg-slate-950 border border-border rounded-2xl shadow-sm overflow-hidden" id="invoice-content">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden" id="invoice-content">
         
         {/* Header */}
         <div className="px-8 pt-8 pb-6 border-b border-border">

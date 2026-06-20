@@ -8,51 +8,100 @@ exports.getDashboardStats = async (req, res, next) => {
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - 7);
 
-    // ── 1. Total Revenue ────────────────────────────────────────────────────
-    // Sum order.total for all DELIVERED, non-deleted orders.
-    // This is the canonical revenue: every delivered order = payment received.
-    // Covers both COD (no payment record) and online (Razorpay/UPI) orders.
-    const deliveredRevenue = await prisma.order.aggregate({
-      where: { status: 'DELIVERED', deletedAt: null },
-      _sum: { total: true }
-    }).catch(() => ({ _sum: { total: 0 } }));
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
 
-    const totalRevenue = deliveredRevenue._sum.total || 0;
+    const [
+      deliveredRevenue,
+      activeOrdersCount,
+      pendingOrdersCount,
+      verifiedCustomers,
+      newCustomersThisWeek,
+      lowInventoryItems,
+      recentPayments,
+      topInventory,
+      todayAttendances,
+      totalEmployees,
+      recentOrders
+    ] = await Promise.all([
+      // 1. Total Revenue
+      prisma.order.aggregate({
+        where: { status: 'DELIVERED', deletedAt: null },
+        _sum: { total: true }
+      }).catch(() => ({ _sum: { total: 0 } })),
 
-    // ── 2. Active & Pending Orders ──────────────────────────────────────────
-    const [activeOrdersCount, pendingOrdersCount] = await Promise.all([
+      // 2. Active Orders Count
       prisma.order.count({
         where: {
           status: { in: ['PENDING', 'PROCESSING', 'DISPATCHED'] },
           deletedAt: null
         }
       }).catch(() => 0),
+
+      // 3. Pending Orders Count
       prisma.order.count({
         where: { status: 'PENDING', deletedAt: null }
-      }).catch(() => 0)
-    ]);
+      }).catch(() => 0),
 
-    // ── 3. Verified Customers ───────────────────────────────────────────────
-    const [verifiedCustomers, newCustomersThisWeek] = await Promise.all([
+      // 4. Verified Customers
       prisma.customer.count({
         where: { isVerified: true, deletedAt: null }
       }).catch(() => 0),
-      // Customer has no createdAt — filter through the related User
+
+      // 5. New Customers This Week
       prisma.customer.count({
         where: {
           isVerified: true,
           deletedAt: null,
           user: { createdAt: { gte: startOfWeek } }
         }
-      }).catch(() => 0)
+      }).catch(() => 0),
+
+      // 6. Low Inventory Items
+      prisma.inventory.findMany({
+        where: { product: { deletedAt: null } },
+        include: { product: { select: { id: true, name: true, sku: true } } }
+      }).catch(() => []),
+
+      // 7. Recent Payments
+      prisma.payment.findMany({
+        where: {
+          status: 'SUCCESS',
+          createdAt: { gte: sixMonthsAgo }
+        },
+        select: { amount: true, createdAt: true }
+      }).catch(() => []),
+
+      // 8. Top Products by Stock
+      prisma.inventory.findMany({
+        take: 4,
+        orderBy: { quantity: 'desc' },
+        include: { product: { select: { name: true } } }
+      }).catch(() => []),
+
+      // 9. Today's Attendance
+      prisma.attendance.groupBy({
+        by: ['status'],
+        where: { date: { gte: startOfToday, lt: startOfTomorrow } },
+        _count: { status: true }
+      }).catch(() => []),
+
+      // 10. Total Employees
+      prisma.employee.count({
+        where: { user: { deletedAt: null, role: { not: 'CUSTOMER' } } }
+      }).catch(() => 0),
+
+      // 11. Recent Orders
+      prisma.order.findMany({
+        take: 5,
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        include: { customer: { select: { companyName: true } } }
+      }).catch(() => [])
     ]);
 
-    // ── 4. Low Inventory Alerts ─────────────────────────────────────────────
-    // IMPORTANT: filter out soft-deleted products (deletedAt != null)
-    const lowInventoryItems = await prisma.inventory.findMany({
-      where: { product: { deletedAt: null } },
-      include: { product: { select: { id: true, name: true, sku: true } } }
-    }).catch(() => []);
+    const totalRevenue = deliveredRevenue._sum.total || 0;
 
     const lowStockProducts = lowInventoryItems
       .filter(i => i.product && (i.quantity === 0 || (i.minThreshold != null && i.quantity <= i.minThreshold)))
@@ -65,25 +114,11 @@ exports.getDashboardStats = async (req, res, next) => {
         isOutOfStock: i.quantity === 0
       }));
 
-    // ── 5. Monthly Revenue Trend (Last 6 months) ────────────────────────────
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1);
-
-    const recentPayments = await prisma.payment.findMany({
-      where: {
-        status: 'SUCCESS',
-        createdAt: { gte: sixMonthsAgo }
-      },
-      select: { amount: true, createdAt: true }
-    }).catch(() => []);
-
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const revenueMap = {};
 
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
-      // Set to 1st of the month to avoid edge case overflow
       const targetMonthDate = new Date(d.getFullYear(), d.getMonth() - i, 1);
       const m = monthNames[targetMonthDate.getMonth()];
       const y = targetMonthDate.getFullYear().toString().substring(2);
@@ -108,24 +143,9 @@ exports.getDashboardStats = async (req, res, next) => {
 
     const revenueData = Object.keys(revenueMap).map(key => ({ name: key, value: revenueMap[key] }));
 
-    // ── 6. Top Products by Stock ────────────────────────────────────────────
-    const topInventory = await prisma.inventory.findMany({
-      take: 4,
-      orderBy: { quantity: 'desc' },
-      include: { product: { select: { name: true } } }
-    }).catch(() => []);
-
     const inventoryData = topInventory
       .filter(inv => inv.product)
       .map(inv => ({ name: inv.product.name, stock: inv.quantity }));
-
-    // ── 7. Today's Attendance ───────────────────────────────────────────────
-    // AttendanceStatus enum: PRESENT | ABSENT | HALF_DAY | LEAVE
-    const todayAttendances = await prisma.attendance.groupBy({
-      by: ['status'],
-      where: { date: { gte: startOfToday, lt: startOfTomorrow } },
-      _count: { status: true }
-    }).catch(() => []);
 
     const attendanceMap = { PRESENT: 0, ABSENT: 0, HALF_DAY: 0, LEAVE: 0 };
     todayAttendances.forEach(a => {
@@ -133,10 +153,6 @@ exports.getDashboardStats = async (req, res, next) => {
         attendanceMap[a.status] = a._count.status;
       }
     });
-
-    const totalEmployees = await prisma.employee.count({
-      where: { user: { deletedAt: null, role: { not: 'CUSTOMER' } } }
-    }).catch((e) => { console.error(e); return 0; });
 
     const markedCount = attendanceMap.PRESENT + attendanceMap.ABSENT + attendanceMap.HALF_DAY + attendanceMap.LEAVE;
     const unmarkedCount = Math.max(0, totalEmployees - markedCount);
@@ -148,13 +164,7 @@ exports.getDashboardStats = async (req, res, next) => {
       { name: 'Unmarked', value: unmarkedCount },
     ];
 
-    // ── 8. Recent Orders ────────────────────────────────────────────────────
-    const recentOrders = await prisma.order.findMany({
-      take: 5,
-      where: { deletedAt: null },
-      orderBy: { createdAt: 'desc' },
-      include: { customer: { select: { companyName: true } } }
-    }).catch(() => []);
+
 
     // ── Response ────────────────────────────────────────────────────────────
     return res.status(200).json({

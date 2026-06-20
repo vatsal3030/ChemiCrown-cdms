@@ -7,7 +7,7 @@ import {
   Boxes, ClipboardList,
   FileText, Wallet, CalendarDays,
   UserCheck, Activity, HelpCircle, Bug, Shield, MessageSquare,
-  Sun, Moon
+  Sun, Moon, Archive, BarChart2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
@@ -23,6 +23,9 @@ const buildNavSections = (role, customerMode = false) => {
   const overview = { label: 'Overview', items: [] };
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {
     overview.items.push({ name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, exact: true });
+  }
+  if (['SUPER_ADMIN', 'OWNER', 'MANAGER'].includes(role)) {
+    overview.items.push({ name: 'Analytics Hub', path: '/dashboard/analytics', icon: BarChart2 });
   }
   if (['SUPER_ADMIN', 'OWNER'].includes(role)) {
     overview.items.push({ name: 'Finance', path: '/dashboard/finance', icon: TrendingUp });
@@ -62,6 +65,7 @@ const buildNavSections = (role, customerMode = false) => {
   }
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER'].includes(role)) {
     ops.items.push({ name: 'Inventory', path: '/dashboard/inventory', icon: Boxes });
+    ops.items.push({ name: 'Lot/Batch Tracking', path: '/dashboard/inventory/lots', icon: Archive });
     ops.items.push({ name: 'Stock History', path: '/dashboard/stock-history', icon: Activity });
   }
   if (ops.items.length) sections.push(ops);
@@ -127,13 +131,26 @@ const ICON_ANIMATIONS = {
   Bug: 'group-hover:scale-110 group-hover:-rotate-6',
   Shield: 'group-hover:scale-110',
   MessageSquare: 'group-hover:scale-105 group-hover:-translate-y-0.5',
+  Archive: 'group-hover:scale-110',
+  BarChart2: 'group-hover:scale-110 group-hover:-translate-y-0.5',
 };
 
 function NavItem({ item, collapsed, onClick }) {
   const location = useLocation();
-  const isActive = item.exact
-    ? location.pathname === item.path
-    : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+  let isActive = false;
+  if (item.exact) {
+    isActive = location.pathname === item.path;
+  } else {
+    if (item.name === 'Inventory') {
+      // Prevent /dashboard/inventory from matching /dashboard/inventory/lots
+      isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/product');
+    } else if (item.name === 'HR Management') {
+      // Prevent /dashboard/hr from matching /dashboard/hr/attendance
+      isActive = location.pathname === item.path || location.pathname.match(/^\/dashboard\/hr\/\d+$/);
+    } else {
+      isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+    }
+  }
   const Icon = item.icon;
   const iconAnim = ICON_ANIMATIONS[item.icon?.displayName || item.icon?.name] || 'group-hover:scale-110';
 
@@ -462,7 +479,7 @@ export default function DashboardLayout() {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
+          <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
             <Outlet />
           </div>
         </main>

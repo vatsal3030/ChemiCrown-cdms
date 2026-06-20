@@ -662,7 +662,7 @@ export default function HRManagement() {
       )}
 
       {/* Tabs — URL hash based for persistence on refresh */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-1 overflow-x-auto">
+      <div className="flex border-b border-border space-x-1 overflow-x-auto">
         {TABS.map(tab => (
           <button
             key={tab}
@@ -728,7 +728,7 @@ export default function HRManagement() {
             )}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-4">Headcount by Department</h3>
               <div className="h-80 w-full relative">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
@@ -745,7 +745,7 @@ export default function HRManagement() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
               <h3 className="font-semibold text-foreground mb-4">Employees by Role</h3>
               <div className="h-80 w-full relative">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
@@ -760,7 +760,7 @@ export default function HRManagement() {
               </div>
             </div>
             
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm lg:col-span-2">
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm lg:col-span-2">
               <h3 className="font-semibold text-foreground mb-4">Pending HR Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-200 dark:border-amber-800/50">
@@ -786,12 +786,12 @@ export default function HRManagement() {
 
       {/* ── Directory / Payroll / Warnings Tabs (shared table) ── */}
       {['directory','payroll','warnings'].includes(activeTab) && (
-        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           
 
 
           {/* Toolbar */}
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+          <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between">
             <div className="relative flex-1 sm:max-w-5xl">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input placeholder="Search by name or email..." value={searchTerm}
@@ -804,7 +804,7 @@ export default function HRManagement() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                   hasActiveFilters
                     ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                    : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                    : 'bg-card border-border text-foreground hover:border-primary'
                 }`}
               >
                 <SlidersHorizontal size={15} />
@@ -895,7 +895,7 @@ export default function HRManagement() {
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+              <thead className="bg-muted text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-border">
                 <tr>
                   <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors text-left" onClick={() => toggleSort('firstName')}>
                     <div className="flex flex-wrap items-center gap-1">Employee <ArrowUpDown size={12} /></div>
@@ -1086,9 +1086,9 @@ export default function HRManagement() {
 
       {/* ── Leave Requests Tab ── */}
       {activeTab === 'leaves' && (
-        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           {/* Toolbar */}
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+          <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between">
             <div className="relative flex-1 sm:max-w-5xl">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input placeholder="Search leaves by employee name or email..." value={leaveSearchTerm}
@@ -1100,7 +1100,7 @@ export default function HRManagement() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                   leaveStatusFilter !== 'all' || leaveDeptFilter !== 'all'
                     ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                    : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                    : 'bg-card border-border text-foreground hover:border-primary'
                 }`}
               >
                 <SlidersHorizontal size={15} />
@@ -1168,7 +1168,7 @@ export default function HRManagement() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+              <thead className="bg-muted text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-border">
                 <tr>
                   {['Employee','Date','Type','Reason','Submitted','Status',''].map(h => (
                     <th key={h} className={`px-6 py-3 ${h === 'Status' ? 'text-right' : ''}`}>{h}</th>
@@ -1317,7 +1317,7 @@ export default function HRManagement() {
           {/* Overtime Records Table */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
             {/* Toolbar */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+            <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between">
               <div className="relative flex-1 sm:max-w-5xl">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <Input placeholder="Search overtime by employee name..." value={otSearchTerm}
@@ -1329,7 +1329,7 @@ export default function HRManagement() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                     otStatusFilter !== 'all' || otEmpFilter !== 'all'
                       ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                      : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                      : 'bg-card border-border text-foreground hover:border-primary'
                   }`}
                 >
                   <SlidersHorizontal size={15} />
@@ -1544,7 +1544,7 @@ export default function HRManagement() {
 
           <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
             {/* Toolbar */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 justify-between">
+            <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between">
               <div className="relative flex-1 sm:max-w-5xl">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <Input placeholder="Search incentives by employee name..." value={incSearchTerm}
@@ -1556,7 +1556,7 @@ export default function HRManagement() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border transition-all ${
                     incStatusFilter !== 'all' || incEmpFilter !== 'all'
                       ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                      : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                      : 'bg-card border-border text-foreground hover:border-primary'
                   }`}
                 >
                   <SlidersHorizontal size={15} />

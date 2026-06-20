@@ -204,6 +204,8 @@ const supportRoutes      = require('./src/routes/support.routes');
 const holidayRoutes      = require('./src/routes/holiday.routes');
 const overtimeRoutes     = require('./src/routes/overtime.routes');
 const incentiveRoutes    = require('./src/routes/incentive.routes');
+const lotRoutes          = require('./src/routes/lot.routes');
+const reportsRoutes      = require('./src/routes/reports.routes');
 
 app.use('/api/auth',          authRoutes);
 app.use('/api/hr',            hrRoutes);
@@ -224,6 +226,8 @@ app.use('/api/support',       supportRoutes);
 app.use('/api/holidays',      holidayRoutes);
 app.use('/api/overtime',      overtimeRoutes);
 app.use('/api/incentives',    incentiveRoutes);
+app.use('/api/lots',          lotRoutes);
+app.use('/api/reports',       reportsRoutes);
 
 // ── Global error handlers ─────────────────────────────────────────────────────
 app.use(notFoundHandler);

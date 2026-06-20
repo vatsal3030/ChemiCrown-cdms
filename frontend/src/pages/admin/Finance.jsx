@@ -286,7 +286,7 @@ export default function Finance() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-1">
+      <div className="flex border-b border-border space-x-1">
         {TABS.map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`pb-3 px-3 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === t ? 'border-b-2 border-primary text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
@@ -320,7 +320,7 @@ export default function Finance() {
 
             {/* P&L Summary card */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h3 className="font-bold text-foreground mb-1">Revenue vs Payroll — Monthly Trend</h3>
                 <p className="text-xs text-muted-foreground mb-4">All-time data from first recorded order</p>
                 <ResponsiveContainer width="100%" height={240} minWidth={0} minHeight={0}>
@@ -337,7 +337,7 @@ export default function Finance() {
               </div>
 
               {/* Cost breakdown pie */}
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h3 className="font-bold text-foreground mb-1">Cost Breakdown</h3>
                 <p className="text-xs text-muted-foreground mb-4">COGS + Payroll + Expenses</p>
                 {pieData.length > 0 ? (
@@ -370,7 +370,7 @@ export default function Finance() {
 
             {/* Expense breakdown by category */}
             {Object.keys(d.expenseByCategory || {}).length > 0 && (
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h3 className="font-bold text-foreground mb-4">Expense Breakdown by Category</h3>
                 <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={0}>
                   <BarChart data={Object.entries(d.expenseByCategory).map(([k,v]) => ({ category: k, amount: v }))} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -386,13 +386,13 @@ export default function Finance() {
 
             {/* Recent expenses */}
             {(d.recentExpenses || []).length > 0 && (
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-border flex items-center justify-between">
                   <h3 className="font-semibold text-foreground">Recent Expenses</h3>
                   <button onClick={() => setTab('expenses')} className="text-xs text-primary hover:underline">View All</button>
                 </div>
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                  <thead className="bg-muted text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-border">
                     <tr>
                       {['Date','Category','Description','Amount'].map(h => (
                         <th key={h} className={`px-4 py-2.5 ${h==='Amount'?'text-right':''}`}>{h}</th>
@@ -424,7 +424,7 @@ export default function Finance() {
 
       {/* ── LEDGER TAB ── */}
       {activeTab === 'ledger' && (
-        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-2 flex-wrap">
               {/* Filters are now inside Advanced Filters globally */}
@@ -438,7 +438,7 @@ export default function Finance() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+              <thead className="bg-muted text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-border">
                 <tr>
                   {['Date','Type','Category','Description','Amount','Source'].map(h => (
                     <th key={h} className={`px-5 py-3 ${h==='Amount'?'text-right':''}`}>{h}</th>
@@ -482,7 +482,7 @@ export default function Finance() {
                         return sum;
                       }, 0);
                       return (
-                        <tr className="bg-slate-50 dark:bg-slate-900/60 font-bold border-t border-border">
+                        <tr className="bg-muted/60 font-bold border-t border-border">
                           <td colSpan={4} className="px-5 py-4 text-left text-sm text-foreground">Page Net Total</td>
                           <td className={`px-5 py-4 text-right text-sm ${pageTotal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                             {pageTotal >= 0 ? '+' : ''}{fmt(pageTotal)}
@@ -511,7 +511,7 @@ export default function Finance() {
 
       {/* ── EXPENSES TAB ── */}
       {activeTab === 'expenses' && (
-        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-2 flex-wrap">
               {/* Category filter moved to Advanced Filters */}
@@ -525,7 +525,7 @@ export default function Finance() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+              <thead className="bg-muted text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-border">
                 <tr>
                   {['Date','Category','Description','Amount','Actions'].map(h => (
                     <th key={h} className={`px-5 py-3 ${h==='Amount'||h==='Actions'?'text-right':''}`}>{h}</th>

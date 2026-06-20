@@ -204,8 +204,8 @@ export default function PayrollConfig() {
 
                 {/* Salary Breakdown Preview Column */}
                 <div className="lg:col-span-5">
-                  <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-2">
+                  <div className="bg-muted border border-border rounded-xl p-5 space-y-4">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b border-border pb-2">
                       Salary Breakdown Preview
                     </h3>
                     
@@ -220,7 +220,7 @@ export default function PayrollConfig() {
                         <span className="font-semibold">-₹{((parseFloat(baseSalary) || 0) * (parseFloat(pfRate) || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
                       
-                      <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-2.5 font-bold text-slate-800 dark:text-slate-100 text-base">
+                      <div className="flex justify-between items-center border-t border-border pt-2.5 font-bold text-slate-800 dark:text-slate-100 text-base">
                         <span>Est. Net Take-Home</span>
                         <span className="text-emerald-600 dark:text-emerald-400">
                           ₹{((parseFloat(baseSalary) || 0) - ((parseFloat(baseSalary) || 0) * (parseFloat(pfRate) || 0) / 100)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -228,7 +228,7 @@ export default function PayrollConfig() {
                       </div>
                     </div>
 
-                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="border-t border-border pt-4 space-y-2.5 text-xs text-slate-500 dark:text-slate-400">
                       <h4 className="font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">Annualized Projection</h4>
                       
                       <div className="flex justify-between">
@@ -241,7 +241,7 @@ export default function PayrollConfig() {
                         <span>₹{(((parseFloat(baseSalary) || 0) * (parseFloat(pfRate) || 0) / 100) * 12).toLocaleString('en-IN')}</span>
                       </div>
 
-                      <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300 border-t border-dashed border-slate-200 dark:border-slate-800 pt-2">
+                      <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300 border-t border-dashed border-border pt-2">
                         <span>Total Cost to Company (CTC)</span>
                         <span>₹{((parseFloat(baseSalary) || 0) * 12).toLocaleString('en-IN')}</span>
                       </div>

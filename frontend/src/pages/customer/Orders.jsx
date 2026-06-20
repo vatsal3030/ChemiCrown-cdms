@@ -348,7 +348,7 @@ export default function Orders({ isMyOrders = false }) {
                     </div>
                     <div className="mt-1 text-xs text-amber-700 dark:text-amber-400">
                       <span className="font-semibold">UTR:</span>
-                      <span className="font-mono ml-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-amber-200">
+                      <span className="font-mono ml-1 bg-card px-2 py-0.5 rounded border border-amber-200">
                         {payment?.utrNumber || '—'}
                       </span>
                       {payment?.upiVpa && <span className="ml-2">UPI: {payment.upiVpa}</span>}
@@ -431,7 +431,7 @@ export default function Orders({ isMyOrders = false }) {
       )}
 
       {/* Search + Filter bar */}
-      <div className="bg-white dark:bg-slate-950 border border-border rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 justify-between items-center">
           <div className="relative flex-1 sm:max-w-5xl w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -450,7 +450,7 @@ export default function Orders({ isMyOrders = false }) {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border transition-all ${
                 hasActiveFilters
                   ? 'bg-primary text-white border-primary shadow-primary/20 shadow-md'
-                  : 'bg-white dark:bg-slate-900 border-border text-foreground hover:border-primary'
+                  : 'bg-card border-border text-foreground hover:border-primary'
               }`}
             >
               <SlidersHorizontal size={15} />
