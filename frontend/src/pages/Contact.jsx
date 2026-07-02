@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
-import { Mail, Phone, MapPin, Send, CheckCircle, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, CheckCircle, Loader2, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Reveal from '@/components/scroll/Reveal';
 
-// Simple in-memory rate limiter (resets on page refresh — good enough for frontend guard)
-const RATE_LIMIT_MS = 60_000; // 1 message per minute
+/* ── rate limiter (resets on refresh — good enough for frontend guard) ── */
+const RATE_LIMIT_MS = 60_000;
 let lastSubmitTime = 0;
 
 const SUBJECTS = [
@@ -18,15 +18,56 @@ const SUBJECTS = [
 
 const BACKEND = import.meta.env.VITE_API_URL;
 
+/* ── animation variants ── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.12, duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
+
+/* ── Contact info data ── */
+const CONTACT_INFO = [
+  {
+    icon: 'location_on',
+    color: '#ff8f78',
+    label: 'Headquarters',
+    lines: [
+      'Plot No - 26, Shed No - 4,',
+      'Madhav Industrial Park,',
+      'Nr. Nari Chokwdi, Vartej,',
+      'Bhavnagar – 364004',
+    ],
+  },
+  {
+    icon: 'call',
+    color: '#729aff',
+    label: 'Phone & Contact',
+    lines: ['Narendrasinh Solanki', '+91 70431 80599', '+91 85309 03009'],
+  },
+  {
+    icon: 'mail',
+    color: '#6deeb4',
+    label: 'Email',
+    lines: ['chemicrown402@gmail.com'],
+  },
+  {
+    icon: 'schedule',
+    color: '#adc2ff',
+    label: 'Business Hours',
+    lines: ['Mon – Sat: 9:00 AM – 7:00 PM', 'Sun: Closed'],
+  },
+];
+
+/* ═══════════════════════════════════════
+   CONTACT — Stitch-faithful design
+   Preserves honeypot, rate limiting, validation
+   ═══════════════════════════════════════ */
 export default function Contact() {
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: SUBJECTS[0],
-    message: '',
-    // honeypot — bots fill this, humans don't
-    website: '',
+    name: '', email: '', phone: '', subject: SUBJECTS[0], message: '', website: '',
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -39,40 +80,23 @@ export default function Contact() {
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim() || form.name.trim().length < 2)
-      e.name = 'Full name is required (min 2 characters)';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email))
-      e.email = 'Valid email address is required';
-    if (form.phone && !/^[+\d\s\-()]{7,15}$/.test(form.phone))
-      e.phone = 'Invalid phone number';
-    if (!form.message.trim() || form.message.trim().length < 15)
-      e.message = 'Message must be at least 15 characters';
+    if (!form.name.trim() || form.name.trim().length < 2) e.name = 'Full name required (min 2 chars)';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) e.email = 'Valid email required';
+    if (form.phone && !/^[+\d\s\-()]{7,15}$/.test(form.phone)) e.phone = 'Invalid phone number';
+    if (!form.message.trim() || form.message.trim().length < 15) e.message = 'Min 15 characters';
     return e;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Honeypot check — bots fill the hidden field
-    if (form.website) {
-      // Silently succeed so bots think it worked
-      setSent(true);
-      return;
-    }
-
-    // Frontend rate limiting
+    if (form.website) { setSent(true); return; } // honeypot
     const now = Date.now();
     if (now - lastSubmitTime < RATE_LIMIT_MS) {
-      const remaining = Math.ceil((RATE_LIMIT_MS - (now - lastSubmitTime)) / 1000);
-      toast.error(`Please wait ${remaining}s before sending another message.`);
+      toast.error(`Please wait ${Math.ceil((RATE_LIMIT_MS - (now - lastSubmitTime)) / 1000)}s`);
       return;
     }
-
     const errs = validate();
-    if (Object.keys(errs).length) {
-      setErrors(errs);
-      return;
-    }
+    if (Object.keys(errs).length) { setErrors(errs); return; }
 
     setSubmitting(true);
     try {
@@ -80,259 +104,253 @@ export default function Contact() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name:    form.name.trim(),
-          email:   form.email.trim().toLowerCase(),
-          phone:   form.phone.trim() || undefined,
-          subject: form.subject,
+          name: form.name.trim(), email: form.email.trim().toLowerCase(),
+          phone: form.phone.trim() || undefined, subject: form.subject,
           message: form.message.trim(),
         }),
       });
-
-      if (res.ok) {
+      if (res.ok || res.status === 404) {
         lastSubmitTime = Date.now();
         setSent(true);
-        toast.success('Message sent! We\'ll reply within 24 hours.');
+        toast.success("Message sent! We'll reply within 24 hours.");
       } else {
         const json = await res.json().catch(() => ({}));
-        // If backend endpoint doesn't exist yet, still treat as success for now
-        if (res.status === 404) {
-          lastSubmitTime = Date.now();
-          setSent(true);
-          toast.success('Message sent! We\'ll reply within 24 hours.');
-        } else {
-          toast.error(json.error || 'Failed to send message. Please try again.');
-        }
+        toast.error(json.error || 'Failed to send. Please try again.');
       }
     } catch {
-      // Network issue — still record and show success (better UX; backend can be retried)
       lastSubmitTime = Date.now();
       setSent(true);
-      toast.success('Message received! We\'ll be in touch soon.');
+      toast.success("Message received! We'll be in touch soon.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  /* ── input styling — Stitch tokens ── */
+  const inputCls = (err) =>
+    `w-full h-12 px-4 rounded-lg border bg-[#11192a] text-sm text-[#e2e8fc] placeholder:text-[#6f7587] focus:outline-none focus:ring-2 focus:ring-[#ff8f78]/40 transition-all duration-200 ${
+      err ? 'border-[#ff6e84]/60' : 'border-[#414858]/40 focus:border-[#ff8f78]/60'
+    }`;
+
   return (
-    <div className="flex flex-col flex-1 pb-24">
-      {/* Hero */}
-      <div className="relative py-20 md:py-28 overflow-hidden bg-ink">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink-2 to-[#0d1a3a]" />
-        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-accent-amber/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-brand/5 rounded-full blur-[100px]" />
+    <div className="bg-[#070e1c] text-[#e2e8fc] overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
+
+      {/* ═══════ HERO ═══════ */}
+      <section className="relative py-24 md:py-32 overflow-hidden">
+        {/* Ambient glows */}
+        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-[#ff8f78]/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 -right-1/4 w-1/3 h-1/3 bg-[#729aff]/8 rounded-full blur-[100px] pointer-events-none" />
+        {/* Dot grid */}
+        <div className="absolute inset-0 opacity-30"
+          style={{ backgroundImage: 'radial-gradient(rgba(164,171,190,0.15) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+        />
 
         <div className="container mx-auto px-6 text-center relative z-10 max-w-4xl">
-          <Reveal delay={0.1}>
-            <h1 className="text-headline text-3xl md:text-5xl lg:text-6xl text-white mb-5">
-              Contact Support
-            </h1>
-          </Reveal>
-          <Reveal delay={0.25}>
-            <p className="text-base md:text-lg text-slate-300/90 max-w-2xl mx-auto leading-relaxed">
+          <motion.div initial="hidden" animate="visible" variants={stagger}>
+            <motion.div variants={fadeUp} custom={0}>
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md bg-[#1c263a]/40 border border-[#ff8f78]/30 mb-8"
+                style={{ fontFamily: 'Space Grotesk' }}>
+                <span className="material-symbols-outlined text-[#ff8f78] text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>support_agent</span>
+                <span className="text-sm font-semibold text-[#ff775d] uppercase tracking-wide">Get in Touch</span>
+              </span>
+            </motion.div>
+            <motion.h1 variants={fadeUp} custom={1}
+              className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter leading-tight mb-6"
+              style={{ fontFamily: 'Space Grotesk' }}>
+              <span className="text-[#e2e8fc]">Let's Build </span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#ff8f78] to-[#ff5c3e]">Together</span>
+            </motion.h1>
+            <motion.p variants={fadeUp} custom={2}
+              className="text-base sm:text-lg md:text-xl text-[#a4abbe] leading-relaxed max-w-2xl mx-auto">
               Have a question about our chemicals, bulk pricing, or your recent order? Our team is here to help.
-            </p>
-          </Reveal>
+            </motion.p>
+          </motion.div>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-4 mt-12 max-w-6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      {/* ═══════ MAIN CONTENT — Info + Form ═══════ */}
+      <section className="pb-24 md:pb-32">
+        <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
 
-          {/* ── Contact Info Sidebar ── */}
-          <Reveal direction="left" className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-foreground mb-2">Get in Touch</h2>
-              <p className="text-sm text-muted-foreground">
-                We respond to all inquiries within 24 business hours. For urgent hazardous-shipment matters, call us directly.
-              </p>
-            </div>
-
-            {[
-              {
-                icon: MapPin,
-                color: 'bg-primary/10 text-primary',
-                label: 'Headquarters',
-                lines: ['Plot No - 26, Shed No - 4,', 'Madhav Industrial Park,', 'Nr. Nari Chokwdi, Vartej,', 'Bhavnagar – 364004'],
-              },
-              {
-                icon: Phone,
-                color: 'bg-secondary/10 text-secondary',
-                label: 'Phone & Contact',
-                lines: ['Narendrasinh Solanki', '+91 70431 80599', '+91 85309 03009'],
-              },
-              {
-                icon: Mail,
-                color: 'bg-emerald-100 text-emerald-600',
-                label: 'Email',
-                lines: ['chemicrown402@gmail.com'],
-              },
-            ].map(({ icon: Icon, color, label, lines }) => (
-              <div key={label} className="flex items-start gap-3">
-                <div className={`p-2.5 rounded-lg shrink-0 ${color}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-foreground">{label}</h3>
-                  {lines.map((l, i) => (
-                    <p key={i} className="text-sm text-muted-foreground mt-0.5">{l}</p>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {/* Map */}
-            <div className="rounded-2xl overflow-hidden border border-border shadow-sm">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3705.518868661706!2d72.0913936154035!3d21.75892538560822!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395f50a80e729a8f%3A0xc3af7a86f0606ec0!2sVartej%2C%20Bhavnagar%2C%20Gujarat!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
-                width="100%" height="220"
-                style={{ border: 0 }} allowFullScreen="" loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="ChemiCrown Location"
-              />
-            </div>
-          </Reveal>
-
-          {/* ── Contact Form ── */}
-          <Reveal direction="right" delay={0.15} className="lg:col-span-2">
-            <div className="bg-card border border-border p-6 sm:p-8 rounded-2xl shadow-sm">
-              {sent ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-emerald-600" />
+            {/* ── Contact Info Cards ── */}
+            <motion.div className="lg:col-span-4 space-y-6"
+              initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
+              variants={stagger}
+            >
+              {CONTACT_INFO.map((item, i) => (
+                <motion.div key={item.label} variants={fadeUp} custom={i}
+                  className="backdrop-blur-md bg-[#1c263a]/40 border border-white/5 rounded-xl p-6 flex gap-4 items-start hover:bg-[#1c263a]/60 hover:border-[#ff775d]/20 hover:-translate-y-0.5 transition-all duration-300 group"
+                >
+                  <div className="p-3 rounded-lg shrink-0" style={{ backgroundColor: `${item.color}15` }}>
+                    <span className="material-symbols-outlined text-2xl" style={{ color: item.color, fontVariationSettings: "'FILL' 1" }}>
+                      {item.icon}
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-foreground mb-2">Message Sent!</h3>
-                  <p className="text-muted-foreground text-sm mb-6">
-                    Thank you for reaching out. We'll get back to you within 24 business hours.
-                  </p>
-                  <button
-                    onClick={() => { setSent(false); setForm({ name:'',email:'',phone:'',subject:SUBJECTS[0],message:'',website:'' }); setErrors({}); }}
-                    className="text-sm text-primary font-semibold hover:underline"
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm text-[#e2e8fc] mb-1" style={{ fontFamily: 'Space Grotesk' }}>{item.label}</h3>
+                    {item.lines.map((l, j) => (
+                      <p key={j} className="text-sm text-[#a4abbe] leading-relaxed">{l}</p>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+
+              {/* Map */}
+              <motion.div variants={fadeUp} custom={4}
+                className="rounded-xl overflow-hidden border border-white/5 shadow-lg"
+              >
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3705.518868661706!2d72.0913936154035!3d21.75892538560822!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395f50a80e729a8f%3A0xc3af7a86f0606ec0!2sVartej%2C%20Bhavnagar%2C%20Gujarat!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                  width="100%" height="200"
+                  style={{ border: 0, filter: 'invert(0.9) hue-rotate(180deg) saturate(0.3) brightness(0.6)' }}
+                  allowFullScreen="" loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="ChemiCrown Location"
+                />
+              </motion.div>
+            </motion.div>
+
+            {/* ── Contact Form ── */}
+            <motion.div className="lg:col-span-8"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="backdrop-blur-md bg-[#1c263a]/40 border border-white/5 rounded-xl p-6 sm:p-8 md:p-10">
+                {sent ? (
+                  <motion.div className="text-center py-16"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
                   >
-                    Send another message
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <h3 className="text-xl font-bold text-foreground mb-6">Send us a Message</h3>
-
-                  <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                    {/* Honeypot field — hidden from real users */}
-                    <input
-                      type="text"
-                      name="website"
-                      value={form.website}
-                      onChange={e => set('website', e.target.value)}
-                      tabIndex={-1}
-                      autoComplete="off"
-                      aria-hidden="true"
-                      className="absolute opacity-0 pointer-events-none w-0 h-0"
-                    />
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Full Name */}
-                      <div>
-                        <label className="text-sm font-medium text-foreground block mb-1">
-                          Full Name <span className="text-destructive">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={form.name}
-                          placeholder="Your Full Name"
-                          onChange={e => set('name', e.target.value)}
-                          maxLength={80}
-                          className={`w-full h-11 px-3 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow ${errors.name ? 'border-destructive' : 'border-input'}`}
-                        />
-                        {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
+                    <div className="w-20 h-20 bg-[#6deeb4]/15 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle className="w-10 h-10 text-[#6deeb4]" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-[#e2e8fc] mb-3" style={{ fontFamily: 'Space Grotesk' }}>Message Sent!</h3>
+                    <p className="text-[#a4abbe] mb-8">Thank you for reaching out. We'll get back to you within 24 business hours.</p>
+                    <button
+                      onClick={() => { setSent(false); setForm({ name:'',email:'',phone:'',subject:SUBJECTS[0],message:'',website:'' }); setErrors({}); }}
+                      className="text-sm text-[#729aff] font-semibold hover:text-[#adc2ff] transition-colors"
+                    >
+                      Send another message →
+                    </button>
+                  </motion.div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="p-3 bg-[#11192a] rounded-lg">
+                        <span className="material-symbols-outlined text-[#ff8f78] text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>edit_note</span>
                       </div>
-
-                      {/* Email */}
                       <div>
-                        <label className="text-sm font-medium text-foreground block mb-1">
-                          Email Address <span className="text-destructive">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          value={form.email}
-                          onChange={e => set('email', e.target.value)}
-                          maxLength={120}
-                          className={`w-full h-11 px-3 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow ${errors.email ? 'border-destructive' : 'border-input'}`}
-                          placeholder="you@company.com"
-                        />
-                        {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+                        <h3 className="text-xl font-bold text-[#e2e8fc]" style={{ fontFamily: 'Space Grotesk' }}>Send us a Message</h3>
+                        <p className="text-sm text-[#a4abbe]">All fields marked with * are required</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Phone (optional) */}
-                      <div>
-                        <label className="text-sm font-medium text-foreground block mb-1">
-                          Phone <span className="text-muted-foreground font-normal">(optional)</span>
-                        </label>
-                        <input
-                          type="tel"
-                          value={form.phone}
-                          onChange={e => set('phone', e.target.value)}
-                          maxLength={15}
-                          className={`w-full h-11 px-3 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow ${errors.phone ? 'border-destructive' : 'border-input'}`}
-                          placeholder="+91 98765 43210"
-                        />
-                        {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
-                      </div>
-
-                      {/* Subject */}
-                      <div>
-                        <label className="text-sm font-medium text-foreground block mb-1">Subject</label>
-                        <select
-                          value={form.subject}
-                          onChange={e => set('subject', e.target.value)}
-                          className="w-full h-11 px-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-                        >
-                          {SUBJECTS.map(s => <option key={s}>{s}</option>)}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Message */}
-                    <div>
-                      <label className="text-sm font-medium text-foreground block mb-1">
-                        Message <span className="text-destructive">*</span>
-                        <span className="text-muted-foreground font-normal ml-2">({form.message.length}/1000)</span>
-                      </label>
-                      <textarea
-                        value={form.message}
-                        onChange={e => set('message', e.target.value)}
-                        maxLength={1000}
-                        rows={8}
-                        className={`w-full p-3 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow resize-y min-h-[200px] ${errors.message ? 'border-destructive' : 'border-input'}`}
-                        placeholder="How can we help you today? Please include product names, quantities, or order IDs if relevant."
+                    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                      {/* Honeypot */}
+                      <input type="text" name="website" value={form.website}
+                        onChange={e => set('website', e.target.value)}
+                        tabIndex={-1} autoComplete="off" aria-hidden="true"
+                        className="absolute opacity-0 pointer-events-none w-0 h-0"
                       />
-                      {errors.message && <p className="text-xs text-destructive mt-1">{errors.message}</p>}
-                    </div>
 
-                    <div className="flex items-center justify-between pt-1 flex-wrap gap-3">
-                      <p className="text-xs text-muted-foreground">
-                        🔒 Your details are kept private and never shared.
-                      </p>
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="inline-flex flex-wrap items-center gap-2 px-6 py-2.5 text-sm font-semibold text-primary-foreground bg-primary rounded-xl hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {submitting ? (
-                          <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
-                        ) : (
-                          <><Send className="w-4 h-4" /> Send Message</>
-                        )}
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
-            </div>
-          </Reveal>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {/* Name */}
+                        <div>
+                          <label className="text-sm font-medium text-[#a4abbe] block mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                            Full Name <span className="text-[#ff8f78]">*</span>
+                          </label>
+                          <input type="text" value={form.name} placeholder="Your Full Name"
+                            onChange={e => set('name', e.target.value)} maxLength={80}
+                            className={inputCls(errors.name)}
+                          />
+                          {errors.name && <p className="text-xs text-[#ff6e84] mt-1.5">{errors.name}</p>}
+                        </div>
+                        {/* Email */}
+                        <div>
+                          <label className="text-sm font-medium text-[#a4abbe] block mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                            Email <span className="text-[#ff8f78]">*</span>
+                          </label>
+                          <input type="email" value={form.email} placeholder="you@company.com"
+                            onChange={e => set('email', e.target.value)} maxLength={120}
+                            className={inputCls(errors.email)}
+                          />
+                          {errors.email && <p className="text-xs text-[#ff6e84] mt-1.5">{errors.email}</p>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {/* Phone */}
+                        <div>
+                          <label className="text-sm font-medium text-[#a4abbe] block mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                            Phone <span className="text-[#6f7587] font-normal">(optional)</span>
+                          </label>
+                          <input type="tel" value={form.phone} placeholder="+91 98765 43210"
+                            onChange={e => set('phone', e.target.value)} maxLength={15}
+                            className={inputCls(errors.phone)}
+                          />
+                          {errors.phone && <p className="text-xs text-[#ff6e84] mt-1.5">{errors.phone}</p>}
+                        </div>
+                        {/* Subject */}
+                        <div>
+                          <label className="text-sm font-medium text-[#a4abbe] block mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                            Subject
+                          </label>
+                          <select value={form.subject} onChange={e => set('subject', e.target.value)}
+                            className="w-full h-12 px-4 rounded-lg border border-[#414858]/40 bg-[#11192a] text-sm text-[#e2e8fc] focus:outline-none focus:ring-2 focus:ring-[#ff8f78]/40 focus:border-[#ff8f78]/60 transition-all duration-200 appearance-none"
+                            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a4abbe' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                          >
+                            {SUBJECTS.map(s => <option key={s} className="bg-[#11192a] text-[#e2e8fc]">{s}</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Message */}
+                      <div>
+                        <label className="text-sm font-medium text-[#a4abbe] block mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                          Message <span className="text-[#ff8f78]">*</span>
+                          <span className="text-[#6f7587] font-normal ml-2">({form.message.length}/1000)</span>
+                        </label>
+                        <textarea value={form.message} onChange={e => set('message', e.target.value)}
+                          maxLength={1000} rows={6}
+                          className={`w-full p-4 rounded-lg border bg-[#11192a] text-sm text-[#e2e8fc] placeholder:text-[#6f7587] focus:outline-none focus:ring-2 focus:ring-[#ff8f78]/40 transition-all duration-200 resize-y min-h-[160px] ${
+                            errors.message ? 'border-[#ff6e84]/60' : 'border-[#414858]/40 focus:border-[#ff8f78]/60'
+                          }`}
+                          placeholder="How can we help you today? Please include product names, quantities, or order IDs if relevant."
+                        />
+                        {errors.message && <p className="text-xs text-[#ff6e84] mt-1.5">{errors.message}</p>}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 flex-wrap gap-4">
+                        <p className="text-xs text-[#6f7587] flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+                          Your details are kept private and never shared.
+                        </p>
+                        <button type="submit" disabled={submitting}
+                          className="inline-flex items-center gap-2.5 px-8 py-3.5 text-sm font-bold bg-[#ff8f78] text-[#610a00] rounded-lg hover:bg-[#ff775d] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_0_20px_rgba(255,143,120,0.3)] hover:shadow-[0_0_30px_rgba(255,143,120,0.5)] group"
+                          style={{ fontFamily: 'Space Grotesk' }}
+                        >
+                          {submitting ? (
+                            <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
+                          ) : (
+                            <>
+                              Send Message
+                              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

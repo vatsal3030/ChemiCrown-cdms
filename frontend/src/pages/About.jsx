@@ -1,376 +1,288 @@
-import { useState, useRef, useEffect } from 'react';
-import { Target, Lightbulb, Users, Award, Globe } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useGSAP } from '@gsap/react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Reveal from '@/components/scroll/Reveal';
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import NumberTicker from '@/components/ui/NumberTicker';
 
-gsap.registerPlugin(ScrollTrigger);
+/* ══════════════════════════════════════════
+   WebGL SHADER — Stitch About aurora
+   Darker variant with different colour mix
+   ══════════════════════════════════════════ */
+function ShaderCanvas({ className = '' }) {
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const mouseRef = useRef({ x: 0.5, y: 0.5 });
+  const [skip] = useState(() =>
+    (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ||
+    (typeof window !== 'undefined' && window.innerWidth < 768)
+  );
 
-/* ── Timeline milestones ── */
-const MILESTONES = [
-  {
-    year: '1995', title: 'Foundation',
-    desc: 'ChemiCrown established in Bhavnagar, Gujarat — focusing on high-grade GP Thinner for local automotive industries.',
-    color: '#FF5A3C',
-  },
-  {
-    year: '2010', title: 'National Expansion',
-    desc: 'Portfolio expanded to 50+ chemical variants with distribution hubs across 5 major Indian states.',
-    color: '#2F6FED',
-  },
-  {
-    year: '2026', title: 'Digital Transformation',
-    desc: 'Launch of the ChemiCrown CDMS, revolutionizing how customers order and track chemical inventory.',
-    color: '#22B27D',
-  },
-];
+  useEffect(() => {
+    if (skip) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return;
 
-const STATS = [
-  { value: '30', suffix: '+', label: 'Years Experience' },
-  { value: '50', suffix: '+', label: 'Chemical Variants' },
-  { value: '5', suffix: '', label: 'State Coverage' },
-  { value: '500', suffix: '+', label: 'Active Clients' },
-];
+    const syncSize = () => {
+      const w = canvas.clientWidth || 1280;
+      const h = canvas.clientHeight || 720;
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    };
+    const ro = new ResizeObserver(syncSize);
+    ro.observe(canvas);
+    syncSize();
 
-/* ── CountUp ── */
-function CountUp({ target, suffix = '' }) {
-  const ref = useRef(null);
-  useGSAP(() => {
-    if (!ref.current) return;
-    const num = parseFloat(target);
-    if (isNaN(num)) return;
-    const obj = { v: 0 };
-    gsap.to(obj, {
-      v: num, duration: 2.5, ease: 'power2.out',
-      scrollTrigger: { trigger: ref.current, start: 'top 85%', once: true },
-      onUpdate: () => { if (ref.current) ref.current.textContent = Math.round(obj.v) + suffix; },
-    });
-  }, { scope: ref });
-  return <span ref={ref} className="tabular-nums">0{suffix}</span>;
+    const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() { v_texCoord = a_position * 0.5 + 0.5; gl_Position = vec4(a_position, 0.0, 1.0); }`;
+    const fs = `precision highp float;
+uniform float u_time; uniform vec2 u_resolution; varying vec2 v_texCoord;
+void main() {
+  vec2 uv = v_texCoord; float t = u_time * 0.2;
+  vec3 base = vec3(0.02, 0.03, 0.05);
+  vec3 accent = vec3(1.0, 0.35, 0.24) * 0.15;
+  vec3 mid = vec3(0.08, 0.12, 0.2);
+  float n1 = sin(uv.x*3.0+t)*cos(uv.y*2.0-t*0.5);
+  float n2 = sin(uv.y*4.0-t*0.8)*cos(uv.x*2.5+t*0.3);
+  float mask = smoothstep(-0.8,0.8,n1+n2);
+  vec3 c = mix(base,mid,mask);
+  float d = distance(uv,vec2(0.5,0.3));
+  float glow = smoothstep(1.0,0.0,d);
+  c = mix(c,accent,glow*0.2);
+  gl_FragColor = vec4(c,1.0);
+}`;
+    const compile = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(prog); gl.useProgram(prog);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+    const pos = gl.getAttribLocation(prog, 'a_position');
+    gl.enableVertexAttribArray(pos); gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+    const uTime = gl.getUniformLocation(prog, 'u_time');
+    const uRes = gl.getUniformLocation(prog, 'u_resolution');
+
+    const render = (t) => {
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      if (uTime) gl.uniform1f(uTime, t * 0.001);
+      if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      rafRef.current = requestAnimationFrame(render);
+    };
+    rafRef.current = requestAnimationFrame(render);
+    return () => { cancelAnimationFrame(rafRef.current); ro.disconnect(); };
+  }, [skip]);
+
+  if (skip) return null;
+  return <canvas ref={canvasRef} className={className} style={{ display: 'block', width: '100%', height: '100%' }} />;
 }
 
+/* ── data ── */
+const STATS = [
+  { value: 30, suffix: '+', label: 'Years Experience' },
+  { value: 50, suffix: '+', label: 'Chemical Variants' },
+  { value: 5, suffix: '', label: 'States Coverage' },
+  { value: 500, suffix: '+', label: 'Active Clients' },
+];
+
+const MILESTONES = [
+  { year: '1995', title: 'Foundation', desc: 'Established in Bhavnagar, Gujarat, focusing on high-quality GP Thinner distribution.', side: 'left', fill: false },
+  { year: '2010', title: 'National Expansion', desc: 'Expanded portfolio to 50+ chemical variants and scaled distribution networks across 5 states.', side: 'right', fill: false },
+  { year: '2026', title: 'Digital Transformation', desc: 'Launch of the proprietary ChemiCrown CDMS platform to revolutionize supply chain transparency.', side: 'left', fill: true },
+];
+
+/* ── animation ── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.12, duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
+
 /* ═══════════════════════════════════════
-   ABOUT PAGE
+   ABOUT — Faithful to Stitch design
    ═══════════════════════════════════════ */
 export default function About() {
-  const mainContainerRef = useRef(null);
-  const heroRef = useRef(null);
-  const timelineSectionRef = useRef(null);
-  const horizontalTrackRef = useRef(null);
-
-  const { scrollYProgress } = useScroll({
-    target: heroRef, offset: ['start start', 'end start'],
-  });
-  const heroImgY = useTransform(scrollYProgress, [0, 1], ['0%', '25%']);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
-
-  useGSAP(() => {
-    // Only run on desktop (md+)
-    const isMobile = window.matchMedia('(max-width: 767px)').matches;
-    if (isMobile) return;
-
-    const container = mainContainerRef.current;
-    if (!container) return;
-
-    const panels = gsap.utils.toArray('.about-panel');
-    const track = horizontalTrackRef.current;
-    
-    // Set all panels except first to translation yPercent: 100
-    gsap.set(panels.slice(1), { yPercent: 100 });
-
-    const scrollWidth = track ? track.scrollWidth - window.innerWidth : 0;
-    
-    // Create combined master timeline with increased scroll distance to slow down scroll speed
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: container,
-        pin: true,
-        scrub: 1,
-        start: 'top top',
-        end: () => `+=${scrollWidth + window.innerHeight * 5.5}`,
-        invalidateOnRefresh: true,
-      }
-    });
-
-    // 1. Slide Panel 2 (Timeline) up (Time: 0.0 -> 1.0)
-    tl.to(panels[1], {
-      yPercent: 0,
-      ease: 'power1.inOut',
-      duration: 1.0
-    }, 0);
-    tl.to(panels[0], {
-      scale: 0.94,
-      opacity: 0.3,
-      ease: 'power1.inOut',
-      duration: 1.0
-    }, 0);
-
-    // 2. Slide horizontal track of Panel 2 (Time: 1.0 -> 4.0)
-    if (scrollWidth > 0) {
-      tl.to(track, {
-        x: -scrollWidth,
-        ease: 'none',
-        duration: 3.0
-      }, 1.0);
-      tl.fromTo('.timeline-progress-line',
-        { scaleX: 0, transformOrigin: 'left center' },
-        { scaleX: 1, ease: 'none', duration: 3.0 },
-        1.0
-      );
-
-      const milestones = gsap.utils.toArray('.timeline-milestone');
-      const trackWidth = track.scrollWidth;
-
-      milestones.forEach((milestone, idx) => {
-        const card = milestone.querySelector('.timeline-card');
-        const dot = milestone.querySelector('.timeline-dot');
-        if (!card || !dot) return;
-
-        // Calculate exact horizontal position of the dot relative to the track
-        const d_i = milestone.offsetLeft + milestone.offsetWidth / 2;
-        const fraction = d_i / trackWidth;
-        const time_i = 1.0 + 3.0 * fraction;
-
-        // Animate Dot: scale up, transition background color and add vibrant glowing box-shadow when reached
-        tl.fromTo(dot,
-          { scale: 0.6, opacity: 0.2, filter: 'blur(1.5px)', backgroundColor: '#0d162d' },
-          { 
-            scale: 1.4, 
-            opacity: 1, 
-            filter: 'blur(0px)', 
-            backgroundColor: MILESTONES[idx].color,
-            boxShadow: `0 0 24px ${MILESTONES[idx].color}`,
-            duration: 0.25, 
-            ease: 'power2.out' 
-          },
-          time_i
-        );
-        tl.to(dot, { 
-          scale: 1.0, 
-          boxShadow: `0 0 12px ${MILESTONES[idx].color}80`,
-          duration: 0.2, 
-          ease: 'power2.inOut' 
-        }, time_i + 0.25);
-
-        // Animate Card: slide in from edge (top down / bottom up) and pop out elegantly
-        const yStart = idx % 2 === 0 ? -60 : 60;
-        tl.fromTo(card,
-          { opacity: 0, y: yStart, scale: 0.85, filter: 'blur(6px)' },
-          { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.45, ease: 'back.out(1.3)' },
-          time_i
-        );
-      });
-    }
-
-    // 3. Slide Panel 3 (Purpose) up (Time: 4.0 -> 5.0)
-    tl.to(panels[2], {
-      yPercent: 0,
-      ease: 'power1.inOut',
-      duration: 1.0
-    }, 4.0);
-    tl.to(panels[1], {
-      scale: 0.94,
-      opacity: 0.3,
-      ease: 'power1.inOut',
-      duration: 1.0
-    }, 4.0);
-
-    // Stagger reveal title and cards inside Panel 3 DURING the transition (Time: 4.1 -> 4.8)
-    tl.fromTo('.purpose-title',
-      { y: 40, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
-      4.1
-    );
-    tl.fromTo('.purpose-card',
-      { y: 80, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.6, stagger: 0.12, ease: 'power2.out' },
-      4.3
-    );
-
-  }, { scope: mainContainerRef, dependencies: [] });
-
   return (
-    <div ref={mainContainerRef} className="relative bg-ink overflow-hidden w-full min-h-screen">
+    <div className="bg-[#070e1c] text-[#e2e8fc] overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
 
-      {/* ═══════ SLIDE 1: HERO & STATS ═══════ */}
-      <div className="about-panel relative md:absolute md:inset-0 min-h-screen md:h-screen w-full bg-ink z-10 flex flex-col justify-between">
-        <div ref={heroRef} className="relative flex-1 flex items-center justify-center overflow-hidden py-16 md:py-0">
-          <motion.div className="absolute inset-0 z-0" style={{ y: heroImgY }}>
-            <img src="/images/about-hero-bg.png" alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-ink/65" />
-          </motion.div>
-          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-ink/30 via-transparent to-ink pointer-events-none" />
+      {/* ═══════ HERO ═══════ */}
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+        {/* Shader */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+          <ShaderCanvas className="w-full h-full" />
+        </div>
+        {/* Parallax image */}
+        <div className="absolute inset-0 z-10 bg-cover bg-center bg-no-repeat bg-fixed opacity-50 mix-blend-overlay"
+          style={{ backgroundImage: "url('/images/about-hero-bg.png')" }}
+        />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 z-20 bg-gradient-to-b from-[#070e1c]/80 via-[#070e1c]/60 to-[#070e1c]" />
 
-          <motion.div className="relative z-10 text-center px-6 max-w-4xl mx-auto" style={{ opacity: heroOpacity }}>
-            <Reveal delay={0.1}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 backdrop-blur-md px-5 py-2 text-sm font-semibold text-accent-amber mb-6">
-                <Award className="w-4 h-4" /> Established 1995
+        <div className="relative z-30 max-w-7xl mx-auto px-6 text-center mt-16">
+          <motion.div initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}>
+            <motion.div variants={fadeUp} custom={0}>
+              <span className="inline-block border border-[#ff8f78]/30 text-[#ff7257] text-sm uppercase tracking-widest px-4 py-1.5 rounded-full mb-8 bg-[#11192a]/30 backdrop-blur-sm"
+                style={{ fontFamily: 'Space Grotesk' }}>
+                Established 1995
               </span>
-            </Reveal>
-            <Reveal delay={0.2}>
-              <h1 className="text-headline text-4xl sm:text-6xl md:text-7xl text-white mb-6 leading-[1.05]">
-                About ChemiCrown
-              </h1>
-            </Reveal>
-            <Reveal delay={0.35}>
-              <p className="text-lg sm:text-xl text-slate-300/90 max-w-2xl mx-auto leading-relaxed">
-                Building the foundation of modern manufacturing through reliable,
-                pure, and high-performance chemical solutions since 1995.
-              </p>
-            </Reveal>
+            </motion.div>
+            <motion.h1 variants={fadeUp} custom={1}
+              className="text-5xl md:text-7xl font-bold tracking-tight mb-6"
+              style={{ fontFamily: 'Space Grotesk' }}
+            >
+              About <span className="text-[#ff8f78]">ChemiCrown</span>
+            </motion.h1>
+            <motion.p variants={fadeUp} custom={2}
+              className="text-xl text-[#a4abbe] max-w-3xl mx-auto font-light leading-relaxed"
+            >
+              Building the foundation of modern manufacturing through reliable, pure, and high-performance chemical solutions since 1995.
+            </motion.p>
           </motion.div>
         </div>
+      </section>
 
-        {/* Stats bar */}
-        <section className="relative py-12 bg-ink-2 border-t border-white/[0.05] z-10">
-          <div className="container mx-auto px-6 max-w-5xl">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
-              {STATS.map((s, i) => (
-                <Reveal key={s.label} delay={i * 0.1} className="text-center">
-                  <div className="text-4xl md:text-5xl font-extrabold text-headline text-white mb-2">
-                    <CountUp target={s.value} suffix={s.suffix} />
-                  </div>
-                  <div className="text-sm text-slate-400 font-medium uppercase tracking-wider">{s.label}</div>
-                </Reveal>
-              ))}
-            </div>
+      {/* ═══════ STATS BAR — floating glass card ═══════ */}
+      <section className="relative z-30 -mt-20 px-6 max-w-7xl mx-auto mb-32">
+        <motion.div
+          className="rounded-xl p-8 md:p-12 backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 md:divide-x divide-[#414858]/30">
+            {STATS.map((s, i) => (
+              <div key={s.label} className="text-center px-4">
+                <div className="text-4xl font-bold text-[#ff8f78] mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                  <NumberTicker value={s.value} suffix={s.suffix} delay={0.3 + i * 0.1} />
+                </div>
+                <div className="text-sm text-[#a4abbe] uppercase tracking-wider" style={{ fontFamily: 'Space Grotesk' }}>{s.label}</div>
+              </div>
+            ))}
           </div>
-        </section>
-      </div>
+        </motion.div>
+      </section>
 
-      {/* ═══════ SLIDE 2: JOURNEY TIMELINE ═══════ */}
-      <div ref={timelineSectionRef} className="about-panel relative md:absolute md:inset-0 min-h-screen md:h-screen w-full bg-[#0d162d] z-20 flex flex-col justify-center border-y border-white/[0.04]">
-        {/* Background glow & mesh */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(rgba(47,111,237,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(47,111,237,0.5) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px',
-          }}
-        />
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-accent-cobalt/5 rounded-full blur-[160px] pointer-events-none" />
-        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-brand/5 rounded-full blur-[160px] pointer-events-none" />
+      {/* ═══════ TIMELINE — Vertical center-line zigzag ═══════ */}
+      <section className="py-24 px-6 max-w-7xl mx-auto relative">
+        <motion.div className="text-center mb-20"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <h2 className="text-4xl md:text-5xl font-bold text-[#e2e8fc]" style={{ fontFamily: 'Space Grotesk' }}>Our Journey</h2>
+          <div className="h-1 w-20 bg-[#ff8f78] mx-auto mt-6 rounded-full" />
+        </motion.div>
 
-        {/* Mobile View (Vertical Scrollable fallback) */}
-        <div className="block md:hidden py-20 px-6">
-          <div className="text-center mb-16">
-            <Reveal>
-              <h2 className="text-headline text-3xl text-white mb-4">Our Journey</h2>
-            </Reveal>
-            <Reveal delay={0.15}>
-              <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
-                Three decades of growth, innovation, and unwavering commitment to quality.
-              </p>
-            </Reveal>
-          </div>
+        <div className="relative">
+          {/* Center line (desktop) */}
+          <div className="hidden md:block absolute left-1/2 -translate-x-1/2 h-full w-px bg-[#414858]/40" />
 
-          <div className="relative max-w-md mx-auto">
-            <div className="absolute left-4 top-0 bottom-0 w-px bg-gradient-to-b from-brand via-accent-cobalt to-accent-emerald" />
+          {/* Mobile left line */}
+          <div className="md:hidden absolute left-8 top-0 bottom-0 w-px bg-[#414858]/40" />
+
+          <div className="space-y-16 md:space-y-0">
             {MILESTONES.map((m, i) => (
-              <Reveal key={m.year} delay={i * 0.1} direction="left">
-                <div className="relative flex items-start gap-4 mb-12 last:mb-0">
-                  <div className="absolute left-4 -translate-x-1/2 mt-1.5 z-10">
-                    <div className="w-3.5 h-3.5 rounded-full border-[3px] border-ink" style={{ backgroundColor: m.color }} />
+              <motion.div
+                key={m.year}
+                className={`relative flex flex-col md:flex-row items-center w-full ${i > 0 ? 'md:mt-24' : ''} mb-8 group`}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ delay: i * 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {/* Left content (for left-side cards) */}
+                {m.side === 'left' ? (
+                  <div className="md:w-1/2 flex justify-start md:justify-end pr-8 w-full text-left md:text-right ml-20 md:ml-0">
+                    <div className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-8 rounded-xl max-w-md w-full transition-transform duration-300 group-hover:-translate-y-1">
+                      <h3 className="text-2xl font-bold text-[#e2e8fc] mb-3" style={{ fontFamily: 'Space Grotesk' }}>{m.title}</h3>
+                      <p className="text-[#a4abbe]">{m.desc}</p>
+                    </div>
                   </div>
-                  <div className="ml-10 bg-ink-2 border border-white/[0.06] rounded-2xl p-5 w-full">
-                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white mb-2" style={{ backgroundColor: m.color }}>{m.year}</span>
-                    <h3 className="text-base font-bold text-white mb-1.5">{m.title}</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed">{m.desc}</p>
+                ) : (
+                  <div className="md:w-1/2 pr-8 hidden md:block" />
+                )}
+
+                {/* Year dot */}
+                <div className="absolute left-8 md:left-1/2 -translate-x-1/2 flex items-center justify-center z-10">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                    m.fill
+                      ? 'bg-[#ff8f78] border-4 border-[#070e1c] shadow-[0_0_20px_rgba(255,143,120,0.5)]'
+                      : 'bg-[#11192a] border-2 border-[#ff8f78] shadow-[0_0_15px_rgba(255,143,120,0.3)]'
+                  }`}>
+                    <span className={`font-bold ${m.fill ? 'text-[#610a00]' : 'text-[#ff8f78]'}`}
+                      style={{ fontFamily: 'Space Grotesk' }}>
+                      {m.year}
+                    </span>
                   </div>
                 </div>
-              </Reveal>
+
+                {/* Right content (for right-side cards) */}
+                {m.side === 'right' ? (
+                  <div className="md:w-1/2 flex justify-start pl-8 w-full ml-20 md:ml-0">
+                    <div className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-8 rounded-xl max-w-md w-full transition-transform duration-300 group-hover:-translate-y-1">
+                      <h3 className="text-2xl font-bold text-[#e2e8fc] mb-3" style={{ fontFamily: 'Space Grotesk' }}>{m.title}</h3>
+                      <p className="text-[#a4abbe]">{m.desc}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="md:w-1/2 pl-8 hidden md:block" />
+                )}
+              </motion.div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Desktop View (GSAP horizontal slider) */}
-        <div className="hidden md:flex h-full flex-col justify-center relative py-6">
-          <div className="container mx-auto px-12 max-w-7xl mb-4 relative z-20">
-            <h2 className="text-headline text-5xl text-white mb-2">Our Journey</h2>
-            <p className="text-slate-400 text-base max-w-xl leading-relaxed">
-              Three decades of growth, innovation, and unwavering commitment to quality.
-            </p>
-          </div>
-
-          <div className="relative w-full overflow-hidden flex-1 flex items-center">
-            <div ref={horizontalTrackRef} className="flex items-center gap-24 relative pl-[10vw] pr-[25vw] h-[450px]">
-              <div className="absolute left-0 right-0 h-[2px] bg-white/10 top-1/2 -translate-y-1/2 z-0" />
-              <div className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-brand via-accent-cobalt to-accent-emerald top-1/2 -translate-y-1/2 z-0 timeline-progress-line origin-left" />
-
-              {MILESTONES.map((m, i) => (
-                <div key={m.year} className="relative flex flex-col items-center justify-between h-full w-[340px] shrink-0 timeline-milestone select-none">
-                  {/* Top Slot */}
-                  {i % 2 === 0 ? (
-                    <div className="timeline-card bg-ink-2/95 border border-white/[0.06] rounded-2xl p-6 hover:border-white/10 transition-colors duration-300 w-full text-left relative z-20 shadow-2xl backdrop-blur-md">
-                      <span className="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-3" style={{ backgroundColor: m.color }}>{m.year}</span>
-                      <h3 className="text-lg font-bold text-white mb-2">{m.title}</h3>
-                      <p className="text-slate-400 text-sm leading-relaxed">{m.desc}</p>
-                    </div>
-                  ) : (
-                    <div className="h-[180px] w-full" />
-                  )}
-
-                  {/* Dot */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                    <div className="timeline-dot w-6 h-6 rounded-full border-4 border-ink" style={{ backgroundColor: m.color }} />
-                  </div>
-
-                  {/* Bottom Slot */}
-                  {i % 2 !== 0 ? (
-                    <div className="timeline-card bg-ink-2/95 border border-white/[0.06] rounded-2xl p-6 hover:border-white/10 transition-colors duration-300 w-full text-left relative z-20 shadow-2xl backdrop-blur-md">
-                      <span className="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-3" style={{ backgroundColor: m.color }}>{m.year}</span>
-                      <h3 className="text-lg font-bold text-white mb-2">{m.title}</h3>
-                      <p className="text-slate-400 text-sm leading-relaxed">{m.desc}</p>
-                    </div>
-                  ) : (
-                    <div className="h-[180px] w-full" />
-                  )}
+      {/* ═══════ MISSION & VISION ═══════ */}
+      <section className="py-24 px-6 max-w-7xl mx-auto mb-32">
+        <div className="bg-[#0b1323]/50 rounded-3xl border border-[#414858]/10 p-8 md:p-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            {/* Mission */}
+            <motion.div
+              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-10 rounded-2xl relative overflow-hidden group"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-[#ff8f78]/10 rounded-full blur-[48px] group-hover:bg-[#ff8f78]/20 transition-colors duration-500" />
+              <div className="relative z-10">
+                <div className="w-14 h-14 bg-[#1c263a] rounded-xl flex items-center justify-center mb-8 border border-[#414858]/30">
+                  <span className="material-symbols-outlined text-3xl text-[#ff8f78]">my_location</span>
                 </div>
-              ))}
-            </div>
+                <h3 className="text-3xl font-bold text-[#e2e8fc] mb-4" style={{ fontFamily: 'Space Grotesk' }}>Mission</h3>
+                <p className="text-[#a4abbe] text-lg leading-relaxed">
+                  To empower industrial growth by delivering uncompromisingly pure chemicals with a commitment to reliability and environmental stewardship.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Vision */}
+            <motion.div
+              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-10 rounded-2xl relative overflow-hidden group"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="absolute bottom-0 right-0 -mr-16 -mb-16 w-48 h-48 bg-[#729aff]/10 rounded-full blur-[48px] group-hover:bg-[#729aff]/20 transition-colors duration-500" />
+              <div className="relative z-10">
+                <div className="w-14 h-14 bg-[#1c263a] rounded-xl flex items-center justify-center mb-8 border border-[#414858]/30">
+                  <span className="material-symbols-outlined text-3xl text-[#729aff]">lightbulb</span>
+                </div>
+                <h3 className="text-3xl font-bold text-[#e2e8fc] mb-4" style={{ fontFamily: 'Space Grotesk' }}>Vision</h3>
+                <p className="text-[#a4abbe] text-lg leading-relaxed">
+                  To be the most trusted name in chemical distribution globally, recognized for precision, innovation, and ethical partnership.
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </div>
-
-      {/* ═══════ SLIDE 3: MISSION & VISION ═══════ */}
-      <div className="about-panel relative md:absolute md:inset-0 min-h-screen md:h-screen w-full bg-paper z-30 flex flex-col justify-center">
-        <div className="absolute inset-0 opacity-[0.025] pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(#0B1220 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-        />
-
-        <div className="container mx-auto px-6 max-w-5xl relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-headline text-3xl sm:text-5xl text-ink mb-5 purpose-title">Our Purpose</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="purpose-card bg-white border border-slate-200/60 p-8 md:p-10 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 h-full text-left">
-              <div className="w-14 h-14 bg-accent-cobalt/10 rounded-2xl flex items-center justify-center mb-6">
-                <Target className="h-7 w-7 text-accent-cobalt" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4 text-ink">Our Mission</h3>
-              <p className="text-slate-500 leading-relaxed">
-                To empower industrial growth by delivering uncompromisingly pure
-                chemicals, ensuring seamless supply chains, and maintaining the
-                highest standards of environmental safety and corporate responsibility.
-              </p>
-            </div>
-
-            <div className="purpose-card bg-white border border-slate-200/60 p-8 md:p-10 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 h-full text-left">
-              <div className="w-14 h-14 bg-accent-amber/10 rounded-2xl flex items-center justify-center mb-6">
-                <Lightbulb className="h-7 w-7 text-accent-amber" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4 text-ink">Our Vision</h3>
-              <p className="text-slate-500 leading-relaxed">
-                To be the most trusted name in chemical distribution globally,
-                pioneering digital supply chain innovations to bring absolute
-                transparency and efficiency to our partners.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      </section>
 
     </div>
   );

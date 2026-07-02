@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
 import ScrollProvider from '@/components/scroll/ScrollProvider';
 import Reveal from '@/components/scroll/Reveal';
+import ChemiCursor from '@/components/ui/ChemiCursor';
 
 export default function PublicLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -104,12 +105,13 @@ export default function PublicLayout() {
   ];
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <ChemiCursor />
       {/* Navbar */}
-      <nav className={`sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur-xl supports-backdrop-filter:bg-background/70 shadow-sm transition-transform duration-500 ease-in-out ${navbarVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <nav className={`sticky top-0 z-50 w-full border-b border-white/[0.06] bg-ink/95 backdrop-blur-xl shadow-sm transition-transform duration-500 ease-in-out ${navbarVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="container flex h-16 max-w-screen-2xl items-center px-4 mx-auto justify-between">
           <Link to="/" className="flex items-center space-x-2.5 mr-6 group">
             <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-9 w-9 object-contain group-hover:scale-105 transition-transform" />
-            <span className="font-extrabold text-xl tracking-tight text-[#1F2E54] dark:text-white">ChemiCrown</span>
+            <span className="font-extrabold text-xl tracking-tight text-white">ChemiCrown</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -121,31 +123,31 @@ export default function PublicLayout() {
                   <Link 
                     key={link.name}
                     to={link.path} 
-                    className={`transition-colors hover:text-primary relative group ${isActive ? 'text-primary' : 'text-foreground/80'}`}
+                    className={`transition-colors hover:text-brand relative group ${isActive ? 'text-brand' : 'text-slate-300'}`}
                   >
                     {link.name}
-                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-brand transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
                   </Link>
                 );
               })}
             </nav>
             
-            <div className="h-6 w-px bg-border mx-2"></div> {/* Separator */}
+            <div className="h-6 w-px bg-white/10 mx-2"></div> {/* Separator */}
 
             <nav className="flex items-center space-x-3 relative">
               <button
                 ref={themeToggleRef}
                 onClick={handleThemeToggle}
-                className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground mr-1"
+                className="p-2 rounded-xl hover:bg-white/10 transition-colors text-slate-400 hover:text-white mr-1"
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {darkMode ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-slate-500" />}
               </button>
               
-              <Link to={user ? "/dashboard/cart" : "/login"} className="relative p-2 text-foreground/80 hover:text-primary transition-colors">
+              <Link to={user ? "/dashboard/cart" : "/login"} className="relative p-2 text-slate-300 hover:text-brand transition-colors">
                 <ShoppingCart className="w-5 h-5" />
                 {cartItems?.length > 0 && (
-                  <span className="absolute top-0 right-0 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute top-0 right-0 w-4 h-4 bg-brand text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {cartItems.length}
                   </span>
                 )}
@@ -158,11 +160,11 @@ export default function PublicLayout() {
                 >
                   <button 
                     onClick={() => setAccountMenuOpen(v => !v)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
                   >
                     <div className="flex -space-x-2">
                       {storedAccounts.slice(0, 3).map((account, i) => (
-                        <div key={account.id} className={`w-8 h-8 rounded-full border-2 border-background bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 z-${30-i*10}`}>
+                        <div key={account.id} className={`w-8 h-8 rounded-full border-2 border-ink bg-brand/20 text-brand flex items-center justify-center font-bold text-xs shrink-0 z-${30-i*10}`}>
                           {account.profileImageUrl ? (
                             <img src={account.profileImageUrl} alt={account.firstName} className="w-full h-full object-cover rounded-full" />
                           ) : (
@@ -215,8 +217,8 @@ export default function PublicLayout() {
                 </div>
               ) : (
                 <>
-                  <Link to="/login" className="text-base font-medium hover:text-primary px-4 py-2 transition-colors">Log in</Link>
-                  <Link to="/register" className="bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:scale-105 h-10 px-5 py-2 inline-flex items-center justify-center whitespace-nowrap rounded-md text-base font-bold transition-all">Get Started</Link>
+                  <Link to="/login" className="text-base font-medium hover:text-brand px-4 py-2 transition-colors text-slate-300">Log in</Link>
+                  <Link to="/register" className="bg-brand text-white shadow hover:bg-brand/90 hover:scale-105 h-10 px-5 py-2 inline-flex items-center justify-center whitespace-nowrap rounded-md text-base font-bold transition-all">Get Started</Link>
                 </>
               )}
             </nav>
@@ -241,22 +243,22 @@ export default function PublicLayout() {
         
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background absolute w-full left-0 p-4 shadow-2xl flex flex-col space-y-4 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="md:hidden border-t border-white/[0.06] bg-ink absolute w-full left-0 p-4 shadow-2xl flex flex-col space-y-4 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto">
             {navLinks.map((link) => (
               <Link 
                 key={link.name}
                 to={link.path} 
                 onClick={() => setMobileMenuOpen(false)}
-                className={`text-lg font-medium p-2 rounded-md ${location.pathname === link.path ? 'bg-primary/10 text-primary' : 'text-foreground'}`}
+                className={`text-lg font-medium p-2 rounded-md ${location.pathname === link.path ? 'bg-brand/10 text-brand' : 'text-slate-300'}`}
               >
                 {link.name}
               </Link>
             ))}
-            <div className="flex items-center justify-between p-2 border-t border-border/60 pt-4">
-              <span className="text-base font-semibold text-foreground">Theme Mode</span>
+            <div className="flex items-center justify-between p-2 border-t border-white/[0.06] pt-4">
+              <span className="text-base font-semibold text-white">Theme Mode</span>
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-foreground transition-all hover:bg-muted"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-slate-300 transition-all hover:bg-white/[0.08]"
               >
                 {darkMode ? (
                   <>
@@ -271,7 +273,7 @@ export default function PublicLayout() {
                 )}
               </button>
             </div>
-            <div className="h-px w-full bg-border my-2"></div>
+            <div className="h-px w-full bg-white/[0.06] my-2"></div>
             {storedAccounts && storedAccounts.length > 0 ? (
               <div className="space-y-2">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2">Quick Login</span>
@@ -279,7 +281,7 @@ export default function PublicLayout() {
                   <button 
                     key={account.id}
                     onClick={() => { setMobileMenuOpen(false); handleQuickLogin(account.id); }}
-                    className="w-full flex items-center justify-between p-3 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
+                    className="w-full flex items-center justify-between p-3 rounded-lg border border-white/[0.06] hover:bg-white/[0.06] transition-colors group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden shrink-0">
@@ -297,14 +299,14 @@ export default function PublicLayout() {
                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
                   </button>
                 ))}
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center py-3 text-primary font-medium border border-primary/20 rounded-md mt-2">
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center py-3 text-accent-cobalt font-medium border border-accent-cobalt/20 rounded-md mt-2">
                   Add another account
                 </Link>
               </div>
             ) : (
               <>
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium p-2 text-foreground">Log in</Link>
-                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="bg-primary text-primary-foreground w-full text-center py-3 rounded-md text-lg font-bold">Get Started</Link>
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium p-2 text-slate-300">Log in</Link>
+                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="bg-brand text-white w-full text-center py-3 rounded-md text-lg font-bold">Get Started</Link>
               </>
             )}
           </div>
@@ -317,47 +319,47 @@ export default function PublicLayout() {
           <Outlet />
         </main>
 
-      {/* Footer */}
+      {/* Footer — dark-mode-first */}
       <Reveal direction="up" amount={0.1}>
-      <footer className="border-t border-border bg-muted/30 py-8 md:py-12">
+      <footer className="border-t border-white/[0.05] bg-ink-2 py-8 md:py-12">
         <div className="container px-4 mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
               <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-8 w-8 object-contain" />
-              <span className="font-extrabold text-xl text-foreground tracking-tight">ChemiCrown</span>
+              <span className="font-extrabold text-xl text-white tracking-tight">ChemiCrown</span>
             </div>
-            <p className="text-base text-muted-foreground mb-6 max-w-sm leading-relaxed">
+            <p className="text-base text-slate-400 mb-6 max-w-sm leading-relaxed">
               India's leading chemical distributor. Delivering high-quality industrial solvents, thinners, and specialty chemicals with precision and trust.
             </p>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                <MapPin className="w-4 h-4 text-primary" /> Plot No - 26, Shed No - 4, Madhav Industrial Park, Vartej, Bhavnagar. 364004
+              <div className="flex items-center gap-3 text-slate-400 text-sm">
+                <MapPin className="w-4 h-4 text-brand shrink-0" /> Plot No - 26, Shed No - 4, Madhav Industrial Park, Vartej, Bhavnagar. 364004
               </div>
-              <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                <Phone className="w-4 h-4 text-primary" /> +91 - 7043180599 / 8530903009
+              <div className="flex items-center gap-3 text-slate-400 text-sm">
+                <Phone className="w-4 h-4 text-brand shrink-0" /> +91 - 7043180599 / 8530903009
               </div>
-              <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                <Mail className="w-4 h-4 text-primary" /> chemicrown402@gmail.com
+              <div className="flex items-center gap-3 text-slate-400 text-sm">
+                <Mail className="w-4 h-4 text-brand shrink-0" /> chemicrown402@gmail.com
               </div>
             </div>
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-4 text-foreground">Quick Links</h3>
-            <ul className="space-y-3 text-base text-muted-foreground">
-              <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link to="/catalog" className="hover:text-primary transition-colors">Products Catalog</Link></li>
-              <li><Link to="/contact" className="hover:text-primary transition-colors">Contact Support</Link></li>
+            <h3 className="font-bold text-lg mb-4 text-white">Quick Links</h3>
+            <ul className="space-y-3 text-base text-slate-400">
+              <li><Link to="/about" className="hover:text-accent-cobalt transition-colors">About Us</Link></li>
+              <li><Link to="/catalog" className="hover:text-accent-cobalt transition-colors">Products Catalog</Link></li>
+              <li><Link to="/contact" className="hover:text-accent-cobalt transition-colors">Contact Support</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-4 text-foreground">Legal</h3>
-            <ul className="space-y-3 text-base text-muted-foreground">
-              <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+            <h3 className="font-bold text-lg mb-4 text-white">Legal</h3>
+            <ul className="space-y-3 text-base text-slate-400">
+              <li><Link to="/privacy" className="hover:text-accent-cobalt transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-accent-cobalt transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
-        <div className="container px-4 mx-auto mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+        <div className="container px-4 mx-auto mt-8 pt-8 border-t border-white/[0.06] text-center text-sm text-slate-500">
           © {new Date().getFullYear()} ChemiCrown CDMS. All rights reserved.
         </div>
       </footer>

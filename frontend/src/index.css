@@ -22,6 +22,15 @@
   --color-accent-cobalt: #2F6FED;
   --color-accent-emerald: #22B27D;
   --color-accent-crimson: #D6263E;
+  --color-ink-3: #0a0e1a;
+
+  /* ── Cinematic motion tokens ── */
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --motion-duration-fast: 300ms;
+  --motion-duration-normal: 600ms;
+  --motion-duration-slow: 1000ms;
+  --motion-stagger: 100ms;
 
 
   --color-border: var(--border);
@@ -369,6 +378,41 @@
   .pl-9 {
     padding-left: 2.25rem !important;
   }
+
+  /* ── Cinematic dark glass card ── */
+  .glass-dark {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .glass-dark:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* ── Cinematic section (full viewport) ── */
+  .cinematic-section {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Product card hover tilt ── */
+  .card-tilt {
+    transition: transform 500ms var(--motion-ease-out), box-shadow 500ms var(--motion-ease-out);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
+  .card-tilt:hover {
+    transform: translateY(-6px) rotateX(2deg) rotateY(-1deg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -426,6 +470,69 @@
   }
 }
 
+/* ── Aurora gradient mesh for hero backgrounds ── */
+@keyframes aurora {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(30px, -50px) rotate(3deg) scale(1.05);
+  }
+  50% {
+    transform: translate(-20px, 20px) rotate(-2deg) scale(0.95);
+  }
+  75% {
+    transform: translate(50px, 30px) rotate(1deg) scale(1.02);
+  }
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  animation: aurora 20s ease-in-out infinite;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.aurora-blob-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, #FF5A3C 0%, transparent 70%);
+  top: -10%;
+  right: -5%;
+  animation-delay: 0s;
+}
+
+.aurora-blob-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #2F6FED 0%, transparent 70%);
+  bottom: -10%;
+  left: -5%;
+  animation-delay: -7s;
+}
+
+.aurora-blob-3 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #22B27D 0%, transparent 70%);
+  top: 40%;
+  left: 30%;
+  animation-delay: -13s;
+}
+
+/* ── Glow pulse for process step icons ── */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(255, 90, 60, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(255, 90, 60, 0.6);
+  }
+}
+
 @keyframes spin-once {
   from {
     transform: rotate(0deg);
@@ -434,6 +541,56 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbit1 {
+  from { transform: translate(-50%, -50%) rotate(0deg) translateX(20px) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg) translateX(20px) rotate(-360deg); }
+}
+
+@keyframes orbit2 {
+  from { transform: translate(-50%, -50%) rotate(0deg) translateX(-20px) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg) translateX(-20px) rotate(-360deg); }
+}
+
+/* ── Custom Cursor Styles ── */
+body.custom-cursor-active,
+body.custom-cursor-active * {
+  cursor: none !important;
+}
+
+.orbiting-dot-1 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #ff8f78;
+  animation: orbit1 3s linear infinite;
+  will-change: transform;
+}
+
+.orbiting-dot-2 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background-color: #729aff;
+  animation: orbit2 3s linear infinite;
+  will-change: transform;
+}
+
+/* ── Material Symbols default styling ── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 /* ─────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Search, ShoppingCart, CheckCircle2, XCircle, Heart,
   Filter, X, SlidersHorizontal, AlertTriangle, FileText, Package
@@ -79,6 +79,9 @@ export default function Catalog() {
   const location   = useLocation();
   const { addToCart } = useCart();
   const { user, token } = useAuth();
+
+  // Catalog always uses standard ERP styling (no cinematic dark override)
+  const isPublic = false;
 
   // ── Search ──────────────────────────────────────────────────────────────────
   // Single source of truth: local state, NOT derived from URL (avoids double-state conflicts)
@@ -185,26 +188,42 @@ export default function Catalog() {
     navigate('/dashboard/checkout');
   };
 
+  // ── Card reveal is handled by CSS transitions (GSAP removed) ──
+
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex-1 bg-background pb-16 overflow-x-hidden">
+    <div className={`flex-1 pb-16 overflow-x-hidden ${isPublic ? 'bg-ink' : 'bg-background'}`}>
 
       {/* ── Simple Hero / Search ── */}
-      <div className="bg-card border-b border-border py-8 sm:py-12 px-3 sm:px-6 lg:px-8">
+      <div className={`border-b py-8 sm:py-12 px-3 sm:px-6 lg:px-8 ${
+        isPublic
+          ? 'bg-ink-2 border-white/[0.05]'
+          : 'bg-card border-border'
+      }`}>
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+          <h1 className={`text-3xl sm:text-4xl font-bold mb-4 ${
+            isPublic ? 'text-headline text-white' : 'text-foreground'
+          }`}>
             Product Catalog
           </h1>
-          <p className="text-base sm:text-lg text-muted-foreground mx-auto max-w-3xl mb-8">
+          <p className={`text-base sm:text-lg mx-auto max-w-3xl mb-8 ${
+            isPublic ? 'text-slate-400' : 'text-muted-foreground'
+          }`}>
             Industrial & laboratory chemicals — direct from manufacturer.
           </p>
 
           <div className="max-w-3xl mx-auto flex flex-wrap gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
+              <Search className={`absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-5 w-5 z-10 ${
+                isPublic ? 'text-slate-500' : 'text-muted-foreground'
+              }`} />
               <input
                 type="text"
-                className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base border focus:outline-none focus:ring-2 ${
+                  isPublic
+                    ? 'border-white/10 bg-white/[0.04] text-white placeholder:text-slate-500 focus:ring-accent-cobalt/50 focus:border-accent-cobalt/30'
+                    : 'border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary'
+                }`}
                 placeholder="Search by name, CAS number, grade…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -214,14 +233,20 @@ export default function Catalog() {
               onClick={showFilters ? () => setShowFilters(false) : openFilters}
               className={`flex items-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
                 hasActiveFilters
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background border border-input text-foreground hover:bg-muted'
+                  ? isPublic
+                    ? 'bg-brand text-white border-brand'
+                    : 'bg-primary text-primary-foreground border-primary'
+                  : isPublic
+                    ? 'bg-white/[0.04] border border-white/10 text-slate-300 hover:bg-white/[0.08]'
+                    : 'bg-background border border-input text-foreground hover:bg-muted'
               }`}
             >
               <SlidersHorizontal size={16} />
               Filters
               {hasActiveFilters && (
-                <span className="bg-primary-foreground/20 text-primary-foreground text-xs rounded-full px-1.5 py-0.5 font-bold leading-none ml-1">
+                <span className={`text-xs rounded-full px-1.5 py-0.5 font-bold leading-none ml-1 ${
+                  isPublic ? 'bg-white/20 text-white' : 'bg-primary-foreground/20 text-primary-foreground'
+                }`}>
                   ON
                 </span>
               )}
@@ -232,7 +257,9 @@ export default function Catalog() {
 
       {/* ── Filter Panel ── */}
       {showFilters && (
-        <div className="bg-card border-b border-border shadow-md">
+        <div className={`border-b shadow-md ${
+          isPublic ? 'bg-ink-2 border-white/[0.05]' : 'bg-card border-border'
+        }`}>
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <h2 className="font-bold text-foreground flex flex-wrap items-center gap-2 text-sm sm:text-base">
@@ -427,7 +454,11 @@ export default function Catalog() {
 
               return (
                 <div key={product.id}
-                  className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-0.5 cursor-pointer h-full"
+                  className={`rounded-xl sm:rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-0.5 cursor-pointer h-full catalog-card-reveal ${
+                    isPublic
+                      ? 'bg-ink-2 border-white/[0.06] card-tilt'
+                      : 'bg-card border-border'
+                  }`}
                   onClick={() => {
                     const isDashboard = location.pathname.startsWith('/dashboard');
                     navigate(`${isDashboard ? '/dashboard/catalog' : '/catalog'}/${product.id}`);
