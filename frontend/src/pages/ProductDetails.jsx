@@ -459,9 +459,9 @@ export default function ProductDetails() {
               >
                 <div className="aspect-square bg-muted rounded-xl mb-4 overflow-hidden flex items-center justify-center">
                   {rel.imageUrls?.length > 0 ? (
-                    <img src={rel.imageUrls[0]} alt={rel.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img src={rel.imageUrls[0]} alt={rel.name} loading="lazy" decoding="async" className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform" />
                   ) : rel.imageUrl ? (
-                    <img src={rel.imageUrl} alt={rel.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img src={rel.imageUrl} alt={rel.name} loading="lazy" decoding="async" className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform" />
                   ) : (
                     <Beaker className="text-slate-300 w-12 h-12" />
                   )}

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import NumberTicker from '@/components/ui/NumberTicker';
+import HexGrid from '@/components/ui/HexGrid';
+import FloatingBubbles from '@/components/ui/FloatingBubbles';
 
 /* ══════════════════════════════════════════
    WebGL SHADER — Stitch About aurora
@@ -120,6 +122,9 @@ export default function About() {
         {/* Gradient overlay */}
         <div className="absolute inset-0 z-20 bg-gradient-to-b from-[#070e1c]/80 via-[#070e1c]/60 to-[#070e1c]" />
 
+        {/* Floating bubbles */}
+        <FloatingBubbles count={12} className="z-[15]" />
+
         <div className="relative z-30 max-w-7xl mx-auto px-6 text-center mt-16">
           <motion.div initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}>
             <motion.div variants={fadeUp} custom={0}>
@@ -143,16 +148,18 @@ export default function About() {
         </div>
       </section>
 
-      {/* ═══════ STATS BAR — floating glass card ═══════ */}
+      {/* ═══════ STATS BAR — floating glass card with shimmer ═══════ */}
       <section className="relative z-30 -mt-20 px-6 max-w-7xl mx-auto mb-32">
         <motion.div
-          className="rounded-xl p-8 md:p-12 backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20"
+          className="rounded-xl p-8 md:p-12 backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 relative overflow-hidden group"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 md:divide-x divide-[#414858]/30">
+          {/* Shimmer sweep */}
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-white/[0.04] to-transparent pointer-events-none" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 md:divide-x divide-[#414858]/30 relative z-10">
             {STATS.map((s, i) => (
               <div key={s.label} className="text-center px-4">
                 <div className="text-4xl font-bold text-[#ff8f78] mb-2" style={{ fontFamily: 'Space Grotesk' }}>
@@ -167,7 +174,8 @@ export default function About() {
 
       {/* ═══════ TIMELINE — Vertical center-line zigzag ═══════ */}
       <section className="py-24 px-6 max-w-7xl mx-auto relative">
-        <motion.div className="text-center mb-20"
+        <HexGrid opacity={0.04} />
+        <motion.div className="text-center mb-20 relative z-10"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -207,7 +215,7 @@ export default function About() {
                 )}
 
                 {/* Year dot */}
-                <div className="absolute left-8 md:left-1/2 -translate-x-1/2 flex items-center justify-center z-10">
+                <div className="absolute top-6 left-8 md:left-1/2 -translate-x-1/2 flex items-center justify-center z-10">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
                     m.fill
                       ? 'bg-[#ff8f78] border-4 border-[#070e1c] shadow-[0_0_20px_rgba(255,143,120,0.5)]'
@@ -243,7 +251,7 @@ export default function About() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             {/* Mission */}
             <motion.div
-              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-10 rounded-2xl relative overflow-hidden group"
+              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-10 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 ease-out"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -263,7 +271,7 @@ export default function About() {
 
             {/* Vision */}
             <motion.div
-              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-10 rounded-2xl relative overflow-hidden group"
+              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-10 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 ease-out"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

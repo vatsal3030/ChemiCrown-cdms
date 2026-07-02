@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle, Loader2, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ParallaxTiltCard from '@/components/ui/ParallaxTiltCard';
+import FloatingBubbles from '@/components/ui/FloatingBubbles';
+import MagneticButton from '@/components/ui/MagneticButton';
 
 /* ── rate limiter (resets on refresh — good enough for frontend guard) ── */
 const RATE_LIMIT_MS = 60_000;
@@ -128,7 +131,7 @@ export default function Contact() {
 
   /* ── input styling — Stitch tokens ── */
   const inputCls = (err) =>
-    `w-full h-12 px-4 rounded-lg border bg-[#11192a] text-sm text-[#e2e8fc] placeholder:text-[#6f7587] focus:outline-none focus:ring-2 focus:ring-[#ff8f78]/40 transition-all duration-200 ${
+    `input-focus-grow w-full h-12 px-4 rounded-lg border bg-[#11192a] text-sm text-[#e2e8fc] placeholder:text-[#6f7587] focus:outline-none focus:ring-2 focus:ring-[#ff8f78]/40 transition-all duration-200 ${
       err ? 'border-[#ff6e84]/60' : 'border-[#414858]/40 focus:border-[#ff8f78]/60'
     }`;
 
@@ -137,6 +140,8 @@ export default function Contact() {
 
       {/* ═══════ HERO ═══════ */}
       <section className="relative py-24 md:py-32 overflow-hidden">
+        {/* Floating bubbles */}
+        <FloatingBubbles count={12} />
         {/* Ambient glows */}
         <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-[#ff8f78]/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 -right-1/4 w-1/3 h-1/3 bg-[#729aff]/8 rounded-full blur-[100px] pointer-events-none" />

@@ -466,14 +466,14 @@ export default function Catalog() {
                   }}
                 >
                   {/* Image — 4:3 ratio keeps cards from being too tall */}
-                  <div className="relative aspect-[4/3] bg-muted overflow-hidden border-b border-border">
+                  <div className="relative aspect-[4/3] bg-muted overflow-hidden border-b border-border flex items-center justify-center">
                     {product.imageUrls?.length > 0 ? (
                       <img
                         src={product.imageUrls[0]}
                         alt={product.name}
                         loading="lazy"
                         decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">

@@ -6,6 +6,9 @@ import {
 } from 'lucide-react';
 import useSWR from 'swr';
 import NumberTicker from '@/components/ui/NumberTicker';
+import MagneticButton from '@/components/ui/MagneticButton';
+import FloatingBubbles from '@/components/ui/FloatingBubbles';
+import HexGrid from '@/components/ui/HexGrid';
 
 /* ══════════════════════════════════════════
    WebGL SHADER — Stitch aurora background
@@ -191,6 +194,9 @@ export default function Home() {
           <ShaderCanvas className="w-full h-full" />
         </div>
 
+        {/* Floating bubbles — chemistry themed */}
+        <FloatingBubbles count={18} />
+
         {/* Ambient glows */}
         <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-[#ff8f78]/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-[#729aff]/10 rounded-full blur-[120px] pointer-events-none" />
@@ -208,7 +214,7 @@ export default function Home() {
 
               {/* Headline */}
               <motion.h1 variants={fadeUp} custom={1}
-                className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-tight mb-6"
+                className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter leading-tight mb-6"
                 style={{ fontFamily: 'Space Grotesk' }}
               >
                 <span className="text-[#e2e8fc]">Precision Chemicals for</span><br/>
@@ -217,32 +223,36 @@ export default function Home() {
 
               {/* Subtext */}
               <motion.p variants={fadeUp} custom={2}
-                className="text-lg md:text-xl text-[#a4abbe] leading-relaxed mb-10 max-w-3xl"
+                className="text-base sm:text-lg md:text-xl text-[#a4abbe] leading-relaxed mb-10 max-w-3xl px-4"
               >
                 ChemiCrown delivers premium thinners, solvents, and specialized
                 industrial chemicals with uncompromising quality and reliable
                 distribution networks across India.
               </motion.p>
 
-              {/* Actions */}
+              {/* Actions — wrapped in MagneticButton */}
               <motion.div variants={fadeUp} custom={3}
                 className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
               >
-                <Link
-                  to="/catalog"
-                  className="inline-flex items-center justify-center px-8 py-4 bg-[#ff8f78] text-[#610a00] rounded font-bold text-lg hover:bg-[#ff775d] transition-all shadow-[0_0_20px_rgba(255,143,120,0.4)] hover:shadow-[0_0_30px_rgba(255,143,120,0.6)] group"
-                  style={{ fontFamily: 'Space Grotesk' }}
-                >
-                  Explore Products
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link
-                  to="/contact"
-                  className="inline-flex items-center justify-center px-8 py-4 border border-[#414858] text-[#e2e8fc] rounded font-bold text-lg hover:bg-[#1c263a] transition-colors"
-                  style={{ fontFamily: 'Space Grotesk' }}
-                >
-                  Contact Sales
-                </Link>
+                <MagneticButton>
+                  <Link
+                    to="/catalog"
+                    className="inline-flex items-center justify-center px-8 py-4 bg-[#ff8f78] text-[#610a00] rounded font-bold text-lg hover:bg-[#ff775d] transition-all shadow-[0_0_20px_rgba(255,143,120,0.4)] hover:shadow-[0_0_30px_rgba(255,143,120,0.6)] group"
+                    style={{ fontFamily: 'Space Grotesk' }}
+                  >
+                    Explore Products
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </MagneticButton>
+                <MagneticButton>
+                  <Link
+                    to="/contact"
+                    className="inline-flex items-center justify-center px-8 py-4 border border-[#414858] text-[#e2e8fc] rounded font-bold text-lg hover:bg-[#1c263a] transition-colors"
+                    style={{ fontFamily: 'Space Grotesk' }}
+                  >
+                    Contact Sales
+                  </Link>
+                </MagneticButton>
               </motion.div>
             </motion.div>
           </div>
@@ -261,7 +271,8 @@ export default function Home() {
 
       {/* ═══════ TRUST STATS BAR ═══════ */}
       <section className="py-12 bg-[#0b1323] border-y border-[#414858]/10 relative z-20">
-        <div className="container mx-auto px-6">
+        <HexGrid opacity={0.05} />
+        <div className="container mx-auto px-6 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-[#414858]/20">
             {STATS.map((s, i) => (
               <motion.div
@@ -287,9 +298,10 @@ export default function Home() {
 
       {/* ═══════ SUPPLY CHAIN PROCESS ═══════ */}
       <section className="py-32 relative bg-[#070e1c] overflow-hidden">
-        {/* Dot grid */}
-        <div className="absolute inset-0 opacity-50"
-          style={{ backgroundImage: 'radial-gradient(rgba(164,171,190,0.15) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+        {/* Hex grid background */}
+        <HexGrid opacity={0.06} />
+        <div className="absolute inset-0 opacity-30"
+          style={{ backgroundImage: 'radial-gradient(rgba(164,171,190,0.1) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
         />
 
         <div className="container mx-auto px-6 relative z-10">
@@ -402,7 +414,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
             {/* Bento 1: Purity — col-span-2 */}
             <motion.div
-              className="md:col-span-2 rounded-xl p-8 relative overflow-hidden flex flex-col justify-end group backdrop-blur-md bg-[#1c263a]/40 border border-white/5 hover:bg-[#1c263a]/60 hover:border-[#ff775d]/20 hover:-translate-y-0.5 transition-all duration-300"
+              className="md:col-span-2 rounded-xl p-8 relative overflow-hidden flex flex-col justify-end group backdrop-blur-md bg-[#1c263a]/40 border border-white/5 hover:bg-[#1c263a]/60 hover:border-[#ff775d]/20 hover:-translate-y-1 transition-all duration-500 ease-out"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -425,7 +437,7 @@ export default function Home() {
 
             {/* Bento 2: Speed */}
             <motion.div
-              className="rounded-xl p-8 relative overflow-hidden flex flex-col justify-between group backdrop-blur-md bg-[#1c263a]/40 border border-white/5 hover:bg-[#1c263a]/60 hover:border-[#ff775d]/20 hover:-translate-y-0.5 transition-all duration-300"
+              className="rounded-xl p-8 relative overflow-hidden flex flex-col justify-between group backdrop-blur-md bg-[#1c263a]/40 border border-white/5 hover:bg-[#1c263a]/60 hover:border-[#ff775d]/20 hover:-translate-y-1 transition-all duration-500 ease-out"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -445,7 +457,7 @@ export default function Home() {
 
             {/* Bento 3: ISO — col-span-3 (full width) */}
             <motion.div
-              className="md:col-span-3 rounded-xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 bg-gradient-to-r from-[#1c263a] to-[#070e1c] backdrop-blur-md border border-white/5 hover:border-[#ff775d]/20 hover:-translate-y-0.5 transition-all duration-300 group"
+              className="md:col-span-3 rounded-xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 bg-gradient-to-r from-[#1c263a] to-[#070e1c] backdrop-blur-md border border-white/5 hover:border-[#ff775d]/20 hover:-translate-y-1 transition-all duration-500 ease-out group"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -559,14 +571,19 @@ export default function Home() {
       </section>
 
       {/* ═══════ CTA ═══════ */}
-      <section className="py-24 relative overflow-hidden bg-gradient-to-br from-[#ff8f78] to-[#a70138]">
+      <section className="py-24 relative overflow-hidden bg-gradient-to-b from-[#0e1726] to-[#070e1c] border-t border-white/[0.06]">
+        {/* Glowing orange-red chemical aura */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#ff8f78]/8 rounded-full blur-[130px] pointer-events-none" />
+        
+        {/* Floating chemistry bubbles */}
+        <FloatingBubbles count={15} />
         {/* Texture */}
-        <div className="absolute inset-0 opacity-10 mix-blend-overlay"
+        <div className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none"
           style={{ backgroundImage: "url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8cGF0aCBkPSJNMCAwbDhfOFpNOCAwTDBfOHoiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=\")" }}
         />
         <div className="container mx-auto px-6 relative z-10 text-center">
           <motion.h2
-            className="text-4xl md:text-6xl font-black text-[#610a00] mb-8 max-w-4xl mx-auto leading-tight"
+            className="text-3xl sm:text-4xl md:text-6xl font-black text-white mb-8 max-w-4xl mx-auto leading-tight"
             style={{ fontFamily: 'Space Grotesk' }}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -576,7 +593,7 @@ export default function Home() {
             Ready to streamline your supply chain?
           </motion.h2>
           <motion.p
-            className="text-lg text-[#610a00]/80 mb-10 max-w-2xl mx-auto"
+            className="text-base sm:text-lg text-[#a4abbe] mb-10 max-w-2xl mx-auto px-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -590,14 +607,16 @@ export default function Home() {
             viewport={{ once: true }}
             transition={{ delay: 0.2, duration: 0.7 }}
           >
-            <Link
-              to="/register"
-              className="inline-flex items-center justify-center px-10 py-5 bg-[#070e1c] text-[#e2e8fc] rounded font-bold text-lg hover:bg-[#212c42] transition-all shadow-xl group"
-              style={{ fontFamily: 'Space Grotesk' }}
-            >
-              Create Customer Account
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform text-[#ff8f78]" />
-            </Link>
+            <MagneticButton intensity={10}>
+              <Link
+                to="/register"
+                className="inline-flex items-center justify-center px-10 py-5 bg-[#ff8f78] text-[#610a00] hover:bg-[#ff775d] rounded font-bold text-lg hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,143,120,0.2)] group"
+                style={{ fontFamily: 'Space Grotesk' }}
+              >
+                Create Customer Account
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform text-[#610a00]" />
+              </Link>
+            </MagneticButton>
           </motion.div>
         </div>
       </section>
