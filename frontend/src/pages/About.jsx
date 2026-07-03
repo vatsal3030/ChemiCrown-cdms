@@ -149,9 +149,9 @@ export default function About() {
       </section>
 
       {/* ═══════ STATS BAR — floating glass card with shimmer ═══════ */}
-      <section className="relative z-30 -mt-20 px-6 max-w-7xl mx-auto mb-20">
+      <section className="relative z-30 px-4 md:px-6 max-w-7xl mx-auto mb-12 md:mb-20">
         <motion.div
-          className="rounded-xl p-8 md:p-12 backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 relative overflow-hidden group"
+          className="rounded-xl p-6 md:p-12 backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 relative overflow-hidden group"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -159,7 +159,7 @@ export default function About() {
         >
           {/* Shimmer sweep */}
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-white/[0.04] to-transparent pointer-events-none" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 md:divide-x divide-[#414858]/30 relative z-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-12 md:divide-x divide-[#414858]/30 relative z-10">
             {STATS.map((s, i) => (
               <div key={s.label} className="text-center px-4">
                 <div className="text-4xl font-bold text-[#ff8f78] mb-2" style={{ fontFamily: 'Space Grotesk' }}>
@@ -173,7 +173,7 @@ export default function About() {
       </section>
 
       {/* ═══════ TIMELINE — Vertical center-line zigzag ═══════ */}
-      <section className="py-24 px-6 max-w-7xl mx-auto relative">
+      <section className="py-16 md:py-24 px-4 md:px-6 max-w-7xl mx-auto relative overflow-hidden">
         <HexGrid opacity={0.04} />
         <motion.div className="text-center mb-20 relative z-10"
           initial={{ opacity: 0, y: 30 }}
@@ -204,8 +204,8 @@ export default function About() {
               >
                 {/* Left content (for left-side cards) */}
                 {m.side === 'left' ? (
-                  <div className="md:w-1/2 flex justify-start md:justify-end pr-8 w-full text-left md:text-right ml-20 md:ml-0">
-                    <div className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-8 rounded-xl max-w-md w-full transition-transform duration-300 group-hover:-translate-y-1">
+                  <div className="md:w-1/2 flex justify-start md:justify-end md:pr-8 w-full text-left md:text-right pl-20 md:pl-0">
+                    <div className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-5 md:p-8 rounded-xl max-w-md w-full transition-transform duration-300 group-hover:-translate-y-1">
                       <h3 className="text-2xl font-bold text-[#e2e8fc] mb-3" style={{ fontFamily: 'Space Grotesk' }}>{m.title}</h3>
                       <p className="text-[#a4abbe]">{m.desc}</p>
                     </div>
@@ -230,8 +230,8 @@ export default function About() {
 
                 {/* Right content (for right-side cards) */}
                 {m.side === 'right' ? (
-                  <div className="md:w-1/2 flex justify-start pl-8 w-full ml-20 md:ml-0">
-                    <div className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-8 rounded-xl max-w-md w-full transition-transform duration-300 group-hover:-translate-y-1">
+                  <div className="md:w-1/2 flex justify-start md:pl-8 w-full pl-20 md:pl-0">
+                    <div className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-5 md:p-8 rounded-xl max-w-md w-full transition-transform duration-300 group-hover:-translate-y-1">
                       <h3 className="text-2xl font-bold text-[#e2e8fc] mb-3" style={{ fontFamily: 'Space Grotesk' }}>{m.title}</h3>
                       <p className="text-[#a4abbe]">{m.desc}</p>
                     </div>
@@ -246,12 +246,12 @@ export default function About() {
       </section>
 
       {/* ═══════ MISSION & VISION ═══════ */}
-      <section className="py-24 px-6 max-w-7xl mx-auto mb-32">
-        <div className="bg-[#0b1323]/50 rounded-3xl border border-[#414858]/10 p-8 md:p-12">
+      <section className="py-12 md:py-24 px-3 md:px-6 max-w-7xl mx-auto mb-12 md:mb-32">
+        <div className="bg-[#0b1323]/50 rounded-2xl md:rounded-3xl border border-[#414858]/10 p-4 md:p-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
             {/* Mission */}
             <motion.div
-              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-10 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 ease-out"
+              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-6 md:p-10 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 ease-out"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -271,7 +271,7 @@ export default function About() {
 
             {/* Vision */}
             <motion.div
-              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-10 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 ease-out"
+              className="backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 p-6 md:p-10 rounded-2xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 ease-out"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

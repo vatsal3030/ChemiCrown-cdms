@@ -116,17 +116,17 @@ export default function PublicLayout() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex flex-1 items-center justify-end space-x-6">
-            <nav className="flex items-center space-x-6 text-base font-medium">
+            <nav className="flex items-center space-x-1 text-base font-medium">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path;
                 return (
                   <Link 
                     key={link.name}
                     to={link.path} 
-                    className={`transition-colors hover:text-brand relative group ${isActive ? 'text-brand' : 'text-slate-300'}`}
+                    className={`px-3 py-2 rounded-lg transition-colors hover:text-brand hover:bg-white/[0.04] relative group ${isActive ? 'text-brand' : 'text-slate-300'}`}
                   >
                     {link.name}
-                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-brand transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                    <span className={`absolute bottom-0.5 left-3 right-3 h-0.5 bg-brand transition-all duration-300 ${isActive ? 'w-[calc(100%-1.5rem)]' : 'w-0 group-hover:w-[calc(100%-1.5rem)]'}`}></span>
                   </Link>
                 );
               })}
