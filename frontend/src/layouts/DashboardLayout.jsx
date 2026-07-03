@@ -60,7 +60,7 @@ const buildNavSections = (role, customerMode = false) => {
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER', 'SALES'].includes(role)) {
     ops.items.push({ name: 'Product Catalog', path: '/dashboard/catalog', icon: Store });
   }
-  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING', 'INVENTORY_MANAGER'].includes(role)) {
+  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {
     ops.items.push({ name: 'Orders', path: '/dashboard/orders', icon: ClipboardList });
   }
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER'].includes(role)) {
@@ -441,7 +441,7 @@ export default function DashboardLayout() {
             {/* Mobile menu */}
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 text-muted-foreground hover:bg-muted rounded-xl transition-colors"
+              className="md:hidden p-2 text-muted-foreground hover:bg-muted rounded-xl transition-colors"
             >
               <Menu size={20} className="text-muted-foreground" />
             </button>

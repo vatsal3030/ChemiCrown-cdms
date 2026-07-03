@@ -226,7 +226,7 @@ export default function PublicLayout() {
 
           {/* Mobile Hamburger Button */}
           <button 
-            className="md:hidden p-2 text-foreground focus:outline-none"
+            className="md:hidden p-2 text-white focus:outline-none"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
@@ -276,7 +276,7 @@ export default function PublicLayout() {
             <div className="h-px w-full bg-white/[0.06] my-2"></div>
             {storedAccounts && storedAccounts.length > 0 ? (
               <div className="space-y-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2">Quick Login</span>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">Quick Login</span>
                 {storedAccounts.map(account => (
                   <button 
                     key={account.id}
@@ -292,8 +292,8 @@ export default function PublicLayout() {
                         )}
                       </div>
                       <div className="text-left">
-                        <p className="text-sm font-bold text-foreground">{account.firstName}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{account.role.replace('_', ' ').toLowerCase()}</p>
+                        <p className="text-sm font-bold text-white">{account.firstName}</p>
+                        <p className="text-xs text-slate-400 capitalize">{account.role.replace('_', ' ').toLowerCase()}</p>
                       </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />

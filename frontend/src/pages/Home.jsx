@@ -188,7 +188,7 @@ export default function Home() {
     <div className="bg-[#070e1c] overflow-hidden text-[#e2e8fc]" style={{ fontFamily: 'Inter, sans-serif' }}>
 
       {/* ═══════ HERO ═══════ */}
-      <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
+      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden">
         {/* Shader background */}
         <div className="absolute inset-0 w-full h-full opacity-60 mix-blend-screen">
           <ShaderCanvas className="w-full h-full" />
@@ -260,7 +260,7 @@ export default function Home() {
 
         {/* Scroll indicator */}
         <motion.div
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center opacity-50"
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
         >

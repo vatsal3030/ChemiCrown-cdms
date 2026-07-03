@@ -139,7 +139,7 @@ export default function Contact() {
     <div className="bg-[#070e1c] text-[#e2e8fc] overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
 
       {/* ═══════ HERO ═══════ */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
+      <section className="relative py-10 md:py-14 overflow-hidden">
         {/* Floating bubbles */}
         <FloatingBubbles count={12} />
         {/* Ambient glows */}

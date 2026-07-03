@@ -110,7 +110,7 @@ export default function About() {
     <div className="bg-[#070e1c] text-[#e2e8fc] overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
 
       {/* ═══════ HERO ═══════ */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
         {/* Shader */}
         <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
           <ShaderCanvas className="w-full h-full" />
@@ -125,16 +125,16 @@ export default function About() {
         {/* Floating bubbles */}
         <FloatingBubbles count={12} className="z-[15]" />
 
-        <div className="relative z-30 max-w-7xl mx-auto px-6 text-center mt-16">
+        <div className="relative z-30 max-w-7xl mx-auto px-6 text-center">
           <motion.div initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}>
             <motion.div variants={fadeUp} custom={0}>
-              <span className="inline-block border border-[#ff8f78]/30 text-[#ff7257] text-sm uppercase tracking-widest px-4 py-1.5 rounded-full mb-8 bg-[#11192a]/30 backdrop-blur-sm"
+              <span className="inline-block border border-[#ff8f78]/30 text-[#ff7257] text-sm uppercase tracking-widest px-4 py-1.5 rounded-full mb-5 bg-[#11192a]/30 backdrop-blur-sm"
                 style={{ fontFamily: 'Space Grotesk' }}>
                 Established 1995
               </span>
             </motion.div>
             <motion.h1 variants={fadeUp} custom={1}
-              className="text-5xl md:text-7xl font-bold tracking-tight mb-6"
+              className="text-5xl md:text-7xl font-bold tracking-tight mb-4"
               style={{ fontFamily: 'Space Grotesk' }}
             >
               About <span className="text-[#ff8f78]">ChemiCrown</span>
@@ -149,7 +149,7 @@ export default function About() {
       </section>
 
       {/* ═══════ STATS BAR — floating glass card with shimmer ═══════ */}
-      <section className="relative z-30 -mt-20 px-6 max-w-7xl mx-auto mb-32">
+      <section className="relative z-30 -mt-20 px-6 max-w-7xl mx-auto mb-20">
         <motion.div
           className="rounded-xl p-8 md:p-12 backdrop-blur-[12px] bg-[#161f32]/40 border border-[#6f7587]/20 relative overflow-hidden group"
           initial={{ opacity: 0, y: 40 }}
