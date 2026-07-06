@@ -106,20 +106,37 @@ export default function Payroll() {
 
 
 
-  const handleBulkPay = async () => {
+  const [showBulkPayModal, setShowBulkPayModal] = useState(false);
+  const [bulkPaymentMethod, setBulkPaymentMethod] = useState('BANK_TRANSFER');
+  const [isProcessingBulkPay, setIsProcessingBulkPay] = useState(false);
+
+  const triggerBulkPay = () => {
     const pending = salaries.filter(s => s.status === 'PENDING');
     if (pending.length === 0) return toast.error('No pending slips');
-    if (!window.confirm(`Mark ALL ${pending.length} pending slips for ${month} as PAID via Bank Transfer?`)) return;
+    setShowBulkPayModal(true);
+  };
+
+  const handleBulkPayConfirm = async () => {
+    setIsProcessingBulkPay(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/bulk-pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ month, paymentMethod: 'BANK_TRANSFER' })
+        body: JSON.stringify({ month, paymentMethod: bulkPaymentMethod })
       });
       const json = await res.json();
-      if (json.success) { toast.success(json.message); fetchSalaries(); }
-      else toast.error(json.message || 'Failed');
-    } catch { toast.error('Network error'); }
+      if (json.success) {
+        toast.success(json.message);
+        setShowBulkPayModal(false);
+        fetchSalaries();
+      } else {
+        toast.error(json.message || 'Failed to process bulk payment');
+      }
+    } catch {
+      toast.error('Network error processing bulk payment');
+    } finally {
+      setIsProcessingBulkPay(false);
+    }
   };
 
   const handleDeleteSlip = async (id) => {
@@ -186,7 +203,7 @@ export default function Payroll() {
             className="px-3 py-2 rounded-xl border border-border bg-card text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {pendingCount > 0 && (
-            <Button variant="outline" onClick={handleBulkPay} className="gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50">
+            <Button variant="outline" onClick={triggerBulkPay} className="gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50">
               <Users size={15} /> Bulk Pay ({pendingCount})
             </Button>
           )}
@@ -458,6 +475,54 @@ export default function Payroll() {
           </div>
         )}
       </div>
+
+      {/* Choice Modal for Bulk Payment Options */}
+      {showBulkPayModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Bulk Disburse Salary</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Process payments for all {salaries.filter(s => s.status === 'PENDING').length} pending slips for {month}.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Payment Method</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'BANK_TRANSFER', label: 'Bank Transfer' },
+                  { key: 'CASH', label: 'Cash' },
+                  { key: 'UPI', label: 'UPI' },
+                  { key: 'CHEQUE', label: 'Cheque' }
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setBulkPaymentMethod(opt.key)}
+                    className={`p-3 rounded-xl border text-left text-sm font-semibold transition-all ${
+                      bulkPaymentMethod === opt.key 
+                        ? 'border-primary bg-primary/10 text-primary' 
+                        : 'border-border hover:border-primary/45 hover:bg-muted text-foreground'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="outline" onClick={() => setShowBulkPayModal(false)} disabled={isProcessingBulkPay}>
+                Cancel
+              </Button>
+              <Button onClick={handleBulkPayConfirm} disabled={isProcessingBulkPay}>
+                {isProcessingBulkPay ? 'Processing...' : 'Confirm Disburse'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -30,6 +30,8 @@ export default function PayrollPaymentPage() {
   const [remarks, setRemarks] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState('');
 
+  const [successData, setSuccessData] = useState(null);
+
   // Reset fields when payment method changes
   useEffect(() => {
     setTransactionRef('');
@@ -85,8 +87,8 @@ export default function PayrollPaymentPage() {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success(`Salary paid via ${method}!`);
-        navigate('/dashboard/payroll');
+        toast.success(`Salary paid successfully!`);
+        setSuccessData(json.data);
       } else {
         toast.error(json.message || 'Payment failed');
       }
@@ -103,6 +105,90 @@ export default function PayrollPaymentPage() {
   const emp = slip.employee;
   const empUser = emp?.user;
   const selectedMethod = PAYMENT_METHODS.find(m => m.key === method);
+
+  if (successData) {
+    const selectedSuccessMethod = PAYMENT_METHODS.find(m => m.key === successData.paymentMethod);
+    
+    return (
+      <div className="max-w-xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+        <div className="flex items-center gap-3 no-print">
+          <button onClick={() => setSuccessData(null)} className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground">
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold text-foreground">Payment Receipt</h1>
+            <p className="text-xs text-muted-foreground">Transaction completed successfully</p>
+          </div>
+        </div>
+
+        {/* Printable Receipt Card */}
+        <div className="bg-card border border-border rounded-2xl shadow-xl p-8 printable-document" id="printable-receipt">
+          <div className="text-center pb-6 border-b border-border">
+            <CheckCircle2 size={48} className="text-emerald-500 mx-auto mb-3 no-print" />
+            <h2 className="text-xl font-extrabold text-foreground tracking-tight">SALARY DISBURSEMENT RECEIPT</h2>
+            <p className="text-xs text-muted-foreground mt-1 font-semibold uppercase tracking-wider">ChemiCrown Distributors</p>
+          </div>
+
+          <div className="py-6 space-y-4 border-b border-border">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Employee Name</span>
+              <span className="font-semibold text-foreground">{empUser?.firstName} {empUser?.lastName}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Designation</span>
+              <span className="font-medium text-foreground capitalize">{emp?.designation?.toLowerCase()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Salary Period</span>
+              <span className="font-semibold text-foreground">{slip.month}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Disbursed Date</span>
+              <span className="font-medium text-foreground">{new Date(successData.paidAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Payment Method</span>
+              <span className="font-semibold text-foreground flex items-center gap-1">
+                {selectedSuccessMethod?.label || successData.paymentMethod}
+              </span>
+            </div>
+            {successData.transactionRef && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Transaction Reference</span>
+                <span className="font-mono font-bold text-primary">{successData.transactionRef}</span>
+              </div>
+            )}
+            {successData.bankUsed && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Bank Used</span>
+                <span className="font-medium text-foreground">{successData.bankUsed}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-6">
+            <div className="flex justify-between items-end bg-primary/5 dark:bg-primary/10 rounded-xl p-4 border border-primary/10">
+              <span className="text-sm font-semibold text-muted-foreground">Total Paid Amount</span>
+              <span className="text-2xl font-black text-primary">₹{successData.netPay?.toFixed(2) || slip.netPay.toFixed(2)}</span>
+            </div>
+          </div>
+          
+          <div className="mt-8 text-center text-[10px] text-muted-foreground uppercase tracking-wider font-semibold border-t border-dashed border-border pt-4">
+            🔒 System Generated Document · Authentic Audit Log
+          </div>
+        </div>
+
+        <div className="flex gap-3 justify-end no-print">
+          <Button variant="outline" onClick={() => window.print()} className="gap-2">
+            <Printer size={15} /> Print Receipt
+          </Button>
+          <Button onClick={() => navigate('/dashboard/payroll')} className="gap-2">
+            Return to Payroll Hub
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">

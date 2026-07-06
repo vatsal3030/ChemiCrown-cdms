@@ -240,13 +240,19 @@ export default function Dashboard() {
             <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">No revenue data yet</div>
           ) : (
             <ResponsiveContainer width="100%" minHeight={220} height={220} minWidth={0}>
-              <BarChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={8} />
+              <BarChart data={revenueData} margin={{ top: 10, right: 5, left: -10, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ff8f78" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#ff5c3e" stopOpacity={0.85} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} dy={8} />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#94A3B8', fontSize: 12 }}
+                  tick={{ fill: '#94A3B8', fontSize: 11 }}
                   tickFormatter={v => formatINR(v)}
                   width={55}
                 />
@@ -256,7 +262,7 @@ export default function Dashboard() {
                   cursor={{ fill: 'var(--muted)', radius: 4 }}
                   labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
                 />
-                <Bar dataKey="value" fill="var(--primary)" radius={[6, 6, 0, 0]} barSize={40} />
+                <Bar dataKey="value" fill="url(#revenueGrad)" radius={[6, 6, 0, 0]} barSize={36} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -351,15 +357,22 @@ export default function Dashboard() {
             <div className="h-56 flex items-center justify-center text-muted-foreground text-sm">No inventory data</div>
           ) : (
             <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
-              <BarChart data={inventoryData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <BarChart data={inventoryData} margin={{ top: 10, right: 5, left: -20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="stockGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} dy={8} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} width={35} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} width={35} />
                 <Tooltip
-                  contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--card)' }}
+                  contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
                   cursor={{ fill: 'var(--muted)', radius: 4 }}
+                  labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
                 />
-                <Bar dataKey="stock" fill="var(--secondary)" radius={[6, 6, 0, 0]} barSize={36} />
+                <Bar dataKey="stock" fill="url(#stockGrad)" radius={[6, 6, 0, 0]} barSize={32} />
               </BarChart>
             </ResponsiveContainer>
           )}

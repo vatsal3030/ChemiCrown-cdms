@@ -5,10 +5,10 @@ import { useEffect, useRef, useState, useCallback } from 'react';
  *
  * Micro-interactions:
  *  • Move      → flask tilts with velocity, liquid sloshes
- *  • Hover     → flask tilts ~15°, liquid heats up, bubbles intensify
- *  • Click     → liquid drops splash outward, level drops then refills
- *  • Shake     → agitation: more bubbles, wilder waves, flask vibrates
- *  • Intense   → exothermic overflow: foam erupts, flask scales, green flash
+ *  • Hover     → flask tilts ~15°, liquid heats up, bubbles intensify, precision target dot appears
+ *  • Click     → liquid droplets splash outward, level drops then refills
+ *  • Shake     → agitation: flask grows, wilder waves, intense bubble speed
+ *  • Intense   → exothermic overflow: foam erupts, shockwave shock, pops background bubbles, color shift
  *  • Text      → clean orange I-beam cursor
  */
 export default function ChemiCursor() {
@@ -47,6 +47,11 @@ export default function ChemiCursor() {
   const isOverflowing = useRef(false);
   const overflowCooldown = useRef(0);
 
+  // ── Shockwave ring ──
+  const shockwaveRef = useRef(null);
+  const shockwaveScale = useRef(0);
+  const shockwaveOpacity = useRef(0);
+
   // ── Bubble animation refs ──
   const bubble1Ref = useRef(null);
   const bubble2Ref = useRef(null);
@@ -79,16 +84,16 @@ export default function ChemiCursor() {
 
     const handleMouseDown = () => {
       // ── Click: spawn splash droplets + drop liquid level ──
-      const numDroplets = 5 + Math.floor(Math.random() * 3);
+      const numDroplets = 6 + Math.floor(Math.random() * 4);
       const newParticles = [];
       for (let i = 0; i < numDroplets; i++) {
         const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.8;
-        const speed = 1.5 + Math.random() * 3;
+        const speed = 2 + Math.random() * 3.5;
         const colors = ['#ff7257', '#ff8f78', '#729aff', '#ffb347'];
         newParticles.push({
           x: 12, y: 2,                               // flask mouth position
           vx: Math.cos(angle) * speed + vx.current * 0.3,
-          vy: Math.sin(angle) * speed - 1.5,
+          vy: Math.sin(angle) * speed - 2.0,
           life: 1,
           radius: 1 + Math.random() * 1.5,
           color: colors[Math.floor(Math.random() * colors.length)],
@@ -115,15 +120,28 @@ export default function ChemiCursor() {
     const handleMouseOver = (e) => {
       const t = e.target;
       if (!t) return;
-      if (t.closest('a, button, [role="button"], [onclick], .cursor-pointer, select, input[type="submit"], input[type="button"], label')) setIsHover(true);
-      if (t.closest('input[type="text"], input[type="email"], input[type="tel"], input[type="search"], input[type="password"], textarea')) setIsText(true);
+      
+      // Checking computed style cursor is pointer captures checkboxes, buttons, custom cards, etc.
+      const computedCursor = window.getComputedStyle(t).cursor;
+      const isClickable = computedCursor === 'pointer' || t.closest('a, button, [role="button"], [onclick], .cursor-pointer, select, input[type="submit"], input[type="button"], input[type="checkbox"], input[type="radio"], label');
+      const isTextInput = t.closest('input[type="text"], input[type="email"], input[type="tel"], input[type="search"], input[type="password"], textarea');
+      
+      if (isClickable) setIsHover(true);
+      if (isTextInput) setIsText(true);
     };
+    
     const handleMouseOut = (e) => {
       const t = e.target;
       if (!t) return;
-      if (t.closest('a, button, [role="button"], [onclick], .cursor-pointer, select, input[type="submit"], input[type="button"], label')) setIsHover(false);
-      if (t.closest('input[type="text"], input[type="email"], input[type="tel"], input[type="search"], input[type="password"], textarea')) setIsText(false);
+      
+      const computedCursor = window.getComputedStyle(t).cursor;
+      const isClickable = computedCursor === 'pointer' || t.closest('a, button, [role="button"], [onclick], .cursor-pointer, select, input[type="submit"], input[type="button"], input[type="checkbox"], input[type="radio"], label');
+      const isTextInput = t.closest('input[type="text"], input[type="email"], input[type="tel"], input[type="search"], input[type="password"], textarea');
+      
+      if (!isClickable) setIsHover(false);
+      if (!isTextInput) setIsText(false);
     };
+    
     document.addEventListener('mouseover', handleMouseOver);
     document.addEventListener('mouseout', handleMouseOut);
 
@@ -139,9 +157,10 @@ export default function ChemiCursor() {
           wrapperRef.current.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
         }
       } else {
-        // ── Smooth lag tracking ──
-        currentPos.current.x += (targetX - currentPos.current.x) * 0.15;
-        currentPos.current.y += (targetY - currentPos.current.y) * 0.15;
+        // ── Snappier physics (lerps faster on hover for high precision) ──
+        const lerpFactor = isHover ? 0.85 : 0.32;
+        currentPos.current.x += (targetX - currentPos.current.x) * lerpFactor;
+        currentPos.current.y += (targetY - currentPos.current.y) * lerpFactor;
 
         // ── Velocity (clamped to prevent accumulation bug) ──
         const dx = targetX - lastMousePos.current.x;
@@ -162,7 +181,7 @@ export default function ChemiCursor() {
 
         // Shake intensity: builds up from direction reversals + velocity
         if (reversals >= 3 && absVx > 5) {
-          const gain = reversals >= 6 ? 0.04 : 0.02;
+          const gain = reversals >= 6 ? 0.05 : 0.03;
           shakeIntensity.current = Math.min(1.2, shakeIntensity.current + gain);
         }
         // Natural decay
@@ -173,22 +192,48 @@ export default function ChemiCursor() {
         if (shakeIntensity.current > 0.85 && overflowCooldown.current <= 0) {
           isOverflowing.current = true;
           overflowCooldown.current = 120; // ~2 seconds at 60fps
+          
+          // Reset shake intensity immediately so it pops back to normal scale
+          shakeIntensity.current = 0;
+          
+          // Trigger shockwave ring
+          shockwaveScale.current = 0.5;
+          shockwaveOpacity.current = 0.9;
+          
           // Spawn foam particles
-          const numFoam = 10 + Math.floor(Math.random() * 5);
+          const numFoam = 12 + Math.floor(Math.random() * 6);
           for (let i = 0; i < numFoam; i++) {
             foamParticles.current.push({
               x: 9 + Math.random() * 6,
               y: 2,
-              vx: (Math.random() - 0.5) * 3,
-              vy: -(1.5 + Math.random() * 3),
+              vx: (Math.random() - 0.5) * 4.5,
+              vy: -(2.2 + Math.random() * 3.8),
               life: 1,
-              radius: 1.2 + Math.random() * 2,
+              radius: 1.2 + Math.random() * 2.2,
               opacity: 0.9,
             });
           }
+          
+          // Dispatch bubble pop event
+          window.dispatchEvent(new CustomEvent('chemicrown-burst', {
+            detail: { x: currentPos.current.x, y: currentPos.current.y }
+          }));
         }
+        
         if (overflowCooldown.current > 0) overflowCooldown.current--;
         if (overflowCooldown.current <= 60) isOverflowing.current = false;
+
+        // Animate shockwave
+        if (shockwaveOpacity.current > 0) {
+          shockwaveScale.current += 0.12;
+          shockwaveOpacity.current -= 0.025;
+          if (shockwaveRef.current) {
+            shockwaveRef.current.setAttribute('r', String(20 + shockwaveScale.current * 40));
+            shockwaveRef.current.setAttribute('opacity', String(Math.max(0, shockwaveOpacity.current)));
+          }
+        } else if (shockwaveRef.current) {
+          shockwaveRef.current.setAttribute('opacity', '0');
+        }
 
         // ── Liquid level interpolation ──
         liquidLevel.current += (targetLiquidLevel.current - liquidLevel.current) * 0.05;
@@ -211,8 +256,8 @@ export default function ChemiCursor() {
         // Hard clamp rotation to prevent structural distortion
         rotate.current = Math.max(-40, Math.min(40, rotate.current));
 
-        // ── Flask scale (grows with agitation) ──
-        const targetScale = 1 + shake * 0.18;
+        // ── Flask scale (grows bigger on shake up to 4x for swelling blast effect) ──
+        const targetScale = 1 + Math.min(3, (shakeIntensity.current / 0.85) * 3);
         flaskScale.current += (targetScale - flaskScale.current) * 0.1;
 
         // ── Apply transforms ──
@@ -228,8 +273,8 @@ export default function ChemiCursor() {
           const baseAmp = isHover ? 1.6 : 0.8;
           const shakeAmp = shake * 3;
           const wave = Math.sin(waveTime.current) * (baseAmp + shakeAmp) + (vx.current * 0.08);
-          // Liquid Y position based on level (higher level = lower Y = more fill)
-          const liqY = 24 - liquidLevel.current * 22; // range: ~11 (full) to ~19 (low)
+          // Liquid Y position based on level
+          const liqY = 24 - liquidLevel.current * 22; 
           liquidRef.current.setAttribute('d',
             `M -2 ${liqY + wave} Q 12 ${liqY - wave} 26 ${liqY + wave} L 26 26 L -2 26 Z`
           );
@@ -351,7 +396,7 @@ export default function ChemiCursor() {
           ref={outerRef}
           style={{ transformOrigin: '12px 2px' }}
         >
-          <svg viewBox="-6 -8 36 42" width="36" height="42" className="overflow-visible drop-shadow-[0_2px_8px_rgba(255,143,120,0.2)]">
+          <svg viewBox="-12 -12 48 54" width="48" height="54" className="overflow-visible drop-shadow-[0_2px_8px_rgba(255,143,120,0.2)]">
             <defs>
               {/* Clip path inside flask geometry */}
               <clipPath id="flask-clip">
@@ -366,6 +411,9 @@ export default function ChemiCursor() {
                 </feMerge>
               </filter>
             </defs>
+
+            {/* Shockwave circle for explosions */}
+            <circle ref={shockwaveRef} cx="12" cy="2" r="0" fill="none" stroke="#7eff66" strokeWidth="1.5" opacity="0" />
 
             {/* Clipped liquid inside the flask */}
             <g clipPath="url(#flask-clip)">
@@ -412,6 +460,10 @@ export default function ChemiCursor() {
               strokeLinecap="round"
               className="opacity-70 transition-colors duration-300"
             />
+
+            {/* Precision target dot (placed at exact click point: x=12, y=2) */}
+            <circle cx="12" cy="2" r="1.8" fill="#ff4d2c" opacity={isHover ? 0.95 : 0} style={{ transition: 'opacity 0.15s ease' }} />
+            <circle cx="12" cy="2" r="4" fill="none" stroke="#ff4d2c" strokeWidth="0.8" opacity={isHover ? 0.7 : 0} style={{ transition: 'opacity 0.15s ease' }} />
 
             {/* Dynamic splash + foam particles (rendered by tick loop) */}
             <g ref={splashSvgRef} filter="url(#flask-glow)" />

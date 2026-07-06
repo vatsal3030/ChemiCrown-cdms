@@ -119,14 +119,29 @@ export default function Settings() {
   }, [otpTimer]);
 
   // Notifications
-  const [notifPrefs, setNotifPrefs] = useState({
-    orderUpdates: true,
-    lowInventory: true,
-    newCustomers: true,
-    payrollReady: false,
-    taskAssigned: true,
-    loginAlerts: false
+  const [notifPrefs, setNotifPrefs] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`chemicrown_notif_prefs_${user?.id}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      orderUpdates: true,
+      lowInventory: true,
+      newCustomers: true,
+      payrollReady: false,
+      taskAssigned: true,
+      loginAlerts: false
+    };
   });
+
+  const handleSaveNotifPrefs = () => {
+    try {
+      localStorage.setItem(`chemicrown_notif_prefs_${user?.id}`, JSON.stringify(notifPrefs));
+      toast.success('Notification preferences saved successfully!');
+    } catch {
+      toast.error('Failed to save preferences');
+    }
+  };
   
   const [customerMode, setCustomerMode] = useState(() => localStorage.getItem('customerMode') !== 'false');
 
@@ -584,7 +599,7 @@ export default function Settings() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => toast.success('Preferences saved!')} className="gap-2">
+                <Button onClick={handleSaveNotifPrefs} className="gap-2">
                   <Save size={15} /> Save Preferences
                 </Button>
               </div>

@@ -5,6 +5,7 @@ import {
   Eye, EyeOff, CreditCard, MapPin, Info
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ChemiCursor from '@/components/ui/ChemiCursor';
 
 // GST validation: standard Indian GSTIN format (15 alphanumeric chars)
 const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
@@ -149,13 +150,15 @@ export default function Register() {
   );
 
   return (
-    <div className="flex-1 flex items-stretch min-h-0 bg-muted/30">
+    <div className="flex-1 flex items-stretch min-h-[calc(100vh-4rem)] bg-muted/30">
       {/* ── Left Brand Panel (desktop) ── */}
       <div className="hidden lg:flex flex-col justify-between w-[380px] shrink-0 bg-primary text-primary-foreground p-10 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
         <div className="relative z-10">
-          <img src="/chemicrown.png" alt="ChemiCrown" className="h-12 w-12 object-contain mb-8 rounded-lg" />
+          <Link to="/" className="inline-block mb-8">
+            <img src="/chemicrown.png" alt="ChemiCrown" className="h-12 w-12 object-contain rounded-lg" />
+          </Link>
           <h1 className="text-2xl font-extrabold leading-tight mb-3">Join ChemiCrown</h1>
           <p className="text-primary-foreground/70 text-sm leading-relaxed">
             Create your company account to access wholesale pricing, real-time inventory, and instant quotations.
@@ -174,11 +177,13 @@ export default function Register() {
       </div>
 
       {/* ── Right Form Panel ── */}
-      <div className="flex-1 flex items-center justify-center px-4 py-6 overflow-y-auto">
+      <div className="flex-grow flex-1 flex items-center justify-center px-4 py-6 overflow-y-auto">
         <div className="w-full max-w-5xl">
           {/* Mobile logo */}
           <div className="flex justify-center mb-5 lg:hidden">
-            <img src="/chemicrown.png" alt="ChemiCrown" className="h-10 w-10 object-contain rounded-lg" />
+            <Link to="/">
+              <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-10 w-10 object-contain rounded-lg" />
+            </Link>
           </div>
 
           <h2 className="text-2xl font-extrabold text-foreground mb-0.5">Create an Account</h2>

@@ -91,10 +91,14 @@ export default function PublicLayout() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleQuickLogin = (accountId) => {
-    switchAccount(accountId);
-    toast.success('Switched account');
-    navigate('/dashboard');
+  const handleQuickLogin = async (accountId) => {
+    const success = await switchAccount(accountId);
+    if (success) {
+      toast.success('Successfully switched account!');
+      navigate('/dashboard');
+    } else {
+      toast.error('This account session has expired or is invalid. Removed from list.');
+    }
   };
 
   const navLinks = [
@@ -153,64 +157,68 @@ export default function PublicLayout() {
                 )}
               </Link>
               
-              {storedAccounts && storedAccounts.length > 0 ? (
+              {user ? (
                 <div 
-                  className="relative"
+                  className="relative flex items-center gap-3"
                   ref={menuRef}
                 >
+                  {/* Quick Dashboard link */}
+                  <Link to="/dashboard" className="hidden sm:inline-flex items-center text-xs font-bold bg-brand/10 hover:bg-brand/20 text-brand px-3.5 py-2 rounded-xl transition-all duration-200">
+                    Dashboard
+                  </Link>
+
                   <button 
                     onClick={() => setAccountMenuOpen(v => !v)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-white/10 transition-colors"
                   >
-                    <div className="flex -space-x-2">
-                      {storedAccounts.slice(0, 3).map((account, i) => (
-                        <div key={account.id} className={`w-8 h-8 rounded-full border-2 border-ink bg-brand/20 text-brand flex items-center justify-center font-bold text-xs shrink-0 z-${30-i*10}`}>
-                          {account.profileImageUrl ? (
-                            <img src={account.profileImageUrl} alt={account.firstName} className="w-full h-full object-cover rounded-full" />
-                          ) : (
-                            account.firstName ? account.firstName.charAt(0) : 'U'
-                          )}
-                        </div>
-                      ))}
+                    <div className="w-8 h-8 rounded-full bg-brand/20 text-brand flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden border border-white/10">
+                      {user.profileImageUrl ? (
+                        <img src={user.profileImageUrl} alt={user.firstName} className="w-full h-full object-cover" />
+                      ) : (
+                        user.firstName ? user.firstName.charAt(0) : 'U'
+                      )}
                     </div>
                     <ChevronDown className="w-4 h-4 text-slate-500" />
                   </button>
                   
                   {accountMenuOpen && (
                     <div className="absolute right-0 top-full pt-2 w-64 z-50">
-                      <div className="bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 py-2">
-                        <div className="px-3 py-2 border-b border-border mb-1">
-                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Quick Login</span>
+                      <div className="bg-card border border-border rounded-xl shadow-xl overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                        <div className="px-4 py-2 border-b border-border">
+                          <p className="text-sm font-bold text-foreground truncate">{user.firstName} {user.lastName}</p>
+                          <p className="text-xs text-muted-foreground capitalize truncate">{user.role?.replace(/_/g, ' ').toLowerCase()}</p>
                         </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {storedAccounts.map(account => (
+                        <div className="p-2 border-b border-border">
+                          <Link to="/dashboard" onClick={() => setAccountMenuOpen(false)} className="w-full text-center block py-2 text-sm bg-brand text-white font-semibold rounded-lg hover:bg-brand/90 transition-colors">
+                            Go to Dashboard
+                          </Link>
+                        </div>
+                        {storedAccounts.filter(a => a.id !== user.id).length > 0 && (
+                          <div className="max-h-40 overflow-y-auto py-1 border-b border-border">
+                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-4 py-1.5 block">Switch Account</span>
+                            {storedAccounts.filter(a => a.id !== user.id).map(account => (
+                              <button 
+                                key={account.id}
+                                onClick={() => { handleQuickLogin(account.id); setAccountMenuOpen(false); }}
+                                className="w-full flex items-center justify-between px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group text-left"
+                              >
+                                <div className="truncate">
+                                  <p className="text-xs font-semibold text-foreground truncate">{account.firstName} {account.lastName}</p>
+                                  <p className="text-[10px] text-muted-foreground capitalize truncate">{account.role?.replace(/_/g, ' ').toLowerCase()}</p>
+                                </div>
+                                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="p-2 pb-0">
                           <button 
-                            key={account.id}
-                            onClick={() => handleQuickLogin(account.id)}
-                            className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+                            onClick={() => { useAuth().logout(); setAccountMenuOpen(false); toast.success('Signed out'); }} 
+                            className="w-full text-center block py-2 text-sm text-red-500 font-medium hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
-                                {account.profileImageUrl ? (
-                                  <img src={account.profileImageUrl} alt={account.firstName} className="w-full h-full object-cover rounded-full" />
-                                ) : (
-                                  account.firstName ? account.firstName.charAt(0) : 'U'
-                                )}
-                              </div>
-                              <div className="text-left overflow-hidden">
-                                <p className="text-sm font-bold text-foreground truncate">{account.firstName}</p>
-                                <p className="text-xs text-muted-foreground capitalize truncate">{account.role.replace('_', ' ').toLowerCase()}</p>
-                              </div>
-                            </div>
-                            <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary shrink-0 transition-colors" />
+                            Sign Out
                           </button>
-                        ))}
-                      </div>
-                      <div className="border-t border-border mt-1 p-2 pb-0">
-                        <Link to="/login" className="w-full text-center block py-2 text-sm text-primary font-medium hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                          Add another account
-                        </Link>
-                      </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -274,34 +282,64 @@ export default function PublicLayout() {
               </button>
             </div>
             <div className="h-px w-full bg-white/[0.06] my-2"></div>
-            {storedAccounts && storedAccounts.length > 0 ? (
-              <div className="space-y-2">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">Quick Login</span>
-                {storedAccounts.map(account => (
-                  <button 
-                    key={account.id}
-                    onClick={() => { setMobileMenuOpen(false); handleQuickLogin(account.id); }}
-                    className="w-full flex items-center justify-between p-3 rounded-lg border border-white/[0.06] hover:bg-white/[0.06] transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden shrink-0">
-                        {account.profileImageUrl ? (
-                          <img src={account.profileImageUrl} alt={account.firstName} className="w-full h-full object-cover" />
-                        ) : (
-                          account.firstName ? account.firstName.charAt(0) : 'U'
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-white">{account.firstName}</p>
-                        <p className="text-xs text-slate-400 capitalize">{account.role.replace('_', ' ').toLowerCase()}</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
-                  </button>
-                ))}
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center py-3 text-accent-cobalt font-medium border border-accent-cobalt/20 rounded-md mt-2">
-                  Add another account
+            {user ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                  <div className="w-10 h-10 rounded-full bg-brand/20 text-brand flex items-center justify-center font-bold overflow-hidden border border-white/10">
+                    {user.profileImageUrl ? (
+                      <img src={user.profileImageUrl} alt={user.firstName} className="w-full h-full object-cover" />
+                    ) : (
+                      user.firstName ? user.firstName.charAt(0) : 'U'
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">{user.firstName} {user.lastName}</p>
+                    <p className="text-xs text-slate-400 capitalize">{user.role?.replace(/_/g, ' ').toLowerCase()}</p>
+                  </div>
+                </div>
+
+                <Link 
+                  to="/dashboard" 
+                  onClick={() => setMobileMenuOpen(false)} 
+                  className="block w-full text-center py-3 bg-brand text-white font-bold rounded-lg hover:bg-brand/90 transition-colors"
+                >
+                  Go to Dashboard
                 </Link>
+
+                {storedAccounts.filter(a => a.id !== user.id).length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-white/[0.06]">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">Switch Account</span>
+                    {storedAccounts.filter(a => a.id !== user.id).map(account => (
+                      <button 
+                        key={account.id}
+                        onClick={() => { setMobileMenuOpen(false); handleQuickLogin(account.id); }}
+                        className="w-full flex items-center justify-between p-3 rounded-lg border border-white/[0.06] hover:bg-white/[0.06] transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden shrink-0">
+                            {account.profileImageUrl ? (
+                              <img src={account.profileImageUrl} alt={account.firstName} className="w-full h-full object-cover" />
+                            ) : (
+                              account.firstName ? account.firstName.charAt(0) : 'U'
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-white">{account.firstName}</p>
+                            <p className="text-[10px] text-slate-400 capitalize">{account.role?.replace(/_/g, ' ').toLowerCase()}</p>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => { useAuth().logout(); setMobileMenuOpen(false); toast.success('Signed out'); }} 
+                  className="block w-full text-center py-2.5 text-red-500 font-semibold border border-red-500/20 hover:bg-red-500/10 rounded-lg mt-2"
+                >
+                  Sign Out
+                </button>
               </div>
             ) : (
               <>
@@ -321,48 +359,48 @@ export default function PublicLayout() {
 
       {/* Footer — dark-mode-first */}
       <Reveal direction="up" amount={0.1}>
-      <footer className="border-t border-white/[0.05] bg-ink-2 py-8 md:py-12">
-        <div className="container px-4 mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-3 mb-6">
-              <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-8 w-8 object-contain" />
-              <span className="font-extrabold text-xl text-white tracking-tight">ChemiCrown</span>
+        <footer className="border-t border-white/[0.05] bg-ink-2 py-8 md:py-12">
+          <div className="container px-4 mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex items-center space-x-3 mb-6">
+                <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-8 w-8 object-contain" />
+                <span className="font-extrabold text-xl text-white tracking-tight">ChemiCrown</span>
+              </div>
+              <p className="text-base text-slate-400 mb-6 max-w-sm leading-relaxed">
+                India's leading chemical distributor. Delivering high-quality industrial solvents, thinners, and specialty chemicals with precision and trust.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-slate-400 text-sm">
+                  <MapPin className="w-4 h-4 text-brand shrink-0" /> Plot No - 26, Shed No - 4, Madhav Industrial Park, Vartej, Bhavnagar. 364004
+                </div>
+                <div className="flex items-center gap-3 text-slate-400 text-sm">
+                  <Phone className="w-4 h-4 text-brand shrink-0" /> +91 - 7043180599 / 8530903009
+                </div>
+                <div className="flex items-center gap-3 text-slate-400 text-sm">
+                  <Mail className="w-4 h-4 text-brand shrink-0" /> chemicrown402@gmail.com
+                </div>
+              </div>
             </div>
-            <p className="text-base text-slate-400 mb-6 max-w-sm leading-relaxed">
-              India's leading chemical distributor. Delivering high-quality industrial solvents, thinners, and specialty chemicals with precision and trust.
-            </p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-slate-400 text-sm">
-                <MapPin className="w-4 h-4 text-brand shrink-0" /> Plot No - 26, Shed No - 4, Madhav Industrial Park, Vartej, Bhavnagar. 364004
-              </div>
-              <div className="flex items-center gap-3 text-slate-400 text-sm">
-                <Phone className="w-4 h-4 text-brand shrink-0" /> +91 - 7043180599 / 8530903009
-              </div>
-              <div className="flex items-center gap-3 text-slate-400 text-sm">
-                <Mail className="w-4 h-4 text-brand shrink-0" /> chemicrown402@gmail.com
-              </div>
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-white">Quick Links</h3>
+              <ul className="space-y-3 text-base text-slate-400">
+                <li><Link to="/about" className="hover:text-accent-cobalt transition-colors">About Us</Link></li>
+                <li><Link to="/catalog" className="hover:text-accent-cobalt transition-colors">Products Catalog</Link></li>
+                <li><Link to="/contact" className="hover:text-accent-cobalt transition-colors">Contact Support</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-white">Legal</h3>
+              <ul className="space-y-3 text-base text-slate-400">
+                <li><Link to="/privacy" className="hover:text-accent-cobalt transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-accent-cobalt transition-colors">Terms of Service</Link></li>
+              </ul>
             </div>
           </div>
-          <div>
-            <h3 className="font-bold text-lg mb-4 text-white">Quick Links</h3>
-            <ul className="space-y-3 text-base text-slate-400">
-              <li><Link to="/about" className="hover:text-accent-cobalt transition-colors">About Us</Link></li>
-              <li><Link to="/catalog" className="hover:text-accent-cobalt transition-colors">Products Catalog</Link></li>
-              <li><Link to="/contact" className="hover:text-accent-cobalt transition-colors">Contact Support</Link></li>
-            </ul>
+          <div className="container px-4 mx-auto mt-8 pt-8 border-t border-white/[0.06] text-center text-sm text-slate-500">
+            © {new Date().getFullYear()} ChemiCrown CDMS. All rights reserved.
           </div>
-          <div>
-            <h3 className="font-bold text-lg mb-4 text-white">Legal</h3>
-            <ul className="space-y-3 text-base text-slate-400">
-              <li><Link to="/privacy" className="hover:text-accent-cobalt transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-accent-cobalt transition-colors">Terms of Service</Link></li>
-            </ul>
-          </div>
-        </div>
-        <div className="container px-4 mx-auto mt-8 pt-8 border-t border-white/[0.06] text-center text-sm text-slate-500">
-          © {new Date().getFullYear()} ChemiCrown CDMS. All rights reserved.
-        </div>
-      </footer>
+        </footer>
       </Reveal>
       </ScrollProvider>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Settings, Menu, Users,
   ClipboardCheck, LogOut, ChevronUp, UserPlus, Store,
@@ -10,6 +10,7 @@ import {
   Sun, Moon, Archive, BarChart2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
 import GlobalSearchModal from '@/components/GlobalSearchModal';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -179,6 +180,7 @@ import { useCart } from '../context/CartContext';
 
 export default function DashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, storedAccounts, logout, logoutAll, switchAccount } = useAuth();
   const { cartItems } = useCart();
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
@@ -367,7 +369,15 @@ export default function DashboardLayout() {
                 {storedAccounts.map(account => (
                   <button
                     key={account.id}
-                    onClick={() => { switchAccount(account.id); setShowAccountSwitcher(false); }}
+                    onClick={async () => {
+                      const success = await switchAccount(account.id);
+                      setShowAccountSwitcher(false);
+                      if (success) {
+                        navigate('/dashboard');
+                      } else {
+                        toast.error('This account session has expired or is invalid. Removed from list.');
+                      }
+                    }}
                     className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors ${
                       user.id === account.id ? 'bg-primary/10' : 'hover:bg-muted'
                     }`}

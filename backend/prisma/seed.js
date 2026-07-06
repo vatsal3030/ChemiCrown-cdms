@@ -1,143 +1,1149 @@
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
 
+const categories = [
+  {
+    "id": "0a22b5d1-40e6-4379-aa30-3d0863f0b80d",
+    "name": "Reagents"
+  },
+  {
+    "id": "f90ce9dc-1669-41ed-8e76-31d5669448bc",
+    "name": "Salts"
+  },
+  {
+    "id": "50c78319-bdd4-49a7-b1a6-682df9ab2a7c",
+    "name": "Acids"
+  },
+  {
+    "id": "675a39a0-603b-427e-a9bd-2b4595834c9f",
+    "name": "Bases"
+  },
+  {
+    "id": "e7aa1ff8-0722-480f-a389-5e797d3e9686",
+    "name": "Solvents"
+  },
+  {
+    "id": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "name": "Thinners & Solvents"
+  },
+  {
+    "id": "8891ef7e-b5b9-44e4-a7dd-749b6cd5723e",
+    "name": "Organic Solvents"
+  },
+  {
+    "id": "174b5ed9-14aa-4780-b5b5-08725b110244",
+    "name": "Paints & Primers"
+  },
+  {
+    "id": "03cefe99-444a-4a49-ae88-b61b31a43de0",
+    "name": "Organic Acids"
+  },
+  {
+    "id": "bda267e8-9c8e-484a-b25b-b828ebc69933",
+    "name": "Inorganic Salts"
+  }
+];
+
+const suppliers = [
+  {
+    "id": "fe947e44-40a1-4deb-98a4-725ff26101c7",
+    "name": "Rankem / Avantor",
+    "phone": null,
+    "email": null,
+    "isActive": true
+  },
+  {
+    "id": "7e8b2f58-9f81-4a4d-812c-e2b062060c00",
+    "name": "Loba Chemie Pvt. Ltd.",
+    "phone": null,
+    "email": null,
+    "isActive": true
+  },
+  {
+    "id": "d318bdb5-b432-401f-ac83-33768feeef43",
+    "name": "Merck Life Science",
+    "phone": null,
+    "email": null,
+    "isActive": true
+  }
+];
+
+const products = [
+  {
+    "id": "03f71f01-9a3d-43c3-9d66-c80dbfcea82e",
+    "sku": "1.93503.5021",
+    "categoryId": "675a39a0-603b-427e-a9bd-2b4595834c9f",
+    "supplierId": null,
+    "name": "Potassium Hydroxide Pellets (EMPLURA®)",
+    "description": "Potassium Hydroxide Pellets EMPLURA® grade. MF: KOH, MW: 56.11. White hygroscopic pellets used in analytical chemistry, synthesis, and pH adjustment. May be corrosive to metals. Net: 5 kg.",
+    "unit": "Bottle",
+    "packageSize": 5,
+    "baseUnit": "Kg",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767590/chemicrown/inventory/yywrc0zql56hcr1ydhzy.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "1310-58-3",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Supelco / EMPLURA®",
+    "manufacturer": "Merck Life Science Pvt. Ltd.",
+    "itemForm": "Pellets / Solid",
+    "purity": "≥85%",
+    "grade": "EMPLURA®",
+    "price": 6500,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "c9a6e276-ba86-424f-9018-60c563fd1f8d",
+    "sku": "A0685",
+    "categoryId": "675a39a0-603b-427e-a9bd-2b4595834c9f",
+    "supplierId": null,
+    "name": "Ammonia Solution (Analytical Reagent)",
+    "description": "Analytical Reagent grade ammonia solution. Assay (as NH₃): 28–30%, Specific Gravity: 0.880–0.910. Used in laboratory analysis, pH adjustment, and chemical synthesis. Clear colorless liquid with pungent odor. Batch: H008C26, MFG: 03-2026, Exp: 03-2029.",
+    "unit": "Drum",
+    "packageSize": 25,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766698/chemicrown/inventory/lyrby0jqrvuoulifbrum.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "7664-41-7",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Rankem",
+    "manufacturer": "Avantor Performance Materials India Pvt. Ltd.",
+    "itemForm": "Liquid",
+    "purity": "28–30% (as NH₃)",
+    "grade": "AR (Analytical Reagent)",
+    "price": 4950,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "5884deb5-bb59-4d88-8a24-9fe4cde8b025",
+    "sku": "BS-68-LB",
+    "categoryId": null,
+    "supplierId": null,
+    "name": "Buffer Solution pH 6.8",
+    "description": "Standard buffer solution with pH 6.8 at 20°C. Used for pH meter calibration and standardization in laboratory settings. Meets NIR and MV specifications. No GHS hazard classification.",
+    "unit": "Bottle",
+    "packageSize": 500,
+    "baseUnit": "mL",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766788/chemicrown/inventory/nzn533bcbwcohov0bdtd.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": null,
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Loba Chemie",
+    "manufacturer": "Loba Chemie Pvt. Ltd.",
+    "itemForm": "Liquid",
+    "purity": "pH 6.8 ± 0.02 at 20°C",
+    "grade": "Laboratory Reagent",
+    "price": 550,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "0e3cecb8-a195-40fa-9954-dc9c93131630",
+    "sku": "03730",
+    "categoryId": "50c78319-bdd4-49a7-b1a6-682df9ab2a7c",
+    "supplierId": null,
+    "name": "Ethylenediamine Tetraacetic Acid Disodium Salt 99% Extra Pure",
+    "description": "EDTA Disodium Salt 99% Extra Pure. MF: C₁₀H₁₄N₂Na₂O₈·2H₂O, MW: 380.24. Used as chelating agent in analytical chemistry, water treatment, and pharmaceutical applications. White crystalline powder. Assay (complexometric): Min 99%, pH (5% solution): 9.0–10.5. Batch: LS88762512, MFG: Dec 2025, Exp: Dec 2028.",
+    "unit": "Drum",
+    "packageSize": 50,
+    "baseUnit": "Kg",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766984/chemicrown/inventory/oc23ucyezvcrtegduohh.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "6381-92-6",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Loba Chemie",
+    "manufacturer": "Loba Chemie Pvt. Ltd.",
+    "itemForm": "Powder / Solid",
+    "purity": "99% (complexometric)",
+    "grade": "Extra Pure",
+    "price": 45000,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "ec55082f-14e1-4dac-afa4-362d2d00592a",
+    "sku": "HP-6-LB",
+    "categoryId": "0a22b5d1-40e6-4379-aa30-3d0863f0b80d",
+    "supplierId": null,
+    "name": "Hydrogen Peroxide Solution 6% w/v H₂O₂ (20 volumes)",
+    "description": "Hydrogen Peroxide Solution 6% w/v H₂O₂ (20 volumes). Used as oxidizing agent, disinfectant, and bleaching agent in laboratory and medical applications. Stored in opaque black bottle to prevent light degradation.",
+    "unit": "Bottle",
+    "packageSize": 1,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767287/chemicrown/inventory/nyhboh5zgkhhwexsxgtt.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "7722-84-1",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Loba Chemie",
+    "manufacturer": "Loba Chemie Pvt. Ltd.",
+    "itemForm": "Liquid",
+    "purity": "6% w/v H₂O₂ (20 volumes)",
+    "grade": "Laboratory Reagent",
+    "price": 1000,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "7d76eec5-4d94-4a2b-bbc8-027d03743d89",
+    "sku": "1.93606.5021",
+    "categoryId": "f90ce9dc-1669-41ed-8e76-31d5669448bc",
+    "supplierId": null,
+    "name": "Sodium Chloride (EMPLURA®)",
+    "description": "Sodium Chloride EMPLURA® grade. MF: NaCl, MW: 58.44. White crystalline powder. Used in laboratory analysis, buffer preparation, and cell culture media. Packed for industrial and institutional use. Net: 5 kg.",
+    "unit": "Bottle",
+    "packageSize": 5,
+    "baseUnit": "Kg",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767995/chemicrown/inventory/xflqrzobdd3qdn3ybeit.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "7647-14-5",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Supelco / EMPLURA®",
+    "manufacturer": "Merck Life Science Pvt. Ltd.",
+    "itemForm": "Powder / Crystals",
+    "purity": "≥99.5%",
+    "grade": "EMPLURA®",
+    "price": 2200,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "23553452-06c2-44aa-9471-2306bb906fb2",
+    "sku": "05971",
+    "categoryId": "f90ce9dc-1669-41ed-8e76-31d5669448bc",
+    "supplierId": null,
+    "name": "Sodium Phosphate Dibasic Anhydrous 98% Extra Pure",
+    "description": "Sodium Phosphate Dibasic Anhydrous 98% Extra Pure. MF: Na₂HPO₄, MW: 141.96. White powder used in buffer preparation, cell culture media, and analytical chemistry. Assay: 98–100.5%, pH (5% solution): 8.7–9.2. Batch: LS88762S12, MFG: Dec 2023, Exp: Nov 2030. Net: 50 kg (10×5 KGS).",
+    "unit": "Drum",
+    "packageSize": 50,
+    "baseUnit": "Kg",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780768215/chemicrown/inventory/yoeoc6a9gqfog80wrkon.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "7558-79-4",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Loba Chemie",
+    "manufacturer": "Loba Chemie Pvt. Ltd.",
+    "itemForm": "Powder / Solid",
+    "purity": "98–100.5%",
+    "grade": "Extra Pure",
+    "price": 12000,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "49dcf75d-2031-4f1c-9c18-79e32a73ab96",
+    "sku": "05830",
+    "categoryId": "f90ce9dc-1669-41ed-8e76-31d5669448bc",
+    "supplierId": null,
+    "name": "Tri-Sodium Citrate Dihydrate 98% Extra Pure",
+    "description": "Tri-Sodium Citrate Dihydrate 98% Extra Pure. MF: Na₃C₆H₅O₇·2H₂O, MW: 294.10. White crystalline powder used as buffer agent, anticoagulant, chelating agent, and food additive. Assay (ex Na): Min 98%. Batch: LS88782512, MFG: Dec 2023, Exp: Nov 2030. Net: 50 kg (10×5 KGS).",
+    "unit": "Drum",
+    "packageSize": 50,
+    "baseUnit": "Kg",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780768493/chemicrown/inventory/eeqj3oylkclclcixyqhp.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "6132-04-3",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Loba Chemie",
+    "manufacturer": "Loba Chemie Pvt. Ltd.",
+    "itemForm": "Powder / Crystals",
+    "purity": "Min 98%",
+    "grade": "Extra Pure",
+    "price": 5000,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "2d4ac2c6-671f-4328-855a-900d2b61de16",
+    "sku": "CHM-THN-PRM-50L",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "GP Thinner Premium Grade",
+    "description": "A premium grade general purpose thinner for dilution of paints, varnishes, and lacquers.",
+    "unit": "Drum",
+    "packageSize": 50,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1781089104/chemicrown/inventory/cagqpb5aomrwbqnak4dj.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "108-88-3",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Astra",
+    "manufacturer": "Astra Chemicals",
+    "itemForm": "Liquid",
+    "purity": "99.5%",
+    "grade": "Premium",
+    "price": 4500,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": false,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "a8e49413-73fd-44a5-8166-58d8e9ea7ef2",
+    "sku": "CC-CLT-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Cleaning Thinner (High Performance Cleaning Solvent)",
+    "description": "ChemiCrown Cleaning Thinner — high performance cleaning solvent. Effectively removes paint, oil, grease, and dirt from surfaces and equipment. Suitable for industrial and general use. Powerful degreasing action with fast evaporation. Net Contents: 1 Litre. Highly flammable.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766820/chemicrown/inventory/acyysaalseq7g7pvt69f.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "High Performance",
+    "price": 120,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "3aa91e65-9506-4280-9143-7912ee19a557",
+    "sku": "CC-MTO-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Mineral Turpentine Oil (MTO)",
+    "description": "ChemiCrown Mineral Turpentine Oil (MTO) — petroleum-derived solvent used for thinning oil-based paints, varnishes, and enamels. Also used for cleaning brushes and equipment. Clear, colorless liquid with mild kerosene-like odor. Good solvency with slower evaporation than GP Thinner. Net Contents: 1 Litre. Flammable.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767341/chemicrown/inventory/s3dbk3y85jwzvghs0d12.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "8052-41-3",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Commercial / Industrial",
+    "price": 110,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "528abda0-d9ac-4831-8eae-84ff1a80e3fa",
+    "sku": "CC-NCT-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Nitrocellulose (NC) Thinner",
+    "description": "ChemiCrown Nitrocellulose Thinner specially formulated for NC lacquers and nitrocellulose-based paints and coatings. Contains a blend of esters, ketones, and alcohols for fast drying and excellent film formation. Clear liquid. Net Contents: 1 Litre. Flammable liquid.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767423/chemicrown/inventory/bb72on7pfanz0qanpsmg.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "NC Grade",
+    "price": 150,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "9288c500-c1b2-4dce-9d47-312965b69f0a",
+    "sku": "CC-PUT-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Polyurethane (PU) Thinner",
+    "description": "ChemiCrown Polyurethane Thinner specially formulated for PU-based paints, coatings, and varnishes. Moisture-free formulation to prevent reaction with isocyanate components. Ensures smooth application and excellent finish. Clear liquid. Net Contents: 1 Litre. Flammable liquid.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767504/chemicrown/inventory/kl5rtmvvunfabnqdfieu.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "PU Grade",
+    "price": 160,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "a0c86f3c-7f9c-4436-a21b-b15d36adf9aa",
+    "sku": "CC-TOL-001",
+    "categoryId": "8891ef7e-b5b9-44e4-a7dd-749b6cd5723e",
+    "supplierId": null,
+    "name": "Toluene (Methylbenzene)",
+    "description": "ChemiCrown Toluene (Methylbenzene). MF: C₇H₈, MW: 92.14. Clear colorless flammable liquid with benzene-like odor. Used as industrial solvent for paints, coatings, adhesives, rubber, and resins. Also used as a chemical intermediate. Miscible with most organic solvents. Net Contents: 1 Litre.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780768441/chemicrown/inventory/kl40rqn3knzls8vyiwdy.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "108-88-3",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Commercial / Industrial",
+    "price": 140,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "97ffa374-a14d-47e9-9790-f17b460aae7e",
+    "sku": "CC-DCT-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Deco Thinner (Premium Quality)",
+    "description": "ChemiCrown Deco Thinner — premium quality thinner specially formulated for decorative paints. Provides excellent flow and finish, optimum thinning performance, and is suitable for deco paints used in interior and exterior applications. Clear liquid. Net Contents: 1 Litre. Highly flammable.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766844/chemicrown/inventory/yrbtwtowko8bquun4u9z.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Premium Quality / Deco Grade",
+    "price": 120,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "2280c548-56ae-46a7-b2db-d3274e832f2f",
+    "sku": "CC-EA-001",
+    "categoryId": "8891ef7e-b5b9-44e4-a7dd-749b6cd5723e",
+    "supplierId": null,
+    "name": "Ethyl Acetate (Premium Quality Solvent)",
+    "description": "ChemiCrown Ethyl Acetate — premium quality solvent. MF: CH₃COOC₂H₅, MW: 88.11. Clear colorless liquid with fruity odor. High purity solvent with excellent solvency and fast evaporation. Suitable for paints, coatings, inks, adhesives, and extraction processes. Net Contents: 1 Litre. Highly flammable.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766891/chemicrown/inventory/bifap4m9v3p9rs5o0nxg.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "141-78-6",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial / High Purity Grade",
+    "grade": "Premium Quality",
+    "price": 150,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "d6237a30-0500-4b3d-9f10-00663416a1e5",
+    "sku": "CC-MXS-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Mix Solvent (Multi Purpose Solvent Blend)",
+    "description": "ChemiCrown Mix Solvent — powerful and versatile multi-purpose solvent blend. Ideal for paint thinning, effective cleaning, and general industrial use. Suitable for thinning, degreasing, and cleaning applications across various industries. Premium quality solvent blend. Net Contents: 1 Litre. Highly flammable.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767373/chemicrown/inventory/rtmyovnjmd7843dyhcfn.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Multi Purpose / Commercial",
+    "price": 110,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "b2198e79-fd6d-4e51-beab-ee0dd3be8d08",
+    "sku": "CC-PT-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Paint Thinner (Premium Quality)",
+    "description": "ChemiCrown Paint Thinner — premium quality thinner ideal for thinning oil-based paints, enamels, varnishes, and primers. Provides excellent thinning action, smooth finish, and fast evaporation. Suitable for brush, roller, and spray application. Compatible with multiple paint systems. Net Contents: 1 Litre. Highly flammable.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767451/chemicrown/inventory/nabwjcxrhplaeyigjzan.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Premium Quality",
+    "price": 115,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "cd2b6cd3-7f50-49d7-bfc6-6a253f37ba1e",
+    "sku": "CC-AA-001",
+    "categoryId": "03cefe99-444a-4a49-ae88-b61b31a43de0",
+    "supplierId": null,
+    "name": "Acetic Acid",
+    "description": "ChemiCrown Acetic Acid. MF: CH₃COOH, MW: 60.05. Clear colorless liquid with pungent vinegar-like odor. Corrosive acid used as solvent, chemical intermediate, and in textile, food, and pharmaceutical industries. Also used for pH adjustment and cleaning. Net Contents: 1 Litre.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766340/chemicrown/inventory/o88ajxv5kvq6zyigjfez.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "64-19-7",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Commercial / Industrial",
+    "price": 160,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "f628ad23-24a0-444b-b949-d3e8be82dc66",
+    "sku": "CC-ACT-001",
+    "categoryId": "8891ef7e-b5b9-44e4-a7dd-749b6cd5723e",
+    "supplierId": null,
+    "name": "Acetone (Propanone)",
+    "description": "ChemiCrown Acetone (Propanone). MF: C₃H₆O, MW: 58.08. Clear, colorless, highly volatile and flammable liquid with characteristic sweet odor. Used as a solvent for paints, resins, adhesives, nail polish remover, and cleaning agent. Miscible with water and most organic solvents. Net Contents: 1 Litre.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766534/chemicrown/inventory/wfs5z6s6emqsn7csygd6.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "67-64-1",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Commercial / Industrial",
+    "price": 130,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "9b0674ec-9f63-4aad-906f-dc0bea15c278",
+    "sku": "CC-ACTS-001",
+    "categoryId": "8891ef7e-b5b9-44e4-a7dd-749b6cd5723e",
+    "supplierId": null,
+    "name": "Acetone Solvent",
+    "description": "ChemiCrown Acetone Solvent. MF: C₃H₆O, MW: 58.08. Clear, colorless, highly volatile and flammable liquid. Premium quality solvent for paints, resins, adhesives, fibreglass, nail polish removal, and surface cleaning. Fast evaporation rate. Miscible with water and most organic solvents. Net Contents: 1 Litre.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766575/chemicrown/inventory/ra6bqbh3zf0fhbeshc7h.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "67-64-1",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Commercial / Industrial",
+    "price": 130,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "91c206da-e6e7-4c8a-b5c9-66052f6e62ae",
+    "sku": "DCF760328 / 1.94524.9027",
+    "categoryId": "e7aa1ff8-0722-480f-a389-5e797d3e9686",
+    "supplierId": null,
+    "name": "2-Propanol (EMPLURA®) 25L",
+    "description": "2-Propanol (Isopropyl Alcohol) EMPLURA® grade, 25 L drum. MF: C₃H₈O, MW: 60.10. Purity: 99.9% min. Net Wt: 19.50 kg, Gross Wt: 20.50 kg. Clear colorless flammable liquid. Flammable Class 3. Exp: Mar 2026. UN 1219.",
+    "unit": "Drum",
+    "packageSize": 25,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780768567/chemicrown/inventory/dxnpgbyajfs9fcoeykni.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "67-63-0",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Supelco / EMPLURA®",
+    "manufacturer": "Merck Life Science Pvt. Ltd.",
+    "itemForm": "Liquid",
+    "purity": "Min 99.9%",
+    "grade": "EMPLURA®",
+    "price": 8500,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "dd3f3549-033b-49c0-93a3-0972568d267e",
+    "sku": "DHAE741401 / 1.94524.0521",
+    "categoryId": "50c78319-bdd4-49a7-b1a6-682df9ab2a7c",
+    "supplierId": null,
+    "name": "2-Propanol (EMPLURA®)",
+    "description": "2-Propanol (Isopropyl Alcohol) EMPLURA® grade. MF: C₃H₈O, MW: 60.10. Clear colorless flammable liquid. Identity (GC): Min 99.5%, Water (K.F.): Max 0.2%, Acidity: Max 0.002%. Used as solvent, disinfectant, and cleaning agent. UN 1219.",
+    "unit": "Bottle",
+    "packageSize": 500,
+    "baseUnit": "mL",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780765731/chemicrown/inventory/sxvuzdbcrapdd3bdcxtu.jpg",
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780765732/chemicrown/inventory/xroxwuhcobxkqvr5eccb.jpg",
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780765732/chemicrown/inventory/hotxxb97thycooacgcxi.jpg",
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780765730/chemicrown/inventory/lc6gvpvj763qqaytu40g.jpg",
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780765732/chemicrown/inventory/xabndbuyxvhjfgzrfzkq.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "67-63-0",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Supelco / EMPLURA®",
+    "manufacturer": "Merck Life Science Pvt. Ltd.",
+    "itemForm": "Liquid",
+    "purity": "Min 99.5% (GC)",
+    "grade": "EMPLURA®",
+    "price": 850,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "3b643eb9-430b-445a-9e05-24ead46a5862",
+    "sku": "A0681",
+    "categoryId": "675a39a0-603b-427e-a9bd-2b4595834c9f",
+    "supplierId": null,
+    "name": "Ammonia Solution (Specific Gravity: 0.91)",
+    "description": "Laboratory Reagent grade ammonia solution. Assay (as NH₃): ≥25%, Specific Gravity: 0.880–0.910. Used in titration, buffer preparation, and general lab use. Clear, pungent liquid. Batch: H002D26, MFG: 04-2026, Exp: 04-2029.",
+    "unit": "Drum",
+    "packageSize": 25,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766741/chemicrown/inventory/u2mgfaqmhnvxzpihwmou.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "1336-21-6",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Rankem",
+    "manufacturer": "Avantor Performance Materials India Pvt. Ltd.",
+    "itemForm": "Liquid",
+    "purity": "≥25% (as NH₃)",
+    "grade": "LR (Laboratory Reagent)",
+    "price": 4450,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "24ba9f6e-b0cf-48db-b2ab-a1c474233869",
+    "sku": "CC-EPT-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Epoxy Thinner (High Performance)",
+    "description": "ChemiCrown Epoxy Thinner — high performance thinner for epoxy-based paints and coatings. Provides optimum flow and leveling, excellent spraying properties, and improves adhesion and finish. Specially formulated for use with 2-component epoxy systems. Net Contents: 1 Litre. Highly flammable.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780766871/chemicrown/inventory/ehmx1hykjhfqxyp4715f.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "High Performance / Epoxy Grade",
+    "price": 170,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "ad7ae415-0608-444b-a23f-fa05c45e0998",
+    "sku": "CC-FS-001",
+    "categoryId": "bda267e8-9c8e-484a-b25b-b828ebc69933",
+    "supplierId": null,
+    "name": "Ferrous Sulphate Heptahydrate (FeSO₄·7H₂O)",
+    "description": "ChemiCrown Ferrous Sulphate Heptahydrate. MF: FeSO₄·7H₂O, MW: 278.01. Blue-green crystalline solid. High purity technical grade. Widely used in water treatment, agriculture (fertilizer & soil correction), industrial processes, and laboratory applications. Consistent quality product. Net Contents: 1 Litre (packed by weight).",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Kg",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767041/chemicrown/inventory/qp1cfwjfikd0cydpqr4d.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "7782-63-0",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Crystals / Solid",
+    "purity": "High Purity Technical Grade",
+    "grade": "Technical Grade",
+    "price": 90,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "7b517651-6a97-4ce4-a5af-3c2059235abb",
+    "sku": "CC-GPT-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "General Purpose (GP) Thinner for Paints",
+    "description": "ChemiCrown General Purpose Thinner for paints. A blend of aliphatic and aromatic solvents used to thin oil-based paints, enamels, and varnishes. Improves flow and application. Clear liquid with mild solvent odor. Net Contents: 1 Litre. Flammable liquid.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767108/chemicrown/inventory/kwiudwihxlvapojmoez7.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "General Purpose",
+    "price": 120,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "4a471a7b-fc92-43d0-a4d5-d0db57342832",
+    "sku": "HC-1N-LB",
+    "categoryId": "50c78319-bdd4-49a7-b1a6-682df9ab2a7c",
+    "supplierId": null,
+    "name": "Hydrochloric Acid 1N Solution",
+    "description": "Hydrochloric Acid 1 Normal (1N) solution. MF: HCl, MW: 36.46. Used for pH adjustment, titrations, and general laboratory analysis. Clear colorless liquid. Laboratory reagent grade.",
+    "unit": "Bottle",
+    "packageSize": 5,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767213/chemicrown/inventory/i7gn0u35xttqch0jd8fd.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "7647-01-0",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Loba Chemie",
+    "manufacturer": "Loba Chemie Pvt. Ltd.",
+    "itemForm": "Liquid",
+    "purity": "1N (~3.65% w/v HCl)",
+    "grade": "Laboratory Reagent",
+    "price": 550,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "fea9112b-7cc9-4338-b5cc-1007ee35e6fc",
+    "sku": "CC-ROP-001",
+    "categoryId": "174b5ed9-14aa-4780-b5b5-08725b110244",
+    "supplierId": null,
+    "name": "Red Oxide Primer (Iron Oxide Primer)",
+    "description": "ChemiCrown Red Oxide Primer — anti-corrosion primer for metal surfaces. Iron oxide based formulation providing excellent adhesion, rust resistance, and corrosion protection. Quick drying with smooth finish. Suitable for structural steel, pipes, machinery, and all metal surfaces. Apply by brush, roller, or spray.",
+    "unit": "Tin / Can",
+    "packageSize": 1,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780767682/chemicrown/inventory/miveocicabm33ost86k5.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid (Paint)",
+    "purity": "Industrial Grade",
+    "grade": "Anti-Corrosion Primer",
+    "price": 350,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "0db3e37c-63bb-4aed-be19-33d88e916a54",
+    "sku": "05897",
+    "categoryId": "675a39a0-603b-427e-a9bd-2b4595834c9f",
+    "supplierId": null,
+    "name": "Sodium Hydroxide Flakes 97% Extra Pure",
+    "description": "Sodium Hydroxide Flakes 97% Extra Pure. MF: NaOH, MW: 40.01. White hygroscopic flakes used in pH adjustment, saponification, and chemical synthesis. Assay: Min 97.0%, Insoluble matter: Max 0.15%. Batch: LS88762512, MFG: Dec 2023, Exp: Nov 2030. Net: 50 kg (10×5 KGS).",
+    "unit": "Drum",
+    "packageSize": 50,
+    "baseUnit": "Kg",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780768076/chemicrown/inventory/fya3bvzea17gfovrquct.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "1310-73-2",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Loba Chemie",
+    "manufacturer": "Loba Chemie Pvt. Ltd.",
+    "itemForm": "Flakes / Solid",
+    "purity": "97% minimum",
+    "grade": "Extra Pure",
+    "price": 20000,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "fd1e2721-aab3-4905-9e40-fbdb4ea61d59",
+    "sku": "CC-THR-001",
+    "categoryId": "a160a717-a7d1-462a-9191-7ba881ce9597",
+    "supplierId": null,
+    "name": "Thinner Reducer (Premium Quality)",
+    "description": "ChemiCrown Thinner Reducer — premium quality thinner reducer ideal for thinning paints, primers, PU, NC, synthetic, and industrial coatings. Improves sprayability, provides smooth finish, optimum flow and leveling. Suitable for multiple coating systems. Net Contents: 1 Litre. Highly flammable.",
+    "unit": "Jerry Can",
+    "packageSize": 1,
+    "baseUnit": "Litre",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780768339/chemicrown/inventory/j0jmh1byakroim0dc4pw.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "N/A (Mixture)",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "ChemiCrown",
+    "manufacturer": "ChemiCrown Trading Co., Plot No-26, Shed No-4, Madhav Industrial Park, Vartej, Bhavnagar – 364006, Gujarat. GSTIN: 24JKJPS88177Q1ZX",
+    "itemForm": "Liquid",
+    "purity": "Industrial Grade",
+    "grade": "Premium Quality / Multi-Coating Grade",
+    "price": 135,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "id": "73ed167b-fd85-4e88-912d-6968fe51c88d",
+    "sku": "S0552",
+    "categoryId": "50c78319-bdd4-49a7-b1a6-682df9ab2a7c",
+    "supplierId": null,
+    "name": "Sulphuric Acid (Laboratory Reagent)",
+    "description": "Sulphuric Acid Laboratory Reagent grade. MF: H₂SO₄, MW: 98.08. Colorless oily liquid, highly corrosive strong mineral acid. Assay (Acidimetric): Min 97.0%, Max 98.0% w/w. Used in titrations, digestion, and chemical synthesis. Batch: S504A26, MFG: 01-2026, Exp: 01-2031. Net: 5 L.",
+    "unit": "Bottle",
+    "packageSize": 5,
+    "baseUnit": "L",
+    "imageUrls": [
+      "https://res.cloudinary.com/dwsi9eqkw/image/upload/v1780768282/chemicrown/inventory/akof6m7tjjco6aqtc6o4.jpg"
+    ],
+    "datasheetUrl": null,
+    "casNumber": "7664-93-9",
+    "unNumber": null,
+    "hazardClasses": [],
+    "packingGroup": null,
+    "sdsUrl": null,
+    "brand": "Rankem",
+    "manufacturer": "Avantor Performance Materials India Pvt. Ltd.",
+    "itemForm": "Liquid",
+    "purity": "97–98% w/w",
+    "grade": "LR (Laboratory Reagent)",
+    "price": 2782,
+    "costPrice": null,
+    "hsnCode": null,
+    "gstRate": null,
+    "isMadeInIndia": true,
+    "isAvailable": true,
+    "isActive": true
+  }
+];
+
 async function main() {
-  console.log('Starting Database Seeding...');
+  console.log('Starting catalog restoration seed...');
 
-  // 1. Create Default Users (Super Admin and Manager)
-  const superAdmin = await prisma.user.upsert({
-    where: { email: 'admin@chemicrown.com' },
-    update: {},
-    create: {
-      email: 'admin@chemicrown.com',
-      role: 'SUPER_ADMIN',
-      employeeProfile: {
-        create: {
-          firstName: 'System',
-          lastName: 'Administrator',
-          phone: '9999999999',
-        },
-      },
-    },
-  });
-
-  const manager = await prisma.user.upsert({
-    where: { email: 'manager@chemicrown.com' },
-    update: {},
-    create: {
-      email: 'manager@chemicrown.com',
-      role: 'MANAGER',
-      employeeProfile: {
-        create: {
-          firstName: 'Operations',
-          lastName: 'Manager',
-          phone: '8888888888',
-        },
-      },
-    },
-  });
-
-  console.log('✅ Users seeded');
-
-  // 2. Create Categories
-  const catThinners = await prisma.category.upsert({
-    where: { name: 'Thinners' },
-    update: {},
-    create: { name: 'Thinners' },
-  });
-
-  const catSolvents = await prisma.category.upsert({
-    where: { name: 'Solvents' },
-    update: {},
-    create: { name: 'Solvents' },
-  });
-
-  const catPrimers = await prisma.category.upsert({
-    where: { name: 'Primers' },
-    update: {},
-    create: { name: 'Primers' },
-  });
-
-  console.log('✅ Categories seeded');
-
-  // 3. Create Products (The 7 requested chemicals)
-  const productsData = [
-    {
-      name: 'General Purpose (GP) Thinner',
-      description: 'Standard thinner for cleaning and general dilution.',
-      unit: 'Litre',
-      price: 150.0,
-      categoryId: catThinners.id,
-    },
-    {
-      name: 'Mineral Turpentine Oil (MTO)',
-      description: 'Used as a solvent and thinner for oil-based paints.',
-      unit: 'Litre',
-      price: 90.0,
-      categoryId: catSolvents.id,
-    },
-    {
-      name: 'Toluene (Methylbenzene)',
-      description: 'Industrial solvent for paints, thinners, and adhesives.',
-      unit: 'Drum',
-      price: 4500.0,
-      categoryId: catSolvents.id,
-    },
-    {
-      name: 'Acetone (Propanone)',
-      description: 'Fast-drying solvent used in manufacturing and cleaning.',
-      unit: 'Drum',
-      price: 5200.0,
-      categoryId: catSolvents.id,
-    },
-    {
-      name: 'Nitrocellulose (NC) Thinner',
-      description: 'High-grade thinner for wood coatings and auto paints.',
-      unit: 'Litre',
-      price: 210.0,
-      categoryId: catThinners.id,
-    },
-    {
-      name: 'Polyurethane (PU) Thinner',
-      description: 'Specialized thinner for PU-based coatings and finishes.',
-      unit: 'Litre',
-      price: 280.0,
-      categoryId: catThinners.id,
-    },
-    {
-      name: 'Red Oxide Primer (Iron Oxide Primer)',
-      description: 'Anti-corrosive primer for metal surfaces.',
-      unit: 'Kg',
-      price: 180.0,
-      categoryId: catPrimers.id,
-    }
-  ];
-
-  for (const p of productsData) {
-    const createdProduct = await prisma.product.create({
-      data: p
+  // 1. Seed Categories
+  console.log('Seeding categories...');
+  for (const cat of categories) {
+    await prisma.category.upsert({
+      where: { id: cat.id },
+      update: cat,
+      create: cat,
     });
-    
-    // Add initial inventory for each product
-    await prisma.inventory.create({
-      data: {
-        productId: createdProduct.id,
+  }
+
+  // 2. Seed Suppliers
+  console.log('Seeding suppliers...');
+  for (const sup of suppliers) {
+    await prisma.supplier.upsert({
+      where: { id: sup.id },
+      update: sup,
+      create: sup,
+    });
+  }
+
+  // 3. Seed Products and create default Inventory
+  console.log('Seeding products...');
+  for (const prod of products) {
+    await prisma.product.upsert({
+      where: { id: prod.id },
+      update: prod,
+      create: prod,
+    });
+
+    // Ensure inventory record exists
+    await prisma.inventory.upsert({
+      where: { productId: prod.id },
+      update: {},
+      create: {
+        productId: prod.id,
         quantity: 100, // starting stock
-        minThreshold: 20,
-        transactions: {
-          create: {
-            type: 'IN',
-            quantity: 100,
-            remarks: 'Initial System Stock'
-          }
-        }
+        minThreshold: 20
       }
     });
   }
 
-  console.log('✅ Products & Initial Inventory seeded');
-  console.log('Seeding completed successfully!');
+  console.log('✅ Catalog database successfully seeded with backup data!');
 }
 
 main()

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ChemiCursor from '@/components/ui/ChemiCursor';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -143,11 +144,13 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-      <div className="max-w-5xl w-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
+    <div className="flex-grow flex-1 flex items-center justify-center min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-[#080d19] px-4 py-8">
+      <div className="max-w-xl w-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
         <div className="p-8">
           <div className="flex flex-col items-center">
-            <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-16 w-16 mb-6 object-contain" />
+            <Link to="/">
+              <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-16 w-16 mb-6 object-contain" />
+            </Link>
           </div>
           <h2 className="text-3xl font-extrabold text-center text-foreground mb-2">Password Reset</h2>
           <p className="text-center text-muted-foreground mb-8 text-sm">

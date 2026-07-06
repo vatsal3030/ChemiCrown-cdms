@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, X, ChevronDown, Shield, Zap, Package } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
+import ChemiCursor from '@/components/ui/ChemiCursor';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,10 +17,16 @@ export default function Login() {
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
 
-  const handleQuickLogin = (accountId) => {
-    switchAccount(accountId);
-    toast.success('Switched account');
-    navigate(from, { replace: true });
+  const handleQuickLogin = async (accountId) => {
+    setIsLoading(true);
+    const success = await switchAccount(accountId);
+    setIsLoading(false);
+    if (success) {
+      toast.success('Successfully signed in!');
+      navigate(from, { replace: true });
+    } else {
+      toast.error('This account session has expired or is invalid. Removed from list.');
+    }
   };
 
   const handleLogin = async (e) => {
@@ -60,7 +67,7 @@ export default function Login() {
   const hasMoreAccounts = storedAccounts && storedAccounts.length > 2;
 
   return (
-    <div className="flex-1 flex items-stretch min-h-0 bg-muted/30">
+    <div className="flex-1 flex items-stretch min-h-[calc(100vh-4rem)] bg-muted/30">
       {/* ── Left Brand Panel (desktop only) ── */}
       <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-primary text-primary-foreground p-10 relative overflow-hidden">
         {/* decorative blobs */}
@@ -68,7 +75,9 @@ export default function Login() {
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
 
         <div className="relative z-10">
-          <img src="/chemicrown.png" alt="ChemiCrown" className="h-12 w-12 object-contain mb-8 rounded-lg" />
+          <Link to="/" className="inline-block mb-8">
+            <img src="/chemicrown.png" alt="ChemiCrown" className="h-12 w-12 object-contain rounded-lg" />
+          </Link>
           <h1 className="text-3xl font-extrabold leading-tight mb-3">Welcome back to ChemiCrown</h1>
           <p className="text-primary-foreground/70 text-sm leading-relaxed">
             Your all-in-one chemical distribution management platform. Access your orders, inventory, and team from one place.
@@ -92,11 +101,13 @@ export default function Login() {
       </div>
 
       {/* ── Right Form Panel ── */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto">
+      <div className="flex-grow flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto">
         <div className="w-full max-w-5xl">
           {/* Logo (mobile only) */}
           <div className="flex justify-center mb-6 lg:hidden">
-            <img src="/chemicrown.png" alt="ChemiCrown" className="h-12 w-12 object-contain rounded-lg" />
+            <Link to="/">
+              <img src="/chemicrown.png" alt="ChemiCrown Logo" className="h-12 w-12 object-contain rounded-lg" />
+            </Link>
           </div>
 
           <h2 className="text-2xl font-extrabold text-foreground mb-1">Sign in</h2>

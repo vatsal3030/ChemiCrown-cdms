@@ -604,19 +604,31 @@ exports.bulkPay = async (req, res, next) => {
     });
     if (slips.length === 0) return res.status(400).json({ success: false, message: `No pending slips for ${month}` });
 
+    // Filter out slips belonging to the current user (prevent self-payment)
+    const originalCount = slips.length;
+    const filteredSlips = slips.filter(s => s.employee?.userId !== req.user.id);
+    const selfSkipped = originalCount > filteredSlips.length;
+
+    if (filteredSlips.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot process bulk payment: The only pending slip belongs to you. Self-payment is restricted!' 
+      });
+    }
+
     const now = new Date();
     const methodLabels = { CASH: 'Cash', BANK_TRANSFER: 'Bank Transfer', UPI: 'UPI Transfer', CHEQUE: 'Cheque', DIGITAL_TRANSFER: 'Digital Transfer' };
     const methodLabel = methodLabels[paymentMethod] || paymentMethod;
 
     // Atomic transaction: update all slips + create ledger entries
     await prisma.$transaction([
-      ...slips.map(s =>
+      ...filteredSlips.map(s =>
         prisma.salary.update({
           where: { id: s.id },
           data: { status: 'PAID', paidAt: now, paymentMethod, paidById: req.user.id }
         })
       ),
-      ...slips.map(s =>
+      ...filteredSlips.map(s =>
         prisma.financeLedger.create({
           data: { type: 'DEBIT', category: 'PAYROLL', amount: s.netPay, description: `Bulk payroll ${month} - ${s.employee?.user?.firstName || ''} ${s.employee?.user?.lastName || ''}`, referenceId: s.id, date: now, isAutomatic: true }
         })
@@ -624,7 +636,7 @@ exports.bulkPay = async (req, res, next) => {
     ]);
 
     // Notify each employee (non-blocking, outside transaction)
-    for (const s of slips) {
+    for (const s of filteredSlips) {
       if (s.employee?.user?.id) {
         prisma.notification.create({
           data: {
@@ -635,7 +647,11 @@ exports.bulkPay = async (req, res, next) => {
       }
     }
 
-    res.json({ success: true, message: `Processed ${slips.length} payments for ${month}` });
+    const message = selfSkipped
+      ? `Processed ${filteredSlips.length} payments for ${month}. Note: Your own salary slip was skipped to prevent self-payment.`
+      : `Processed ${filteredSlips.length} payments for ${month}`;
+
+    res.json({ success: true, message });
   } catch (error) { next(error); }
 };
 

@@ -122,18 +122,17 @@ export default function RecycleBin() {
 
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         {loading ? (
-            <table className="w-full text-left border-collapse">
+            <table className="data-table">
               <thead>
-                <tr className="bg-muted/50 border-b border-border">
-                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Entity Type</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Description</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Deleted At</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Deleted By</th>
+                <tr className="data-table-header bg-muted/50 border-b border-border">
+                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Type</th>
+                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Name / ID</th>
+                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Deleted On</th>
                   <th className="px-6 py-4 text-right font-semibold text-slate-700 dark:text-slate-300">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <SkeletonTableBody columns={5} rows={5} />
+                <SkeletonTableBody columns={4} rows={5} />
               </tbody>
             </table>
           ) : items.length === 0 ? (
@@ -144,9 +143,9 @@ export default function RecycleBin() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="data-table">
               <thead className="bg-muted/50">
-                <tr>
+                <tr className="data-table-header">
                   <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Name / ID</th>
                   <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Deleted On</th>
@@ -155,22 +154,22 @@ export default function RecycleBin() {
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                 {items.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
-                    <td className="px-6 py-4">
+                  <tr key={item.id} className="data-table-row hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                    <td className="data-table-cell px-6 py-4">
                       <span className={`px-2 py-1 rounded-md text-xs font-medium ${item.type === 'PRODUCT' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'}`}>
                         {item.type}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-medium">
+                    <td className="data-table-cell px-6 py-4 font-medium">
                       {item.name} {item.sku && <span className="text-slate-400 text-xs ml-2">({item.sku})</span>}
                     </td>
-                    <td className="px-6 py-4 text-slate-500">
+                    <td className="data-table-cell px-6 py-4 text-slate-500">
                       <div>{new Date(item.deletedAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                       <div className="text-[11px] text-amber-600 font-semibold mt-0.5">
                         Permanently deleted in {getDaysRemaining(item.deletedAt)} days
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="data-table-cell px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button onClick={() => handleRestore(item.id, item.type)} variant="outline" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">
                           <RotateCcw size={14} className="mr-1.5" /> Restore

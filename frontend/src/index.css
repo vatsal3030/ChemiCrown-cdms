@@ -740,25 +740,28 @@ body.custom-cursor-active * {
   button,
   [role="dialog"],
   [role="alertdialog"],
-  .fixed {
+  .fixed,
+  .print\:hidden {
     display: none !important;
   }
 
-  /* Reset backgrounds and colors for ink-friendly output */
+  /* Preserve colors and backgrounds during print */
   * {
-    color: #000 !important;
-    background: transparent !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
     box-shadow: none !important;
     text-shadow: none !important;
-    border-color: #ccc !important;
   }
 
-  /* Main content should fill the page */
-  body {
-    margin: 0;
-    padding: 0;
-    font-size: 12pt;
+  /* Reset layout for full page printing */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt;
     line-height: 1.4;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   }
 
   main {
@@ -776,6 +779,67 @@ body.custom-cursor-active * {
   .flex-1.flex.flex-col {
     display: block !important;
     overflow: visible !important;
+  }
+
+  /* Printable containers (Invoice, Challan, Payslip) */
+  #invoice-content, 
+  #printable-payslip, 
+  .printable-document,
+  .print-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Table borders and backgrounds */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 15px !important;
+    margin-bottom: 15px !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important; /* light gray header */
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+  }
+
+  td, th {
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    text-align: left;
+  }
+
+  /* Preserve specific badge colors for printed authentic look */
+  .badge {
+    border: 1px solid currentColor !important;
+    padding: 2px 6px !important;
+    font-size: 9pt !important;
+    border-radius: 4px !important;
+    font-weight: 600 !important;
+  }
+
+  .badge-success {
+    background-color: #f0fdf4 !important;
+    color: #166534 !important;
+  }
+
+  .badge-warning {
+    background-color: #fffbeb !important;
+    color: #92400e !important;
+  }
+
+  .badge-danger {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
   }
 
   /* Page breaks */

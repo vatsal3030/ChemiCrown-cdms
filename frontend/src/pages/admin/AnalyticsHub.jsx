@@ -79,12 +79,23 @@ export default function AnalyticsHub() {
             <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">No customer data</div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={topCustomers} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} opacity={0.3} />
-                <XAxis type="number" tickFormatter={(v) => `₹${v/1000}k`} />
-                <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value) => formatINRFull(value)} cursor={{fill: 'var(--muted)'}} />
-                <Bar dataKey="revenue" fill="#3B82F6" radius={[0, 4, 4, 0]} barSize={20} />
+              <BarChart data={topCustomers} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="customerGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#1e3a8a" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} opacity={0.15} stroke="var(--border)" />
+                <XAxis type="number" tickFormatter={(v) => `₹${v/1000}k`} axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10 }} />
+                <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
+                  formatter={(value) => [formatINRFull(value), 'Revenue']}
+                  cursor={{ fill: 'var(--muted)', radius: 4 }}
+                  labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
+                />
+                <Bar dataKey="revenue" fill="url(#customerGrad)" radius={[0, 6, 6, 0]} barSize={16} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -100,13 +111,16 @@ export default function AnalyticsHub() {
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie data={orderStatusDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" nameKey="name" label>
+                <Pie data={orderStatusDistribution} cx="50%" cy="40%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
                   {orderStatusDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
+                  labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
+                />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -121,12 +135,22 @@ export default function AnalyticsHub() {
             <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">No inventory data</div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={inventoryValuation} margin={{ top: 5, right: 10, left: 0, bottom: 25 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" tick={{ fontSize: 10 }} interval={0} height={60} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip cursor={{fill: 'var(--muted)'}} />
-                <Bar dataKey="stock" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+              <BarChart data={inventoryValuation} margin={{ top: 10, right: 10, left: -25, bottom: 25 }}>
+                <defs>
+                  <linearGradient id="invValGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#c084fc" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.15} stroke="var(--border)" />
+                <XAxis dataKey="name" angle={-30} textAnchor="end" tick={{ fontSize: 9, fill: '#94A3B8' }} interval={0} height={60} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
+                  cursor={{ fill: 'var(--muted)', radius: 4 }}
+                  labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
+                />
+                <Bar dataKey="stock" fill="url(#invValGrad)" radius={[6, 6, 0, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           )}

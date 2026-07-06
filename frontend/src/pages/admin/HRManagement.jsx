@@ -733,13 +733,13 @@ export default function HRManagement() {
               <div className="h-80 w-full relative">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <PieChart>
-                    <Pie data={deptData} cx="50%" cy="50%" innerRadius={65} outerRadius={90} paddingAngle={5} dataKey="value" label={({ name, value }) => `${name} (${value})`}>
+                    <Pie data={deptData} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value" label={({ name, value }) => `${name} (${value})`}>
                       {deptData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0' }} />
-                    <Legend />
+                    <RechartsTooltip contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }} labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }} />
+                    <Legend iconType="circle" />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -749,12 +749,18 @@ export default function HRManagement() {
               <h3 className="font-semibold text-foreground mb-4">Employees by Role</h3>
               <div className="h-80 w-full relative">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                  <BarChart data={roleData} margin={{ bottom: 25, left: 15 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={50} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} allowDecimals={false} width={40} label={{ value: 'Employees Count', angle: -90, position: 'insideLeft', offset: -5, fill: '#94A3B8', fontSize: 12 }} />
-                    <RechartsTooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0' }} />
-                    <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                  <BarChart data={roleData} margin={{ top: 10, bottom: 25, left: -25 }}>
+                    <defs>
+                      <linearGradient id="hrRoleGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0.8} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.15} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94A3B8' }} interval={0} angle={-15} textAnchor="end" height={50} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94A3B8' }} allowDecimals={false} width={40} />
+                    <RechartsTooltip cursor={{ fill: 'var(--muted)', radius: 4 }} contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }} labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }} />
+                    <Bar dataKey="value" fill="url(#hrRoleGrad)" radius={[4, 4, 0, 0]} barSize={28} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

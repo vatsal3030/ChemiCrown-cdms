@@ -324,14 +324,29 @@ export default function Finance() {
                 <h3 className="font-bold text-foreground mb-1">Revenue vs Payroll — Monthly Trend</h3>
                 <p className="text-xs text-muted-foreground mb-4">All-time data from first recorded order</p>
                 <ResponsiveContainer width="100%" height={240} minWidth={0} minHeight={0}>
-                  <BarChart data={d.monthlyRevenue || []} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={v => fmtShort(v)} axisLine={false} tickLine={false} />
-                    <Tooltip formatter={(v, n) => [fmt(v), n]} cursor={{fill: 'var(--muted)'}} />
-                    <Legend />
-                    <Bar dataKey="revenue" name="Revenue" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                    <Bar dataKey="payroll" name="Payroll" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <BarChart data={d.monthlyRevenue || []} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="finRevGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#34d399" stopOpacity={0.8} />
+                      </linearGradient>
+                      <linearGradient id="finPayGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ef4444" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#f87171" stopOpacity={0.8} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.12} vertical={false} stroke="var(--border)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: '#94A3B8' }} tickFormatter={v => fmtShort(v)} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
+                      formatter={(v, n) => [fmt(v), n]}
+                      cursor={{ fill: 'var(--muted)', radius: 4 }}
+                      labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
+                    />
+                    <Legend iconType="circle" />
+                    <Bar dataKey="revenue" name="Revenue" fill="url(#finRevGrad)" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                    <Bar dataKey="payroll" name="Payroll" fill="url(#finPayGrad)" radius={[4, 4, 0, 0]} maxBarSize={32} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -344,10 +359,13 @@ export default function Finance() {
                   <>
                     <ResponsiveContainer width="100%" height={160} minWidth={0} minHeight={0}>
                       <PieChart>
-                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" nameKey="name">
+                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" nameKey="name" paddingAngle={3}>
                           {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                         </Pie>
-                        <Tooltip formatter={(v) => fmt(v)} />
+                        <Tooltip
+                          contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
+                          formatter={(v) => fmt(v)}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="space-y-1.5 mt-2">
@@ -373,12 +391,23 @@ export default function Finance() {
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h3 className="font-bold text-foreground mb-4">Expense Breakdown by Category</h3>
                 <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={0}>
-                  <BarChart data={Object.entries(d.expenseByCategory).map(([k,v]) => ({ category: k, amount: v }))} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis dataKey="category" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10 }} tickFormatter={v => fmtShort(v)} />
-                    <Tooltip formatter={(v) => [fmt(v), 'Amount']} />
-                    <Bar dataKey="amount" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                  <BarChart data={Object.entries(d.expenseByCategory).map(([k,v]) => ({ category: k, amount: v }))} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="finExpGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#d97706" stopOpacity={0.8} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.12} vertical={false} stroke="var(--border)" />
+                    <XAxis dataKey="category" tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: '#94A3B8' }} tickFormatter={v => fmtShort(v)} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--card)', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.15)' }}
+                      formatter={(v) => [fmt(v), 'Amount']}
+                      cursor={{ fill: 'var(--muted)', radius: 4 }}
+                      labelStyle={{ fontWeight: 600, color: 'var(--foreground)' }}
+                    />
+                    <Bar dataKey="amount" fill="url(#finExpGrad)" radius={[4, 4, 0, 0]} barSize={36} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
