@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Mail, Lock, User, Building, Phone, Camera, ArrowRight,
   Eye, EyeOff, CreditCard, MapPin, Info
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/context/AuthContext';
 import ChemiCursor from '@/components/ui/ChemiCursor';
 
 // GST validation: standard Indian GSTIN format (15 alphanumeric chars)
@@ -14,6 +15,15 @@ const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 const NAME_REGEX = /^[A-Za-z][A-Za-z\s.\-']{0,48}[A-Za-z.]?$/;
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, loading, navigate]);
+
   const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({

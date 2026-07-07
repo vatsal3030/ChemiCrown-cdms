@@ -6,7 +6,7 @@ export default function CoAGeneratorModal({ isOpen, onClose, lot }) {
   const componentRef = useRef();
 
   const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
+    contentRef: componentRef,
     documentTitle: `CoA_${lot?.lotNumber}_${lot?.product?.name}`,
   });
 

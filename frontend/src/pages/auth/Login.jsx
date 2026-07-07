@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, X, ChevronDown, Shield, Zap, Package } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -7,7 +7,13 @@ import ChemiCursor from '@/components/ui/ChemiCursor';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, storedAccounts, switchAccount, removeStoredAccount } = useAuth();
+  const { login, storedAccounts, switchAccount, removeStoredAccount, user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, loading, navigate]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

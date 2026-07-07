@@ -58,7 +58,7 @@ const buildNavSections = (role, customerMode = false) => {
 
   // OPERATIONS section
   const ops = { label: 'Operations', items: [] };
-  if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER', 'SALES'].includes(role)) {
+  if (!customerMode && ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'INVENTORY_MANAGER', 'SALES'].includes(role)) {
     ops.items.push({ name: 'Product Catalog', path: '/dashboard/catalog', icon: Store });
   }
   if (['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES', 'MARKETING', 'DIGITAL_MARKETING'].includes(role)) {

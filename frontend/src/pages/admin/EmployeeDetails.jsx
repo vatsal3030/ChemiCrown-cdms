@@ -183,6 +183,20 @@ export default function EmployeeDetails() {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    if (editForm.baseSalary && parseFloat(editForm.baseSalary) < 0) {
+      return toast.error('Base Salary cannot be negative');
+    }
+    if (editForm.ctc && parseFloat(editForm.ctc) < 0) {
+      return toast.error('CTC cannot be negative');
+    }
+    if (editForm.baseSalary && editForm.ctc && parseFloat(editForm.ctc) > 0 && parseFloat(editForm.baseSalary) > 0) {
+      if (parseFloat(editForm.ctc) < parseFloat(editForm.baseSalary) * 12) {
+        return toast.error('Annual CTC must be at least 12 times the monthly Base Salary');
+      }
+    }
+    if (editForm.pfRate && (parseFloat(editForm.pfRate) < 0 || parseFloat(editForm.pfRate) > 30)) {
+      return toast.error('PF Rate must be between 0% and 30%');
+    }
     try {
       setEditLoading(true);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.id}`, {

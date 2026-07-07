@@ -82,7 +82,7 @@ export default function CreateLotPage() {
         </div>
       </div>
 
-      <div className="max-w-3xl bg-card border border-border rounded-2xl p-6 shadow-sm">
+      <div className="max-w-[1200px] bg-card border border-border rounded-2xl p-8 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>

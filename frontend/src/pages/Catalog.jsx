@@ -80,8 +80,8 @@ export default function Catalog() {
   const { addToCart } = useCart();
   const { user, token } = useAuth();
 
-  // Catalog always uses standard ERP styling (no cinematic dark override)
-  const isPublic = false;
+  // Dynamic determination of public vs dashboard layout style
+  const isPublic = !location.pathname.startsWith('/dashboard');
 
   // ── Search ──────────────────────────────────────────────────────────────────
   // Single source of truth: local state, NOT derived from URL (avoids double-state conflicts)

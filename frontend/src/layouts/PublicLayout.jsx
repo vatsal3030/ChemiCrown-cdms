@@ -13,7 +13,7 @@ export default function PublicLayout() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { storedAccounts, switchAccount, user } = useAuth();
+  const { storedAccounts, switchAccount, user, loading } = useAuth();
   const { cartItems } = useCart();
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -157,7 +157,9 @@ export default function PublicLayout() {
                 )}
               </Link>
               
-              {user ? (
+              {loading ? (
+                <div className="h-10 w-24 bg-white/[0.04] animate-pulse rounded-xl" />
+              ) : user ? (
                 <div 
                   className="relative flex items-center gap-3"
                   ref={menuRef}
@@ -282,7 +284,9 @@ export default function PublicLayout() {
               </button>
             </div>
             <div className="h-px w-full bg-white/[0.06] my-2"></div>
-            {user ? (
+            {loading ? (
+              <div className="h-16 w-full bg-white/[0.02] animate-pulse rounded-lg border border-white/[0.06]" />
+            ) : user ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 rounded-lg border border-white/[0.06] bg-white/[0.02]">
                   <div className="w-10 h-10 rounded-full bg-brand/20 text-brand flex items-center justify-center font-bold overflow-hidden border border-white/10">

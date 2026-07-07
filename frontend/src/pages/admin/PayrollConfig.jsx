@@ -65,6 +65,14 @@ export default function PayrollConfig() {
 
   const saveSalary = async () => {
     if (!baseSalary || parseFloat(baseSalary) <= 0) return toast.error('Enter a valid base salary');
+    if (ctc && parseFloat(ctc) > 0 && parseFloat(baseSalary) > 0) {
+      if (parseFloat(ctc) < parseFloat(baseSalary) * 12) {
+        return toast.error('Annual CTC must be at least 12 times the monthly Base Salary');
+      }
+    }
+    if (pfRate && (parseFloat(pfRate) < 0 || parseFloat(pfRate) > 30)) {
+      return toast.error('PF Rate must be between 0% and 30%');
+    }
     setSaving(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${emp?.id}/salary-config`, {

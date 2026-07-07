@@ -2,11 +2,20 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/context/AuthContext';
 import ChemiCursor from '@/components/ui/ChemiCursor';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, loading, navigate]);
+
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
   const [email, setEmail] = useState(location.state?.email || '');
   const [otp, setOtp] = useState('');

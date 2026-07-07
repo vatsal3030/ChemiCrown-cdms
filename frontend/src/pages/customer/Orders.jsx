@@ -299,7 +299,11 @@ export default function Orders({ isMyOrders = false }) {
             <span key={s} className="flex flex-wrap items-center gap-1">
               <button
                 onClick={() => { setParam('status', s); setTempFilters(f => ({ ...f, status: s })); }}
-                className={`font-medium px-2 py-0.5 rounded-full transition-all ${statusFilter === s ? 'bg-primary text-white' : 'hover:bg-muted text-foreground'}`}
+                className={`font-medium px-2.5 py-1 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-xs ${
+                  statusFilter === s 
+                    ? 'bg-primary text-white shadow-md shadow-primary/20 border border-primary' 
+                    : 'bg-background hover:bg-primary/10 hover:text-primary border border-border hover:border-primary/30 text-foreground'
+                }`}
               >
                 {s.charAt(0) + s.slice(1).toLowerCase()}
                 {statusCounts[s] ? ` (${statusCounts[s]})` : ''}

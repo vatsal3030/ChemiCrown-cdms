@@ -47,6 +47,17 @@ export default function AttendanceCalendar() {
 
   const handleCellClick = (empId, day) => {
     if (!isSuperAdmin) return;
+
+    // Check if date is before employee joining date
+    const emp = employees?.find(e => e.id === empId);
+    if (emp?.employeeProfile?.joiningDate) {
+      const cellDateTime = new Date(targetYear, targetMonth, day).getTime();
+      const joiningDateTime = new Date(new Date(emp.employeeProfile.joiningDate).setHours(0,0,0,0)).getTime();
+      if (cellDateTime < joiningDateTime) {
+        toast.error(`Cannot edit attendance before joining date (${new Date(emp.employeeProfile.joiningDate).toLocaleDateString()})`);
+        return;
+      }
+    }
     
     const dateStr = new Date(Date.UTC(targetYear, targetMonth, day)).toISOString().split('T')[0];
     const key = `${empId}_${dateStr}`;
@@ -264,15 +275,29 @@ export default function AttendanceCalendar() {
                       const isPending = pendingChanges[key] !== undefined;
                       const isWeekend = [0, 6].includes(new Date(targetYear, targetMonth, day).getDay());
                       
+                      // Check if before joining date
+                      const joiningDateVal = emp.employeeProfile?.joiningDate ? new Date(emp.employeeProfile.joiningDate) : null;
+                      const cellDateTime = new Date(targetYear, targetMonth, day).getTime();
+                      const joiningDateTime = joiningDateVal ? new Date(new Date(joiningDateVal).setHours(0,0,0,0)).getTime() : null;
+                      const isBeforeJoining = joiningDateTime ? cellDateTime < joiningDateTime : false;
+                      
                       return (
                         <td key={day} className={`p-0.5 border-r border-border text-center ${isWeekend ? 'bg-muted/10' : ''}`}>
                           <button
-                            disabled={!isSuperAdmin}
+                            disabled={!isSuperAdmin || isBeforeJoining}
                             onClick={() => handleCellClick(empId, day)}
-                            className={`w-full h-8 flex items-center justify-center text-xs font-bold rounded transition-colors ${getStatusColor(status, isPending)} ${!isSuperAdmin ? 'cursor-default' : 'cursor-pointer'}`}
-                            title={`${emp.firstName} - ${day}/${targetMonth + 1}/${targetYear}`}
+                            className={`w-full h-8 flex items-center justify-center text-xs font-bold rounded transition-colors ${
+                              isBeforeJoining 
+                                ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-350 dark:text-slate-650 cursor-not-allowed opacity-50' 
+                                : getStatusColor(status, isPending)
+                            } ${!isSuperAdmin || isBeforeJoining ? '' : 'cursor-pointer hover:opacity-80'}`}
+                            title={
+                              isBeforeJoining
+                                ? `${emp.firstName} - Before Joining Date (Joined: ${new Date(emp.employeeProfile.joiningDate).toLocaleDateString('en-IN')})`
+                                : `${emp.firstName} - ${day}/${targetMonth + 1}/${targetYear}`
+                            }
                           >
-                            {getStatusLabel(status)}
+                            {isBeforeJoining ? '-' : getStatusLabel(status)}
                           </button>
                         </td>
                       );

@@ -221,6 +221,21 @@ exports.addEmployee = async (req, res, next) => {
   try {
     const { email, password, firstName, lastName, role, department, jobTitle, phone, joiningDate, isActive, baseSalary, ctc, pfRate } = req.body;
 
+    if (baseSalary !== undefined && baseSalary !== null && parseFloat(baseSalary) < 0) {
+      return res.status(400).json({ success: false, message: 'Base Salary cannot be negative' });
+    }
+    if (ctc !== undefined && ctc !== null && parseFloat(ctc) < 0) {
+      return res.status(400).json({ success: false, message: 'CTC cannot be negative' });
+    }
+    if (baseSalary !== undefined && baseSalary !== null && ctc !== undefined && ctc !== null) {
+      if (parseFloat(ctc) > 0 && parseFloat(baseSalary) > 0 && parseFloat(ctc) < parseFloat(baseSalary) * 12) {
+        return res.status(400).json({ success: false, message: 'Annual CTC must be at least 12 times the monthly Base Salary' });
+      }
+    }
+    if (pfRate !== undefined && pfRate !== null && (parseFloat(pfRate) < 0 || parseFloat(pfRate) > 30)) {
+      return res.status(400).json({ success: false, message: 'PF Rate must be between 0% and 30%' });
+    }
+
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email is already registered' });
@@ -275,6 +290,26 @@ exports.updateEmployee = async (req, res, next) => {
     const { id } = req.params;
     const { firstName, lastName, phone, role, department, jobTitle, joiningDate, isActive, baseSalary, ctc, pfRate } = req.body;
     const requestingUser = req.user;
+
+    const empRecord = await prisma.employee.findUnique({ where: { userId: id } });
+    const finalBaseSalary = baseSalary !== undefined ? baseSalary : (empRecord?.baseSalary || 0);
+    const finalCtc = ctc !== undefined ? ctc : (empRecord?.ctc || 0);
+    const finalPfRate = pfRate !== undefined ? pfRate : (empRecord?.pfRate || 12.0);
+
+    if (finalBaseSalary !== undefined && finalBaseSalary !== null && parseFloat(finalBaseSalary) < 0) {
+      return res.status(400).json({ success: false, message: 'Base Salary cannot be negative' });
+    }
+    if (finalCtc !== undefined && finalCtc !== null && parseFloat(finalCtc) < 0) {
+      return res.status(400).json({ success: false, message: 'CTC cannot be negative' });
+    }
+    if (finalBaseSalary !== undefined && finalBaseSalary !== null && finalCtc !== undefined && finalCtc !== null) {
+      if (parseFloat(finalCtc) > 0 && parseFloat(finalBaseSalary) > 0 && parseFloat(finalCtc) < parseFloat(finalBaseSalary) * 12) {
+        return res.status(400).json({ success: false, message: 'Annual CTC must be at least 12 times the monthly Base Salary' });
+      }
+    }
+    if (finalPfRate !== undefined && finalPfRate !== null && (parseFloat(finalPfRate) < 0 || parseFloat(finalPfRate) > 30)) {
+      return res.status(400).json({ success: false, message: 'PF Rate must be between 0% and 30%' });
+    }
 
     // RBAC: Prevent role escalation — only SUPER_ADMIN/OWNER can assign privileged roles
     const privilegedRoles = ['SUPER_ADMIN', 'OWNER', 'MANAGER'];
@@ -590,6 +625,29 @@ exports.updateSalaryConfig = async (req, res, next) => {
   try {
     const { id } = req.params; // employee.id
     const { baseSalary, ctc, pfRate, salesTarget } = req.body;
+
+    const empRecord = await prisma.employee.findUnique({ where: { id } });
+    if (!empRecord) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+    const finalBaseSalary = baseSalary !== undefined ? baseSalary : (empRecord.baseSalary || 0);
+    const finalCtc = ctc !== undefined ? ctc : (empRecord.ctc || 0);
+    const finalPfRate = pfRate !== undefined ? pfRate : (empRecord.pfRate || 12.0);
+
+    if (finalBaseSalary !== undefined && finalBaseSalary !== null && parseFloat(finalBaseSalary) < 0) {
+      return res.status(400).json({ success: false, message: 'Base Salary cannot be negative' });
+    }
+    if (finalCtc !== undefined && finalCtc !== null && parseFloat(finalCtc) < 0) {
+      return res.status(400).json({ success: false, message: 'CTC cannot be negative' });
+    }
+    if (finalBaseSalary !== undefined && finalBaseSalary !== null && finalCtc !== undefined && finalCtc !== null) {
+      if (parseFloat(finalCtc) > 0 && parseFloat(finalBaseSalary) > 0 && parseFloat(finalCtc) < parseFloat(finalBaseSalary) * 12) {
+        return res.status(400).json({ success: false, message: 'Annual CTC must be at least 12 times the monthly Base Salary' });
+      }
+    }
+    if (finalPfRate !== undefined && finalPfRate !== null && (parseFloat(finalPfRate) < 0 || parseFloat(finalPfRate) > 30)) {
+      return res.status(400).json({ success: false, message: 'PF Rate must be between 0% and 30%' });
+    }
 
     const updated = await prisma.employee.update({
       where: { id },

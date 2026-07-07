@@ -74,7 +74,7 @@ export default function AuditLogDetails() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-[1200px] pb-20">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <button

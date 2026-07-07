@@ -71,7 +71,14 @@ export default function AddEmployeePage() {
     // Number validations
     if (form.baseSalary && parseFloat(form.baseSalary) < 0) return toast.error('Base Salary cannot be negative');
     if (form.ctc && parseFloat(form.ctc) < 0) return toast.error('CTC cannot be negative');
-    if (form.pfRate && (parseFloat(form.pfRate) < 0 || parseFloat(form.pfRate) > 100)) return toast.error('Invalid PF Rate');
+    if (form.baseSalary && form.ctc && parseFloat(form.ctc) > 0 && parseFloat(form.baseSalary) > 0) {
+      if (parseFloat(form.ctc) < parseFloat(form.baseSalary) * 12) {
+        return toast.error('Annual CTC must be at least 12 times the monthly Base Salary');
+      }
+    }
+    if (form.pfRate && (parseFloat(form.pfRate) < 0 || parseFloat(form.pfRate) > 30)) {
+      return toast.error('PF Rate must be between 0% and 30%');
+    }
     if (form.salesTarget && parseFloat(form.salesTarget) < 0) return toast.error('Sales target cannot be negative');
 
     setLoading(true);

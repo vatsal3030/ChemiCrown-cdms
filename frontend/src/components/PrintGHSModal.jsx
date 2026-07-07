@@ -8,7 +8,7 @@ export default function PrintGHSModal({ isOpen, onClose, product }) {
 
   // We only print the GHS label area, not the modal backdrop
   const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
+    contentRef: componentRef,
     documentTitle: `GHS_Label_${product?.casNumber || product?.name}`,
   });
 

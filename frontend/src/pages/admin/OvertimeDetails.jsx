@@ -99,7 +99,7 @@ export default function OvertimeDetails() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-[1200px] space-y-6 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-wrap items-center gap-4">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors">
           <ArrowLeft size={20} />

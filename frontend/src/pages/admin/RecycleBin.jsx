@@ -122,20 +122,22 @@ export default function RecycleBin() {
 
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         {loading ? (
+          <div className="overflow-x-auto">
             <table className="data-table">
-              <thead>
-                <tr className="data-table-header bg-muted/50 border-b border-border">
-                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Type</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Name / ID</th>
-                  <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Deleted On</th>
-                  <th className="px-6 py-4 text-right font-semibold text-slate-700 dark:text-slate-300">Actions</th>
+              <thead className="bg-muted/50">
+                <tr className="data-table-header">
+                  <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Name / ID</th>
+                  <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider">Deleted On</th>
+                  <th className="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <SkeletonTableBody columns={4} rows={5} />
               </tbody>
             </table>
-          ) : items.length === 0 ? (
+          </div>
+        ) : items.length === 0 ? (
           <div className="p-12 text-center">
             <Trash2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white">Recycle Bin is empty</h3>
