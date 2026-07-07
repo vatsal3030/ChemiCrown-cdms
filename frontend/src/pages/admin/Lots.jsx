@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SkeletonTableBody } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import toast from 'react-hot-toast';
 import CoAGeneratorModal from '@/components/CoAGeneratorModal';
 import CreateLotModal from '@/components/CreateLotModal';
@@ -21,6 +22,7 @@ const STATUS_COLORS = {
 
 export default function Lots() {
   const { token, user } = useAuth();
+  const { confirm } = useDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [lots, setLots] = useState([]);
@@ -82,7 +84,12 @@ export default function Lots() {
   };
 
   const updateLotStatus = async (id, newStatus) => {
-    if (!window.confirm(`Are you sure you want to change this lot's status to ${newStatus}?`)) return;
+    const ok = await confirm(
+      'Update Lot Status',
+      `Are you sure you want to change this lot's status to ${newStatus}?`,
+      { type: 'warning', confirmLabel: 'Change Status' }
+    );
+    if (!ok) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/lots/${id}`, {
         method: 'PUT',

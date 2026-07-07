@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Bug, Lightbulb, Database, AlertTriangle, CheckCircle2, Clock, RefreshCw, X, ChevronDown, Search, Filter } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
@@ -28,6 +29,7 @@ const STATUS_STYLES = {
 
 export default function TicketDashboard() {
   const { token, user } = useAuth();
+  const { confirm } = useDialog();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -68,7 +70,8 @@ export default function TicketDashboard() {
   useEffect(() => { fetchTickets(); }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this ticket?')) return;
+    const confirmed = await confirm('Delete Support Ticket', 'Are you sure you want to delete this support ticket? This will permanently delete it from the system.', { type: 'danger' });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/support/${id}`, {
         method: 'DELETE',

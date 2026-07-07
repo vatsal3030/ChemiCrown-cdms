@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Search, Filter, RefreshCw, Activity, AlertCircle, X, ArrowUpDown, Clock, Shield, Trash2, SlidersHorizontal } from 'lucide-react';
 import { Skeleton, SkeletonTableBody } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'react-router-dom';
@@ -18,6 +19,7 @@ const ACTION_COLORS = {
 
 export default function AuditLog() {
   const { token } = useAuth();
+  const { confirm } = useDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,8 @@ export default function AuditLog() {
 
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this audit log entry? This action cannot be undone.')) return;
+    const ok = await confirm('Delete Audit Log Entry', 'Are you sure you want to delete this audit log entry? This action cannot be undone.', { type: 'danger' });
+    if (!ok) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/support/audit-logs/${id}`, {
         method: 'DELETE',

@@ -6,6 +6,7 @@ import {
   QrCode, Clock
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { SkeletonTableBody } from '@/components/ui/Skeleton';
@@ -42,6 +43,7 @@ const STATUS_COLORS = {
 
 export default function Orders({ isMyOrders = false }) {
   const { token, user } = useAuth();
+  const { confirm, prompt } = useDialog();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -161,9 +163,10 @@ export default function Orders({ isMyOrders = false }) {
   const handleCancel = async (id) => {
     const order = orders.find(o => o.id === id);
     if (!order) return;
-    const reason = window.prompt('Reason for cancellation (optional — leave blank to skip):');
+    const reason = await prompt('Cancel Order', 'Reason for cancellation (optional):', '', { placeholder: 'e.g. Changed my mind' });
     if (reason === null) return; // User pressed Cancel on the prompt
-    if (!window.confirm(`Cancel order #${id.substring(0, 8).toUpperCase()}? This cannot be undone.`)) return;
+    const confirmed = await confirm('Confirm Cancellation', `Are you sure you want to cancel order #${id.substring(0, 8).toUpperCase()}? This cannot be undone.`, { type: 'danger' });
+    if (!confirmed) return;
 
     const previousStatus = order.status;
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'CANCELLED' } : o));
@@ -604,22 +607,22 @@ export default function Orders({ isMyOrders = false }) {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-primary/5">
-              <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('id')}>
+          <table className="w-full text-sm text-left">
+            <thead className="bg-muted text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-border">
+              <tr>
+                <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors text-left" onClick={() => toggleSort('id')}>
                   <div className="flex flex-wrap items-center gap-1">Order ID <ArrowUpDown size={12} className={sortField === 'id' ? 'text-primary' : ''} /></div>
                 </th>
-                <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('createdAt')}>
+                <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors text-left" onClick={() => toggleSort('createdAt')}>
                   <div className="flex flex-wrap items-center gap-1">Date <ArrowUpDown size={12} className={sortField === 'createdAt' ? 'text-primary' : ''} /></div>
                 </th>
-                {isAdmin && <th className="data-table-cell text-left">Customer</th>}
-                <th className="data-table-cell text-left cursor-pointer hover:text-foreground" onClick={() => toggleSort('total')}>
+                {isAdmin && <th className="px-6 py-3 text-left">Customer</th>}
+                <th className="px-6 py-3 cursor-pointer hover:text-primary transition-colors text-left" onClick={() => toggleSort('total')}>
                   <div className="flex flex-wrap items-center gap-1">Total <ArrowUpDown size={12} className={sortField === 'total' ? 'text-primary' : ''} /></div>
                 </th>
-                <th className="data-table-cell text-left">Status</th>
-                {isAdmin && <th className="data-table-cell text-left">Advance</th>}
-                <th className="data-table-cell text-right">Actions</th>
+                <th className="px-6 py-3 text-left">Status</th>
+                {isAdmin && <th className="px-6 py-3 text-left">Advance</th>}
+                <th className="px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">

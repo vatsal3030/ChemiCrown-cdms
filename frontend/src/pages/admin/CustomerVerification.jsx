@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { ShieldCheck, XCircle, Search, UserCheck, Building2, Clock, Users, AlertTriangle, Ban, CheckCircle, Filter, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 
 export default function CustomerManagement() {
   const { token } = useAuth();
+  const { confirm } = useDialog();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -57,7 +59,8 @@ export default function CustomerManagement() {
   };
 
   const rejectCustomer = async (id) => {
-    if (!window.confirm('Reject and remove this customer account?')) return;
+    const ok = await confirm('Reject Customer', 'Are you sure you want to reject and remove this customer registration request?', { type: 'danger', confirmLabel: 'Reject Request' });
+    if (!ok) return;
     setProcessing(id);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/verify-customer/${id}`, {
@@ -79,7 +82,13 @@ export default function CustomerManagement() {
   };
 
   const toggleCustomerStatus = async (id, action) => {
-    if (!window.confirm(`Are you sure you want to ${action} this customer?`)) return;
+    const actionLabel = action === 'block' ? 'Block Customer' : 'Unblock Customer';
+    const ok = await confirm(
+      actionLabel,
+      `Are you sure you want to ${action} this customer?`,
+      { type: action === 'block' ? 'danger' : 'success', confirmLabel: actionLabel }
+    );
+    if (!ok) return;
     setProcessing(id);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/customer/${id}/toggle-status`, {

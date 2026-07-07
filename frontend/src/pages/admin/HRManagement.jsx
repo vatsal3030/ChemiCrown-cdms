@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton, SkeletonCard, SkeletonTableRow, SkeletonTableBody } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -283,6 +284,7 @@ const TABS = ['dashboard', 'directory', 'payroll', 'leaves', 'warnings', 'overti
 
 export default function HRManagement() {
   const { user, token } = useAuth();
+  const { confirm } = useDialog();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';  // gate for sensitive write actions
   const navigate = useNavigate();
   const location = useLocation();
@@ -527,7 +529,8 @@ export default function HRManagement() {
   };
 
   const handleReinstate = async (emp) => {
-    if (!window.confirm(`Reinstate ${emp.firstName} ${emp.lastName}?`)) return;
+    const ok = await confirm('Reinstate Employee', `Are you sure you want to reinstate ${emp.firstName} ${emp.lastName} to ACTIVE status?`, { type: 'success', confirmLabel: 'Reinstate' });
+    if (!ok) return;
     
     // Optimistic UI
     setEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, employeeProfile: { ...e.employeeProfile, status: 'ACTIVE' } } : e));
@@ -1174,7 +1177,7 @@ export default function HRManagement() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-border">
+              <thead className="bg-muted text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-border">
                 <tr>
                   {['Employee','Date','Type','Reason','Submitted','Status',''].map(h => (
                     <th key={h} className={`px-6 py-3 ${h === 'Status' ? 'text-right' : ''}`}>{h}</th>
@@ -1398,16 +1401,16 @@ export default function HRManagement() {
               </div>
             )}
 
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Employee</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date</th>
-                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Hours</th>
-                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Rate</th>
-                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Amount</th>
-                  <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3"></th>
+            <table className="w-full text-sm text-left">
+              <thead className="bg-muted text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-border">
+                <tr>
+                  <th className="text-left px-6 py-3">Employee</th>
+                  <th className="text-left px-6 py-3">Date</th>
+                  <th className="text-right px-6 py-3">Hours</th>
+                  <th className="text-right px-6 py-3">Rate</th>
+                  <th className="text-right px-6 py-3">Amount</th>
+                  <th className="text-center px-6 py-3">Status</th>
+                  <th className="px-6 py-3"></th>
                 </tr>
               </thead>
               {otLoading ? (
@@ -1625,15 +1628,15 @@ export default function HRManagement() {
               </div>
             )}
 
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Employee</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Month</th>
-                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Achieved</th>
-                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Incentive</th>
-                  <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
+            <table className="w-full text-sm text-left">
+              <thead className="bg-muted text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-border">
+                <tr>
+                  <th className="text-left px-6 py-3">Employee</th>
+                  <th className="text-left px-6 py-3">Month</th>
+                  <th className="text-right px-6 py-3">Achieved</th>
+                  <th className="text-right px-6 py-3">Incentive</th>
+                  <th className="text-center px-6 py-3">Status</th>
+                  <th className="text-right px-6 py-3">Actions</th>
                 </tr>
               </thead>
               {incLoading ? (

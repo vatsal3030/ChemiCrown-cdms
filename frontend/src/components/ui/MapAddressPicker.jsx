@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useDialog } from '@/context/DialogContext';
 
 // Fix for default marker icon in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -45,6 +46,7 @@ function MapController({ centerPosition }) {
 }
 
 export function MapAddressPicker({ onLocationChange }) {
+  const { alert } = useDialog();
   const defaultCenter = { lat: 21.7411471, lng: 72.0706172 }; // Default to warehouse vicinity
   const [position, setPosition] = useState(null);
   const [flyToPosition, setFlyToPosition] = useState(null);
@@ -64,11 +66,11 @@ export function MapAddressPicker({ onLocationChange }) {
           setFlyToPosition(newPos);
         },
         () => {
-          alert("Unable to retrieve your location. Please click on the map to set your location.");
+          alert("Location Fetch Error", "Unable to retrieve your location. Please click on the map manually to set your delivery location.");
         }
       );
     } else {
-      alert("Geolocation is not supported by your browser.");
+      alert("Unsupported Browser Feature", "Geolocation is not supported by your browser. Please select your location on the map manually.");
     }
   };
 

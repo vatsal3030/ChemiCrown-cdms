@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -182,6 +183,7 @@ function TaskDetailModal({ task, onClose, onStatusChange }) {
 
 export default function Tasks() {
   const { user, token } = useAuth();
+  const { confirm } = useDialog();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // URL-driven filters
@@ -240,7 +242,8 @@ export default function Tasks() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this task?')) return;
+    const confirmed = await confirm('Delete Task', 'Are you sure you want to delete this task? This will permanently remove it from the task board.', { type: 'danger' });
+    if (!confirmed) return;
     setTasks(prev => prev.filter(t => t.id !== id));
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${id}`, {

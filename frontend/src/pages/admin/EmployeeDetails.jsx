@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ArrowLeft, User, Phone, Mail, Building, Briefcase, Calendar as CalendarIcon, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, Trophy, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
@@ -10,6 +11,7 @@ export default function EmployeeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token, user } = useAuth();
+  const { confirm, prompt } = useDialog();
   const [employee, setEmployee] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [salaries, setSalaries] = useState([]);
@@ -32,15 +34,16 @@ export default function EmployeeDetails() {
   });
 
   const handleIssueWarning = async () => {
-    const type = window.prompt("Enter Warning Type (VERBAL, WRITTEN, FINAL):", "WRITTEN");
+    const type = await prompt("Issue Official Warning", "Enter Warning Type (VERBAL, WRITTEN, FINAL):", "WRITTEN", { placeholder: "VERBAL, WRITTEN, or FINAL" });
     if (!type) return;
     if (!['VERBAL', 'WRITTEN', 'FINAL'].includes(type.toUpperCase())) {
       return toast.error("Invalid warning type. Must be VERBAL, WRITTEN, or FINAL.");
     }
-    const reason = window.prompt("Enter reason for warning:");
+    const reason = await prompt("Warning Reason", `Enter reason for the ${type.toUpperCase()} warning:`);
     if (!reason?.trim()) return toast.error("Reason is required.");
     
-    if (!window.confirm(`Confirm issuing ${type.toUpperCase()} warning to ${employee.firstName}?`)) return;
+    const ok = await confirm("Confirm Warning", `Confirm issuing ${type.toUpperCase()} warning to ${employee.firstName}?`, { type: 'warning' });
+    if (!ok) return;
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.employeeProfile?.id}/warnings`, {
@@ -60,14 +63,15 @@ export default function EmployeeDetails() {
   };
 
   const handleSuspend = async () => {
-    const from = window.prompt("Enter Start Date (YYYY-MM-DD):", new Date().toISOString().substring(0, 10));
+    const from = await prompt("Suspension Start Date", "Enter Start Date (YYYY-MM-DD):", new Date().toISOString().substring(0, 10));
     if (!from) return;
-    const to = window.prompt("Enter End Date (YYYY-MM-DD):");
+    const to = await prompt("Suspension End Date", "Enter End Date (YYYY-MM-DD):");
     if (!to) return;
-    const reason = window.prompt("Enter reason for suspension:");
+    const reason = await prompt("Suspension Reason", "Enter reason for suspension:");
     if (!reason?.trim()) return toast.error("Reason is required.");
 
-    if (!window.confirm(`Confirm suspending ${employee.firstName} from ${from} to ${to}?`)) return;
+    const ok = await confirm("Confirm Suspension", `Confirm suspending ${employee.firstName} from ${from} to ${to}?`, { type: 'warning' });
+    if (!ok) return;
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.employeeProfile?.id}/suspend`, {
@@ -88,12 +92,17 @@ export default function EmployeeDetails() {
   };
 
   const handleTerminate = async () => {
-    const reason = window.prompt("Enter reason for termination:");
+    const reason = await prompt("Termination Reason", "Enter reason for termination:");
     if (!reason?.trim()) return toast.error("Reason is required.");
-    const date = window.prompt("Enter effective date (YYYY-MM-DD):", new Date().toISOString().substring(0, 10));
+    const date = await prompt("Termination Date", "Enter effective date (YYYY-MM-DD):", new Date().toISOString().substring(0, 10));
     if (!date) return;
 
-    if (!window.confirm(`⚠️ CRITICAL: Are you sure you want to TERMINATE ${employee.firstName} ${employee.lastName} effective ${date}? This cannot be undone.`)) return;
+    const ok = await confirm(
+      "⚠️ CRITICAL: Confirm Termination",
+      `Are you sure you want to TERMINATE ${employee.firstName} ${employee.lastName} effective ${date}? This cannot be undone.`,
+      { type: 'danger', confirmLabel: 'Terminate Employee' }
+    );
+    if (!ok) return;
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.employeeProfile?.id}/terminate`, {

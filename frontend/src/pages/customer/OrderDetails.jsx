@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   ArrowLeft, Package, MapPin, Truck, CheckCircle2,
@@ -35,6 +36,7 @@ const NEXT_ACTION = {
 export default function OrderDetails() {
   const { id } = useParams();
   const { user, token } = useAuth();
+  const { confirm, prompt } = useDialog();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -156,8 +158,10 @@ export default function OrderDetails() {
   };
 
   const handleCancelOrder = async () => {
-    const reason = window.prompt('Reason for cancellation (optional):');
+    const reason = await prompt('Cancel Order', 'Reason for cancellation (optional):', '', { placeholder: 'e.g. Changed my mind' });
     if (reason === null) return;
+    const ok = await confirm('Confirm Cancellation', `Are you sure you want to cancel order #${id.substring(0, 8).toUpperCase()}? This cannot be undone.`, { type: 'danger' });
+    if (!ok) return;
     
     const previousStatus = order.status;
     const previousHistory = order.history ? [...order.history] : [];

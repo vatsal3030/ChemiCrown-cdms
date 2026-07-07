@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 import { ArrowLeft, Building2, Mail, Phone, MapPin, User, FileText, Ban, CheckCircle, Package, Clock, DollarSign, Activity, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import toast from 'react-hot-toast';
@@ -11,6 +12,7 @@ export default function CustomerProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token, user: currentUser } = useAuth();
+  const { confirm } = useDialog();
   const [processing, setProcessing] = useState(false);
 
   const fetcher = async (url) => {
@@ -29,7 +31,13 @@ export default function CustomerProfile() {
   const loading = !data && !error;
 
   const toggleCustomerStatus = async (action) => {
-    if (!window.confirm(`Are you sure you want to ${action} this customer?`)) return;
+    const actionLabel = action === 'block' ? 'Block Customer' : 'Unblock Customer';
+    const ok = await confirm(
+      actionLabel,
+      `Are you sure you want to ${action} this customer?`,
+      { type: action === 'block' ? 'danger' : 'success', confirmLabel: actionLabel }
+    );
+    if (!ok) return;
     setProcessing(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/customer/${id}/toggle-status`, {

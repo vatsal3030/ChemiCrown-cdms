@@ -60,6 +60,7 @@ export default function ChemiCursor() {
 
   // ── Flask scale ──
   const flaskScale = useRef(1);
+  const recoil = useRef(0);
 
   // ── Color interpolation helper ──
   const lerpColor = useCallback((a, b, t) => {
@@ -83,6 +84,8 @@ export default function ChemiCursor() {
     };
 
     const handleMouseDown = () => {
+      // Trigger recoil squash-and-stretch on click
+      recoil.current = 1.8;
       // ── Click: spawn splash droplets + drop liquid level ──
       const numDroplets = 6 + Math.floor(Math.random() * 4);
       const newParticles = [];
@@ -193,24 +196,36 @@ export default function ChemiCursor() {
           isOverflowing.current = true;
           overflowCooldown.current = 120; // ~2 seconds at 60fps
           
-          // Reset shake intensity immediately so it pops back to normal scale
+          // Reset shake intensity immediately
           shakeIntensity.current = 0;
+          
+          // Trigger recoil squash-and-stretch animation
+          recoil.current = 0.01;
+          
+          // Empty liquid and refill
+          targetLiquidLevel.current = 0.05;
+          setTimeout(() => { targetLiquidLevel.current = 0.58; }, 700);
           
           // Trigger shockwave ring
           shockwaveScale.current = 0.5;
-          shockwaveOpacity.current = 0.9;
+          shockwaveOpacity.current = 1.0;
           
-          // Spawn foam particles
-          const numFoam = 12 + Math.floor(Math.random() * 6);
-          for (let i = 0; i < numFoam; i++) {
+          // Spawn premium foam and spark particles
+          const numParticles = 28 + Math.floor(Math.random() * 10);
+          const particleColors = ['#39ff14', '#00ffff', '#ff007f', '#ffaa00', '#ffffff'];
+          for (let i = 0; i < numParticles; i++) {
+            const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 2; // full 360 degree spread
+            const speed = 2.5 + Math.random() * 5.5;
             foamParticles.current.push({
-              x: 9 + Math.random() * 6,
+              x: 12,
               y: 2,
-              vx: (Math.random() - 0.5) * 4.5,
-              vy: -(2.2 + Math.random() * 3.8),
-              life: 1,
-              radius: 1.2 + Math.random() * 2.2,
-              opacity: 0.9,
+              vx: Math.cos(angle) * speed + vx.current * 0.2,
+              vy: Math.sin(angle) * speed - 1.2,
+              life: 1.0,
+              radius: 1.2 + Math.random() * 2.8,
+              color: particleColors[Math.floor(Math.random() * particleColors.length)],
+              opacity: 1.0,
+              isSpark: Math.random() > 0.4 // 60% sparks
             });
           }
           
@@ -223,12 +238,21 @@ export default function ChemiCursor() {
         if (overflowCooldown.current > 0) overflowCooldown.current--;
         if (overflowCooldown.current <= 60) isOverflowing.current = false;
 
+        // ── Recoil Squash & Stretch tick ──
+        if (recoil.current > 0) {
+          recoil.current += 0.16;
+          if (recoil.current > Math.PI * 2) {
+            recoil.current = 0;
+          }
+        }
+
         // Animate shockwave
         if (shockwaveOpacity.current > 0) {
-          shockwaveScale.current += 0.12;
-          shockwaveOpacity.current -= 0.025;
+          shockwaveScale.current += 0.14;
+          shockwaveOpacity.current -= 0.028;
           if (shockwaveRef.current) {
-            shockwaveRef.current.setAttribute('r', String(20 + shockwaveScale.current * 40));
+            shockwaveRef.current.setAttribute('r', String(15 + shockwaveScale.current * 55));
+            shockwaveRef.current.setAttribute('stroke-width', String(Math.max(0.8, 3.5 * shockwaveOpacity.current)));
             shockwaveRef.current.setAttribute('opacity', String(Math.max(0, shockwaveOpacity.current)));
           }
         } else if (shockwaveRef.current) {
@@ -260,12 +284,21 @@ export default function ChemiCursor() {
         const targetScale = 1 + Math.min(3, (shakeIntensity.current / 0.85) * 3);
         flaskScale.current += (targetScale - flaskScale.current) * 0.1;
 
+        // Calculate recoil squash-and-stretch wobble
+        let squashX = 1;
+        let squashY = 1;
+        if (recoil.current > 0) {
+          const amp = 0.38 * Math.exp(-recoil.current * 0.7);
+          squashY = 1 - Math.sin(recoil.current * 4) * amp;
+          squashX = 1 + Math.sin(recoil.current * 4) * amp;
+        }
+
         // ── Apply transforms ──
         if (wrapperRef.current) {
           wrapperRef.current.style.transform = `translate3d(${currentPos.current.x}px, ${currentPos.current.y}px, 0) translate(-12px, -2px)`;
         }
         if (outerRef.current) {
-          outerRef.current.style.transform = `rotate(${rotate.current}deg) scale(${flaskScale.current})`;
+          outerRef.current.style.transform = `rotate(${rotate.current}deg) scale(${flaskScale.current * squashX}, ${flaskScale.current * squashY})`;
         }
 
         // ── Liquid wave (amplitude driven by shake + velocity) ──
@@ -323,15 +356,22 @@ export default function ChemiCursor() {
           return p.life > 0;
         });
 
-        // ── Foam particle physics ──
+        // ── Foam & Spark particle physics ──
         foamParticles.current = foamParticles.current.filter(p => {
           p.x += p.vx;
           p.y += p.vy;
-          p.vy -= 0.02; // slight float up
-          p.vx *= 0.98;
-          p.life -= 0.015;
-          p.opacity = Math.max(0, p.life * 0.8);
-          p.radius += 0.03; // expand
+          if (p.isSpark) {
+            p.vx *= 0.94;
+            p.vy *= 0.94;
+            p.life -= 0.038;
+            p.radius = Math.max(0.4, p.radius - 0.02);
+          } else {
+            p.vy += 0.12; // gravity pulls liquid down
+            p.vx *= 0.98;
+            p.life -= 0.018;
+            p.radius += 0.015; // drop expands slightly
+          }
+          p.opacity = Math.max(0, p.life);
           return p.life > 0;
         });
 

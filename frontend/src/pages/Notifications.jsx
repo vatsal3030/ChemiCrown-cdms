@@ -6,6 +6,7 @@ import {
   ChevronRight, RefreshCw, Filter
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -90,6 +91,7 @@ function relativeTime(dateStr) {
 
 export default function Notifications() {
   const { token, user } = useAuth();
+  const { confirm } = useDialog();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,8 @@ export default function Notifications() {
   };
 
   const deleteAllNotifications = async () => {
-    if (!window.confirm('Delete ALL notifications? This cannot be undone.')) return;
+    const confirmed = await confirm('Delete All Notifications', 'Are you sure you want to delete ALL notifications? This cannot be undone.', { type: 'danger' });
+    if (!confirmed) return;
     try {
       setNotifications([]);
       await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/all`, {

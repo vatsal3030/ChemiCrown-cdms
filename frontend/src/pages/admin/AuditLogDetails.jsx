@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { 
   ArrowLeft, Shield, Clock, User, Activity, Database, Key, Trash2 
 } from 'lucide-react';
@@ -10,6 +11,7 @@ export default function AuditLogDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token, user } = useAuth();
+  const { confirm } = useDialog();
   
   const [log, setLog] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +39,12 @@ export default function AuditLogDetails() {
   }, [id, token, navigate]);
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this audit log entry? This is generally not recommended for compliance.')) return;
+    const ok = await confirm(
+      'Delete Audit Log Entry',
+      'Are you sure you want to delete this audit log entry? This is generally not recommended for security and compliance.',
+      { type: 'danger', confirmLabel: 'Delete Entry' }
+    );
+    if (!ok) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/support/audit-logs/${id}`, {
         method: 'DELETE',

@@ -7,6 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { useSearchParams, Link } from 'react-router-dom';
 import { formatINR, formatINRFull } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -21,6 +22,7 @@ function SalaryStatusBadge({ status, confirmed }) {
 
 export default function Payroll() {
   const { token } = useAuth();
+  const { confirm } = useDialog();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // All filter/state from URL
@@ -70,8 +72,10 @@ export default function Payroll() {
 
     if (hasExisting) {
       if (hasPending) {
-        const confirmForce = window.confirm(
-          `Payroll slips already exist for ${month}.\n\nDo you want to REGENERATE (re-calculate) all PENDING slips?\n\nThis will delete the pending slips and recalculate them based on the latest attendance and approved overtime/incentives. PAID slips will not be modified.`
+        const confirmForce = await confirm(
+          'Regenerate Payroll Slips?',
+          `Payroll slips already exist for ${month}.\n\nDo you want to REGENERATE (re-calculate) all PENDING slips?\n\nThis will delete the pending slips and recalculate them based on the latest attendance and approved overtime/incentives. PAID slips will not be modified.`,
+          { type: 'warning', confirmLabel: 'Regenerate' }
         );
         if (!confirmForce) return;
         force = true;
@@ -80,7 +84,12 @@ export default function Payroll() {
         return;
       }
     } else {
-      if (!window.confirm(`Generate payroll for all active employees for ${month}? This cannot be undone.`)) return;
+      const ok = await confirm(
+        'Generate Payroll Slips',
+        `Generate payroll for all active employees for ${month}? This cannot be undone.`,
+        { type: 'info', confirmLabel: 'Generate' }
+      );
+      if (!ok) return;
     }
 
     try {
@@ -140,7 +149,8 @@ export default function Payroll() {
   };
 
   const handleDeleteSlip = async (id) => {
-    if (!window.confirm('Delete this pending salary slip?')) return;
+    const ok = await confirm('Delete Salary Slip', 'Are you sure you want to delete this pending salary slip? This action cannot be undone.', { type: 'danger' });
+    if (!ok) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/${id}`, {
         method: 'DELETE', headers: { Authorization: `Bearer ${token}` }

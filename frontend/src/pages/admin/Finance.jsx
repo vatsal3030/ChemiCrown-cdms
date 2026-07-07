@@ -6,6 +6,7 @@ import {
   Receipt, ArrowUpRight, ArrowDownRight, BookOpen
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -61,6 +62,7 @@ const EXPENSE_CATS = ['UTILITIES','MAINTENANCE','RENT','MARKETING','TRAVEL','SAL
 
 export default function Finance() {
   const { token } = useAuth();
+  const { confirm } = useDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -137,7 +139,8 @@ export default function Finance() {
   }, [expensePage, expenseCatFilter, dateFrom, dateTo, token]);
 
   const deleteExpense = async (id) => {
-    if (!window.confirm('Delete this expense?')) return;
+    const ok = await confirm('Delete Expense', 'Are you sure you want to delete this expense record? This will soft-delete it from the database.', { type: 'danger' });
+    if (!ok) return;
     
     // Optimistic UI update
     setExpenses(prev => prev.filter(e => e.id !== id));

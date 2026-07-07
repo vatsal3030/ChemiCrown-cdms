@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Trash2, RotateCcw, AlertTriangle, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import { SkeletonTableBody } from '@/components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 export default function RecycleBin() {
   const { token, user } = useAuth();
+  const { confirm } = useDialog();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
@@ -64,8 +66,10 @@ export default function RecycleBin() {
   };
 
   const handlePermanentDelete = async (id, type, name) => {
-    const confirmed = window.confirm(
-      `⚠️ PERMANENT DELETE\n\nThis will permanently delete "${name}" and ALL related data. This action CANNOT be undone.\n\nClick OK to confirm.`
+    const confirmed = await confirm(
+      '🚨 PERMANENT DELETE',
+      `This will permanently delete "${name}" (${type}) and ALL related data. This action CANNOT be undone.`,
+      { type: 'danger', confirmLabel: 'Delete Forever' }
     );
     if (!confirmed) return;
 

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton, SkeletonTableBody } from "@/components/ui/Skeleton";
 import { useAuth } from '@/context/AuthContext';
+import { useDialog } from '@/context/DialogContext';
 import toast from 'react-hot-toast';
 import useSWR from 'swr';
 import useDebounce from '@/hooks/useDebounce';
@@ -16,6 +17,7 @@ import PrintGHSModal from '@/components/PrintGHSModal';
 
 export default function Inventory() {
   const { token } = useAuth();
+  const { confirm } = useDialog();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -102,7 +104,8 @@ export default function Inventory() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this product?')) return;
+    const confirmed = await confirm('Delete Product', 'Are you sure you want to delete this product? This will soft-delete it from the inventory database.', { type: 'danger' });
+    if (!confirmed) return;
     if (data) mutate({ ...data, data: data.data.filter(p => p.id !== id) }, false);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/inventory/${id}`, {

@@ -11,6 +11,7 @@ function ScrollToTop() {
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { CartProvider } from './context/CartContext';
+import { DialogProvider } from './context/DialogContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import PublicLayout from './layouts/PublicLayout';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -122,8 +123,9 @@ function DynamicTitle() {
 function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <SocketProvider>
+      <DialogProvider>
+        <CartProvider>
+          <SocketProvider>
           <BrowserRouter>
             <DynamicTitle />
             <ScrollToTop />
@@ -276,8 +278,9 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </SocketProvider>
-      </CartProvider>
+          </SocketProvider>
+        </CartProvider>
+      </DialogProvider>
     </AuthProvider>
   );
 }

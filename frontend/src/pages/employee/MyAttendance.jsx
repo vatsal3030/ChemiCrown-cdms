@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ClipboardCheck, Calendar, DollarSign, PiggyBank, ShieldCheck, Send, CheckCircle2, Clock, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import useSWR from 'swr';
 import { useAuth } from '../../context/AuthContext';
+import { useDialog } from '../../context/DialogContext';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
@@ -419,9 +420,11 @@ export default function MyAttendance() {
 function ConfirmReceiptButton({ salaryId, token }) {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const { confirm } = useDialog();
 
   const handleConfirm = async () => {
-    if (!window.confirm('Confirm that you have received this salary payment?')) return;
+    const ok = await confirm('Confirm Salary Receipt', 'Confirm that you have received this salary payment. This will verify disbursement on your profile.', { type: 'success', confirmLabel: 'Confirm' });
+    if (!ok) return;
     setConfirming(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/${salaryId}/confirm`, {
