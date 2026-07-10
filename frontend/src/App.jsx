@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -126,9 +127,10 @@ function App() {
       <DialogProvider>
         <CartProvider>
           <SocketProvider>
-          <BrowserRouter>
-            <DynamicTitle />
-            <ScrollToTop />
+            <Analytics />
+            <BrowserRouter>
+              <DynamicTitle />
+              <ScrollToTop />
             <Toaster
               position="top-right"
               containerStyle={{ top: 70 }}

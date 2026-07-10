@@ -19,6 +19,7 @@ const { Server } = require('socket.io');
 const { errorHandler, notFoundHandler } = require('./src/middlewares/error.middleware');
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // ── Allowed origins ───────────────────────────────────────────────────────────
