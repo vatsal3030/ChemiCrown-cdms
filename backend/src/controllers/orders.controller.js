@@ -1,6 +1,7 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const prisma = require('../config/prisma');
+const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/email.service');
 
 // Lazy Razorpay init — only needed for online payment flows, not COD/UPI
 let _razorpay = null;
@@ -150,6 +151,20 @@ const createOrder = async (req, res, next) => {
           status: 'PENDING'
         }
       });
+
+      // Send order confirmation email (non-blocking)
+      (async () => {
+        try {
+          const orderWithItems = await prisma.order.findUnique({
+            where: { id: order.id },
+            include: { items: { include: { product: { select: { name: true } } } }, customer: { include: { user: { select: { email: true, firstName: true } } } } }
+          });
+          if (orderWithItems?.customer?.user) {
+            const emailItems = orderWithItems.items.map(i => ({ name: i.product?.name || 'Chemical', quantity: i.quantity, price: i.price * i.quantity }));
+            sendOrderConfirmationEmail(orderWithItems.customer.user.email, orderWithItems.customer.user.firstName, order.id, totalAmount, emailItems).catch(() => {});
+          }
+        } catch (_) { /* non-critical */ }
+      })();
 
       if (paymentMethod === 'PAY_ON_DELIVERY') {
         return res.status(201).json({
@@ -882,6 +897,16 @@ const advanceOrderStatus = async (req, res, next) => {
           email: emp.user.email
         };
       }
+    }
+
+    // Send order status update email to customer (non-blocking)
+    if (fullOrder?.customer?.user?.email) {
+      sendOrderStatusUpdateEmail(
+        fullOrder.customer.user.email,
+        fullOrder.customer.user.firstName,
+        id,
+        nextStatus
+      ).catch(() => {});
     }
 
     res.json({ 

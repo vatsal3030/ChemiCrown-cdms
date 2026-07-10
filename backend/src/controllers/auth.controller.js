@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('../config/cloudinary');
 const stream = require('stream');
+const { sendOtpEmail, sendLoginNotificationEmail, sendPasswordResetSuccessEmail, sendCustomerVerificationEmail } = require('../services/email.service');
 
 const JWT_SECRET = process.env.JWT_SECRET; // Startup guard enforced in index.js
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -169,6 +170,11 @@ const login = async (req, res, next) => {
     const tokenExpiry = rememberMe ? '30d' : '7d';
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: tokenExpiry });
 
+    // Fire login notification email for employee/admin roles (non-blocking)
+    if (user.role !== 'CUSTOMER') {
+      sendLoginNotificationEmail(user.email, user.firstName, new Date().toISOString()).catch(() => {});
+    }
+
     res.status(200).json({
       message: 'Login successful',
       token,
@@ -258,6 +264,9 @@ const verifyCustomer = async (req, res, next) => {
         }
       });
     });
+
+    // Send verification approval email to the customer (non-blocking)
+    sendCustomerVerificationEmail(customer.user.email, customer.user.firstName).catch(() => {});
 
     res.status(200).json({ success: true, message: 'Customer verified successfully' });
   } catch (error) {
@@ -372,7 +381,6 @@ const warnCustomer = async (req, res, next) => {
   }
 };
 
-const { sendOtpEmail } = require('../services/email.service');
 const crypto = require('crypto');
 
 const forgotPassword = async (req, res, next) => {
@@ -452,6 +460,9 @@ const resetPassword = async (req, res, next) => {
         resetPasswordExpires: null
       }
     });
+
+    // Send password reset confirmation email (non-blocking)
+    sendPasswordResetSuccessEmail(email, user.firstName).catch(() => {});
 
     res.status(200).json({ success: true, message: 'Password reset successfully' });
   } catch (error) {

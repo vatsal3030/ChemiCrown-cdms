@@ -8,19 +8,22 @@ import ChemiCursor from '@/components/ui/ChemiCursor';
 export default function Login() {
   const navigate = useNavigate();
   const { login, storedAccounts, switchAccount, removeStoredAccount, user, loading } = useAuth();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isAddingAccount = searchParams.get('add-account') === 'true';
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && !isAddingAccount) {
       navigate('/dashboard', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, isAddingAccount]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
-  const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
 
   const handleQuickLogin = async (accountId) => {
@@ -267,7 +270,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-primary hover:text-primary/80">
+            <Link to={isAddingAccount ? "/register?add-account=true" : "/register"} className="font-semibold text-primary hover:text-primary/80">
               Create account
             </Link>
           </p>

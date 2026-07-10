@@ -399,7 +399,7 @@ export default function DashboardLayout() {
               </div>
               <div className="p-2 border-t border-border space-y-1">
                 <Link
-                  to="/login"
+                  to="/login?add-account=true"
                   onClick={() => setShowAccountSwitcher(false)}
                   className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
                 >

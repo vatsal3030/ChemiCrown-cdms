@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Mail, Lock, User, Building, Phone, Camera, ArrowRight,
   Eye, EyeOff, CreditCard, MapPin, Info
@@ -16,13 +16,16 @@ const NAME_REGEX = /^[A-Za-z][A-Za-z\s.\-']{0,48}[A-Za-z.]?$/;
 
 export default function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isAddingAccount = searchParams.get('add-account') === 'true';
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && !isAddingAccount) {
       navigate('/dashboard', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, isAddingAccount]);
 
   const fileInputRef = useRef(null);
 
@@ -147,17 +150,6 @@ export default function Register() {
       </div>
     );
   }
-
-  // ── Registration Form ──────────────────────────────────────────────────────
-  const Field = ({ label, error, children, required }) => (
-    <div>
-      <label className="block text-xs font-semibold text-foreground mb-1">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-    </div>
-  );
 
   return (
     <div className="flex-1 flex items-stretch min-h-[calc(100vh-4rem)] bg-muted/30">
@@ -358,10 +350,21 @@ export default function Register() {
 
           <p className="text-center text-sm text-muted-foreground mt-5">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-primary hover:text-primary/80">Sign in</Link>
+            <Link to={isAddingAccount ? "/login?add-account=true" : "/login"} className="font-semibold text-primary hover:text-primary/80">Sign in</Link>
           </p>
         </div>
       </div>
     </div>
   );
 }
+
+// ── Registration Form Field Component ──
+const Field = ({ label, error, children, required }) => (
+  <div>
+    <label className="block text-xs font-semibold text-foreground mb-1">
+      {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+    {children}
+    {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+  </div>
+);
