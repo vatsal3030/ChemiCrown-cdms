@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EntityRelationshipModel name="ChemiCrown CDMS ER Model">
+    <!-- 
+      Entity definitions mapping columns, types, and primary/foreign key flags 
+    -->
+    <Entities>
+        <Entity name="User" table="User" description="Stores accounts for all system roles (clients and staff)">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier (maps to Supabase Auth UID)</Attribute>
+            <Attribute name="email" type="String" unique="true" nullable="false">Primary login email address</Attribute>
+            <Attribute name="password" type="String" nullable="true">Local bcrypt hashed password</Attribute>
+            <Attribute name="role" type="Enum (Role)" nullable="false">User authorization role (SUPER_ADMIN, OWNER, MANAGER, INVENTORY_MANAGER, SALES, MARKETING, DIGITAL_MARKETING, CUSTOMER)</Attribute>
+            <Attribute name="firstName" type="String" nullable="true">User's first name</Attribute>
+            <Attribute name="lastName" type="String" nullable="true">User's last name</Attribute>
+            <Attribute name="phone" type="String" nullable="true">Contact phone number</Attribute>
+            <Attribute name="profileImageUrl" type="String" nullable="true">Cloudinary hosted avatar asset URL</Attribute>
+            <Attribute name="resetPasswordOtp" type="String" nullable="true">Hashed password recovery verification code</Attribute>
+            <Attribute name="resetPasswordExpires" type="DateTime" nullable="true">Expiry date and time for recovery OTP</Attribute>
+            <Attribute name="createdAt" type="DateTime" nullable="false">Account registration timestamp</Attribute>
+            <Attribute name="deletedAt" type="DateTime" nullable="true">Soft deletion timestamp</Attribute>
+        </Entity>
+
+        <Entity name="Employee" table="Employee" description="Wage details, department settings, and HR properties of staff members">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="userId" type="String (UUID)" fk="true" unique="true" nullable="false">References User.id (1-to-1 relationship)</Attribute>
+            <Attribute name="jobTitle" type="String" nullable="true">Designation name</Attribute>
+            <Attribute name="department" type="String" nullable="true">Assigned corporate department</Attribute>
+            <Attribute name="joiningDate" type="DateTime" nullable="false">Employee join date (prevents attendance edits prior to this date)</Attribute>
+            <Attribute name="isActive" type="Boolean" nullable="false">Active status status flag</Attribute>
+            <Attribute name="status" type="Enum (EmployeeStatus)" nullable="false">ACTIVE, SUSPENDED, TERMINATED</Attribute>
+            <Attribute name="baseSalary" type="Float" nullable="true">Monthly base pay amount</Attribute>
+            <Attribute name="ctc" type="Float" nullable="true">Cost To Company (Enforces CTC >= BaseSalary * 12)</Attribute>
+            <Attribute name="pfRate" type="Float" nullable="true">Employee Provident Fund percentage (0% to 30%)</Attribute>
+            <Attribute name="bankAccountNumber" type="String" nullable="true">Bank transfer routing account number</Attribute>
+            <Attribute name="bankIFSC" type="String" nullable="true">Bank IFSC branch code</Attribute>
+            <Attribute name="bankName" type="String" nullable="true">Wages deposit bank name</Attribute>
+            <Attribute name="bankAccountName" type="String" nullable="true">Name on bank account</Attribute>
+            <Attribute name="upiId" type="String" nullable="true">Direct UPI payment routing VPA</Attribute>
+            <Attribute name="paymentPreference" type="String" nullable="true">CASH, BANK_TRANSFER, UPI, CHEQUE</Attribute>
+            <Attribute name="salesTarget" type="Float" nullable="true">Monthly sales targets (for commission tracking)</Attribute>
+            <Attribute name="deletedAt" type="DateTime" nullable="true">Soft deletion timestamp</Attribute>
+        </Entity>
+
+        <Entity name="Customer" table="Customer" description="B2B client profile information and registration verification status">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="userId" type="String (UUID)" fk="true" unique="true" nullable="false">References User.id (1-to-1 relationship)</Attribute>
+            <Attribute name="companyName" type="String" nullable="false">B2B client company name</Attribute>
+            <Attribute name="gstNumber" type="String" nullable="true">Client GSTIN registry verification ID</Attribute>
+            <Attribute name="address" type="String" nullable="true">Default corporate billing and delivery address</Attribute>
+            <Attribute name="isVerified" type="Boolean" nullable="false">Indicates if approved by admin (unverified accounts cannot place orders)</Attribute>
+            <Attribute name="assignedSalesId" type="String (UUID)" fk="true" nullable="true">References Employee.id (Sales rep responsible for managing this client)</Attribute>
+            <Attribute name="deletedAt" type="DateTime" nullable="true">Soft deletion timestamp</Attribute>
+        </Entity>
+
+        <Entity name="Category" table="Category" description="Grouping of chemical products">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="name" type="String" unique="true" nullable="false">Category grouping label (e.g. Thinners, Primers, Solvents)</Attribute>
+        </Entity>
+
+        <Entity name="Product" table="Product" description="Specifications and data links for chemical items in the warehouse catalog">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="sku" type="String" unique="true" nullable="true">Unique Stock Keeping Unit code</Attribute>
+            <Attribute name="categoryId" type="String (UUID)" fk="true" nullable="true">References Category.id</Attribute>
+            <Attribute name="supplierId" type="String (UUID)" fk="true" nullable="true">References Supplier.id</Attribute>
+            <Attribute name="name" type="String" nullable="false">Chemical name (e.g. GP Thinner, Acetone)</Attribute>
+            <Attribute name="description" type="String" nullable="false">Specifications, usage safety details</Attribute>
+            <Attribute name="unit" type="String" nullable="false">Packaging type (Litre, Kg, Drum, Barrel)</Attribute>
+            <Attribute name="packageSize" type="Float" nullable="true">Item volume or mass per unit</Attribute>
+            <Attribute name="price" type="Float" nullable="false">Wholesale rate per unit</Attribute>
+            <Attribute name="sdsUrl" type="String" nullable="true">Safety Data Sheet PDF link in Supabase storage</Attribute>
+            <Attribute name="datasheetUrl" type="String" nullable="true">Certificate of Analysis/Technical specification PDF link</Attribute>
+            <Attribute name="casNumber" type="String" nullable="true">Chemical Abstracts Service registry ID</Attribute>
+            <Attribute name="unNumber" type="String" nullable="true">United Nations dangerous goods transportation code</Attribute>
+            <Attribute name="hazardClasses" type="String[]" nullable="false">List of GHS hazard class ratings (e.g. Class 3 Flammable Liquid)</Attribute>
+        </Entity>
+
+        <Entity name="Inventory" table="Inventory" description="Active physical stock counts mapping back to Catalog entries">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="productId" type="String (UUID)" fk="true" unique="true" nullable="false">References Product.id (1-to-1 relationship)</Attribute>
+            <Attribute name="quantity" type="Float" nullable="false">Total physical stock in inventory</Attribute>
+            <Attribute name="safetyStock" type="Float" nullable="false">Minimum quantity threshold (generates auto alerts when breached)</Attribute>
+            <Attribute name="location" type="String" nullable="true">Warehouse storage rack/zone indicator</Attribute>
+            <Attribute name="updatedAt" type="DateTime" nullable="false">Timestamp of last stock adjustment</Attribute>
+        </Entity>
+
+        <Entity name="Order" table="Order" description="Client purchase orders routing status history and overall costs">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="customerId" type="String (UUID)" fk="true" nullable="false">References Customer.id</Attribute>
+            <Attribute name="status" type="Enum (OrderStatus)" nullable="false">REQUESTED, PENDING, CONFIRMED, PROCESSING, READY, SHIPPED, DELIVERED, CANCELLED, REFUNDED</Attribute>
+            <Attribute name="total" type="Float" nullable="false">Final gross order cost (inclusive of transport, taxes, and handling fees)</Attribute>
+            <Attribute name="baseCost" type="Float" nullable="false">Net value of products ordered</Attribute>
+            <Attribute name="taxAmount" type="Float" nullable="false">Total CGST + SGST tax surcharge</Attribute>
+            <Attribute name="distanceKm" type="Float" nullable="false">Distance in km for logistics shipping calculations</Attribute>
+            <Attribute name="distanceCost" type="Float" nullable="false">Distance-based logistics shipping charge</Attribute>
+            <Attribute name="hazardousShippingCost" type="Float" nullable="false">Safety handling fee for hazardous material transport</Attribute>
+            <Attribute name="shippingAddress" type="String" nullable="false">Delivery destination address</Attribute>
+            <Attribute name="orderNotes" type="String" nullable="true">Client delivery instructions</Attribute>
+            <Attribute name="createdAt" type="DateTime" nullable="false">Order creation timestamp</Attribute>
+        </Entity>
+
+        <Entity name="OrderItem" table="OrderItem" description="Chemical item and quantity breakdown inside a client order">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="orderId" type="String (UUID)" fk="true" nullable="false">References Order.id</Attribute>
+            <Attribute name="productId" type="String (UUID)" fk="true" nullable="false">References Product.id</Attribute>
+            <Attribute name="quantity" type="Float" nullable="false">Quantity of units ordered</Attribute>
+            <Attribute name="price" type="Float" nullable="false">Price per unit at checkout</Attribute>
+            <Attribute name="taxAmount" type="Float" nullable="false">Tax amount computed for this item</Attribute>
+        </Entity>
+
+        <Entity name="Payment" table="Payment" description="Payment transaction status (COD, UPI, Razorpay) for orders">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="orderId" type="String (UUID)" fk="true" unique="true" nullable="false">References Order.id</Attribute>
+            <Attribute name="paymentMethod" type="String" nullable="false">RAZORPAY, UPI, PAY_ON_DELIVERY</Attribute>
+            <Attribute name="amount" type="Float" nullable="false">Payment value amount</Attribute>
+            <Attribute name="status" type="String" nullable="false">PENDING, SUCCESS, FAILED</Attribute>
+            <Attribute name="utrNumber" type="String" nullable="true">Unique Transaction Reference for UPI verification</Attribute>
+            <Attribute name="razorpayOrderId" type="String" nullable="true">Razorpay checkout order ID link</Attribute>
+            <Attribute name="razorpayPaymentId" type="String" nullable="true">Razorpay receipt payment ID link</Attribute>
+        </Entity>
+
+        <Entity name="FinanceLedger" table="FinanceLedger" description="Automated financial bookkeeping ledger for accounting audit compliance">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="type" type="Enum (LedgerType)" nullable="false">DEBIT, CREDIT</Attribute>
+            <Attribute name="category" type="Enum (LedgerCategory)" nullable="false">REVENUE, SALARY, EXPENSE, REFUND, OTHER</Attribute>
+            <Attribute name="amount" type="Float" nullable="false">Monetary amount of transaction</Attribute>
+            <Attribute name="description" type="String" nullable="false">Accounting description (includes order/payroll reference details)</Attribute>
+            <Attribute name="referenceId" type="String" nullable="true">Linked Order.id, Expense.id, or Salary.id</Attribute>
+            <Attribute name="isAutomatic" type="Boolean" nullable="false">True if posted automatically by system events</Attribute>
+            <Attribute name="createdAt" type="DateTime" nullable="false">Bookkeeping entry date</Attribute>
+        </Entity>
+
+        <Entity name="AuditLog" table="AuditLog" description="Chronological record of sensitive actions performed by users">
+            <Attribute name="id" type="String (UUID)" pk="true" nullable="false">Unique identifier</Attribute>
+            <Attribute name="userId" type="String (UUID)" fk="true" nullable="false">References User.id (user who initiated action)</Attribute>
+            <Attribute name="action" type="String" nullable="false">Action type (e.g. ORDER_STATUS_ADVANCED, EMPLOYEE_SUSPENDED)</Attribute>
+            <Attribute name="entity" type="String" nullable="false">Target data entity table (e.g. Order, Product)</Attribute>
+            <Attribute name="entityId" type="String (UUID)" nullable="false">Target entity primary key</Attribute>
+            <Attribute name="details" type="String" nullable="false">JSON string showing changes made</Attribute>
+            <Attribute name="timestamp" type="DateTime" nullable="false">Action timestamp</Attribute>
+        </Entity>
+    </Entities>
+
+    <!-- 
+      Model relationships mapping cardinalities and foreign key fields 
+    -->
+    <Relationships>
+        <Relationship type="OneToOne" parent="User" child="Employee" fk="userId" description="A user has at most one employee profile" />
+        <Relationship type="OneToOne" parent="User" child="Customer" fk="userId" description="A user has at most one B2B customer profile" />
+        <Relationship type="OneToMany" parent="User" child="AuditLog" fk="userId" description="A user generates multiple system audit logs" />
+        <Relationship type="OneToMany" parent="Category" child="Product" fk="categoryId" description="A category groups multiple products" />
+        <Relationship type="OneToOne" parent="Product" child="Inventory" fk="productId" description="A product has exactly one inventory stock record" />
+        <Relationship type="OneToMany" parent="Customer" child="Order" fk="customerId" description="A customer places multiple orders" />
+        <Relationship type="OneToMany" parent="Order" child="OrderItem" fk="orderId" description="An order contains multiple itemized entries" />
+        <Relationship type="OneToMany" parent="Product" child="OrderItem" fk="productId" description="A product can be part of multiple order items" />
+        <Relationship type="OneToOne" parent="Order" child="Payment" fk="orderId" description="An order has exactly one payment details log" />
+        <Relationship type="OneToMany" parent="Employee" child="Customer" fk="assignedSalesId" description="A sales rep manages multiple customer accounts" />
+    </Relationships>
+</EntityRelationshipModel>
