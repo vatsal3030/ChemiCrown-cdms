@@ -3,66 +3,134 @@
 ![ChemiCrown Banner](chemicrown.png)
 
 ## 📖 Overview
-**ChemiCrown CDMS** is a full-fledged, enterprise-grade ERP/B2B eCommerce platform tailored for chemical distribution. Built from the ground up to solve complex supply chain, HR, finance, and customer-management workflows, it provides an intuitive, high-performance web interface to manage end-to-end business operations.
+**ChemiCrown CDMS** is an enterprise-grade ERP, Supply Chain, and B2B eCommerce platform designed specifically for the chemical distribution industry. Tailored to solve complex logistics, safety compliance, multi-role operations, human resource payroll, and real-time business workflows, it acts as the centralized system for managing a chemical wholesale enterprise.
 
-From **inventory tracking** to **HR payroll processing**, from **B2B customer orders** to **multi-role RBAC authorization**, ChemiCrown acts as the central nervous system for modern chemical enterprises.
+Built with a high-performance **React + Vite** single-page application frontend and a robust **Express.js + Node.js** REST API backend integrated with **Prisma ORM** and **PostgreSQL (Supabase)**, ChemiCrown CDMS delivers a premium user experience coupled with secure, scalable, and audit-compliant business logic.
 
 ---
 
-## 🚀 Key Features
+## 🏗️ System Architecture & Data Flow
 
-### 1. 👥 Multi-Role RBAC System
-- **Super Admin & Owner**: Full platform visibility, financial overrides, user management, and refund handling.
-- **Managers & Sales**: Process orders, configure payroll, view real-time inventory, and track sales performance.
-- **HR & Operations**: Manage employee records, track attendance, approve leaves, and generate dynamic payroll slips.
-- **Customers**: B2B customer portal with unified cart, wishlist, order history, invoice downloads, and Razorpay/UPI/COD payment support.
+```mermaid
+flowchart TD
+    subgraph Client [Frontend SPA - React + Vite]
+        UI[Tailwind CSS + shadcn/ui]
+        State[React Context / SWR Client]
+        Sockets[Socket.io Client - Real-Time Chat & Alerts]
+        Cursor[Interactive ChemiCursor Physics Engine]
+    end
 
-### 2. 🛒 B2B Order & Inventory Management
-- Centralized Product Catalog with complex variants, chemical specifications, and data sheets.
-- Automated stock deduction on payment success.
-- End-to-end order tracking (Requested ➔ Pending ➔ Processing ➔ Dispatched ➔ Delivered).
-- Advanced order state transitions with idempotency to prevent double charges.
+    subgraph Server [Backend REST API - Node.js + Express]
+        Router[Express Routers]
+        Middleware[RBAC Authorization & Input Validation]
+        Controller[Controllers & Service Layer]
+        Prisma[Prisma Client ORM]
+    end
 
-### 3. 💳 Payments & Finance
-- Full Razorpay integration for fast, secure checkouts.
-- Direct UPI integration with UTR tracking for zero-fee transactions.
-- Automated ledger entry generation for sales, expenses, and payroll.
-- Refund lifecycle tracking (including cancellation fees and API refunds).
+    subgraph Database [Database & Storage - Supabase]
+        Postgres[(PostgreSQL DB)]
+        Storage[Supabase Object Storage]
+    end
 
-### 4. 👔 Complete HRMS
-- **Attendance**: Real-time tracking (Present/Absent/Half-Day/Leave) dynamically syncing with payroll.
-- **Payroll**: Automated calculation of base pay, overtime, incentives, absent deductions, PF, and TDS.
-- **Employee Portal**: Dedicated "Customer Mode" for internal staff ordering, along with employee self-service to view attendance and download payslips.
+    subgraph Integrations [Third-Party Services]
+        Email[Resend Custom Domain Mailer]
+        Payment[Razorpay API Gateway]
+        Analytics[Vercel Web Analytics]
+    end
+
+    UI -->|Router & Contexts| State
+    State <-->|HTTP API Calls| Router
+    Sockets <-->|Websocket Handshake / JWT| Server
+    Router --> Middleware
+    Middleware --> Controller
+    Controller <--> Prisma
+    Prisma <--> Postgres
+    Controller -->|Asset Uploads| Storage
+    Controller -->|Transactional Emails| Email
+    Controller -->|Checkout Sessions| Payment
+```
+
+---
+
+## 🚀 Key Modules & Capabilities
+
+### 1. 👥 Multi-Role Role-Based Access Control (RBAC)
+The platform enforces strict role-based permission boundaries at both the frontend UI rendering layer and backend router middleware:
+* **Super Admin & Owner**: Absolute visibility, ledger overrides, user account controls, and manual verification pipelines.
+* **Manager**: Full control over inventory logs, suppliers, employee records, payroll execution, and order processing.
+* **Sales / Marketing**: Handle client inquiries, generate custom quotations, verify manual payments, and coordinate delivery status.
+* **Inventory Manager**: Control batches, lots, packaging types, and handle low-stock compliance thresholds.
+* **Customer**: Self-service B2B portal to view pricing, create wishlists/carts, place orders, make digital payments, and download tax invoices/delivery challans.
+
+### 2. 🛒 B2B Chemical Order & Inventory Engine
+* **Dynamic Product Catalog**: Manage complex chemical items (MTO, Toluene, Acetone, etc.) with packaging details, safety datasheets (SDS/MSDS), storage guidelines, and dynamic pricing.
+* **Batch & Lot Tracking**: Trace chemical batches from raw supplier supply down to customer delivery, tracking shelf life and GHS hazard class compliance.
+* **Interactive Order Pipeline**: Follows orders from `REQUESTED` ➔ `PENDING` ➔ `PROCESSING` ➔ `READY` ➔ `SHIPPED` ➔ `DELIVERED`.
+* **Idempotent Checkout**: Multi-step payment validation matching database records with transaction-safe checkouts to prevent race conditions or double charges.
+
+### 3. 💳 Financial Ledger & Payment Integrations
+* **Razorpay Gateway**: Integrated Razorpay API for direct credit card, debit card, and net banking checkouts.
+* **Zero-Fee UPI QR Engine**: Real-time UPI QR generation with Unique Transaction Reference (UTR) tracking for instant manual verification.
+* **Double-Entry Ledgers**: Automated credit/debit records generated inside `FinanceLedger` upon completed orders, employee payroll disbursals, and corporate expense inputs.
+
+### 4. 👔 Complete HRMS & Payroll Automation
+* **Attendance System**: Calendar-based attendance logging supporting Present, Absent, Half-Day, and Paid Leaves.
+* **Positive Payroll System**: Dynamically calculates salary based on positive working days, overtime hours, holiday multipliers, and active incentives, factoring in PF rates, TDS deductions, and absent penalties.
+* **Direct Disbursal & Slips**: Generates professional, print-ready salary disbursement statements.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend (Client Application)
-- **Framework**: React 18 + Vite
-- **Routing**: React Router DOM (v6)
-- **Styling**: Tailwind CSS + Lucide Icons
-- **State Management & Data Fetching**: Context API, React Query (for complex data)
-- **UI Components**: Recharts (Analytics), Framer Motion (Animations), react-hot-toast (Notifications)
-- **Build Tool**: Vite
+### Frontend
+* **Core**: React 19, Vite, React Router DOM (v7)
+* **Styling**: Tailwind CSS v4, Lucide Icons
+* **Animations**: Framer Motion, GSAP, CSS Keyframes
+* **State & Data**: Context API, SWR (State-While-Revalidate)
+* **Utilities**: Recharts (Analytics), react-to-print (v3), react-hot-toast
 
-### Backend (API & Business Logic)
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database ORM**: Prisma
-- **Database**: PostgreSQL (hosted on Supabase)
-- **Authentication**: JSON Web Tokens (JWT) + Bcrypt
-- **Security**: Helmet, CORS, Express Rate Limit
-- **Payment Gateway**: Razorpay SDK
+### Backend
+* **Runtime**: Node.js, Express.js
+* **Database Access**: Prisma ORM
+* **Database**: PostgreSQL (Supabase)
+* **Real-time**: Socket.io (WebSockets)
+* **Email System**: Resend Node SDK
+* **Security**: Helmet, CORS, Express Rate Limit, BCrypt, JSON Web Tokens (JWT)
 
 ---
 
-## ⚙️ Getting Started (Local Development)
+## 📈 Internship Deliverables & Contributions
+During my 6-week software engineering internship, I took ownership of the platform's core architectural improvements, UI animations, financial security, and third-party integrations. Below are the **18 core deliverables** I successfully built and polished:
 
-### Prerequisites
-- Node.js (v18+)
-- PostgreSQL Database (Local or Supabase)
-- Razorpay Sandbox Account
+### 🎨 Frontend UI/UX & Interactions
+1. **Multi-Account Switcher**: Developed a session switcher in the sidebar menu allowing administrators to instantly switch between active profiles (stored securely inside `localStorage`) without logging out.
+2. **Interactive Flask Cursor (ChemiCursor)**: Built a custom cursor engine simulating a laboratory flask with wobbly squash-and-stretch recoil physics, hover target selectors, and interactive shake triggers.
+3. **Full-Screen Shockwave Ripples**: Integrated screen-wide radial shockwave expansions whenever the flask cursor erupts, reacting dynamically to scroll positions and viewport boundaries.
+4. **Click-to-Pop Background Bubbles**: Rendered floating background bubbles that accept click events to trigger CSS keyframe popping animations.
+5. **Universal DialogProvider**: Replaced browser-native blocking alerts (`alert`, `confirm`, `prompt`) with a beautiful promise-based, dark-mode supported custom modal system.
+6. **Unified Table Header Styling**: Standardized table headers across Orders and HR Management views for consistent font size, uppercase casing, padding, and alignments.
+7. **Widescreen density optimization**: Restructured page constraints across 8 main dashboards (`CreateLotPage`, `AssignTask`, `LeaveDetails`, etc.) from restrictive widths to `max-w-[1200px]` to eliminate unused side spacing.
+
+### ⚙️ Backend Security & Infrastructure
+8. **Express Reverse Proxy Trust Setup**: Configured `app.set('trust proxy', 1)` to allow the backend to trust Render.com load balancer proxy headers. This fixed the `express-rate-limit` Validation Crash.
+9. **Prisma Connection Pooling Optimization**: Resolved local database connection timeouts by routing localhost requests directly to PostgreSQL (`DIRECT_URL`) while keeping production traffic routed to the Supabase Transaction Pooler.
+10. **Graceful Connection Handlers**: Configured process event listeners (`SIGINT`, `SIGTERM`, `SIGUSR2`) to cleanly close database connections, eliminating Supabase connection exhaustion.
+
+### 👔 HRMS & Business Logic Validation
+11. **Positive Payroll Accumulation**: Refactored payroll logic to calculate salary based on positive working days, overtime, holidays, and Sundays instead of negative deduction logic.
+12. **Salary Ratio & PF Boundary Constraints**: Enforced CTC validation limits (`CTC >= Base Salary * 12`) and bounded PF contribution rates between `0%` and `30%` on both client forms and server routes.
+13. **Before-Joining Attendance Lock**: Blocked administrators from editing employee attendance prior to their official joining dates.
+14. **Custom Disbursal Receipt Printing**: Redesigned individual employee salary disbursement views to remain on-screen after payment, displaying a printable billing receipt with genuine company letterheads.
+
+### 📧 Mailer & Third-Party Integrations
+15. **Custom Domain Resend Mailer**: Switched the transaction mailer configuration from the Resend Sandbox (`onboarding@resend.dev`) to a verified corporate domain (`noreply@chemicrown.site`).
+16. **Login Security Alerts**: Programmed backend auth hooks to automatically email security alerts to employee/admin accounts upon new session logins.
+17. **Client Transaction Emails**: Implemented auto-generated customer emails for order confirmations, itemized shipping checklists, and shipping status updates.
+18. **Vercel Web Analytics**: Integrated the Vercel Analytics SDK within the React application provider tree to track traffic, page views, and user demographics.
+
+---
+
+## ⚙️ Local Development Setup
 
 ### 1. Clone the repository
 ```bash
@@ -70,74 +138,67 @@ git clone https://github.com/vatsal3030/ChemiCrown-cdms.git
 cd ChemiCrown-cdms
 ```
 
-### 2. Backend Setup
+### 2. Backend Environment Config
+Navigate to the `backend/` directory and install dependencies:
 ```bash
 cd backend
 npm install
 ```
-
-Create a `.env` file in the `backend/` directory:
+Create a `.env` file inside `backend/` with the following variables:
 ```env
-# Server
 PORT=5000
 NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
 
-# Database (Prisma)
-DATABASE_URL="postgresql://user:password@localhost:5432/chemicrown"
-DIRECT_URL="postgresql://user:password@localhost:5432/chemicrown"
+# Database URLs (Supabase / Local PG)
+DATABASE_URL="postgresql://user:password@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=10"
+DIRECT_URL="postgresql://user:password@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres"
 
-# JWT Auth
-JWT_SECRET=your_super_secret_key_here
-JWT_EXPIRES_IN=24h
+# JWT Authentication
+JWT_SECRET=your_jwt_secret_key_here
+JWT_EXPIRES_IN=7d
 
-# Razorpay
+# Razorpay Test Keys
 RAZORPAY_KEY_ID=rzp_test_xxxxxx
-RAZORPAY_KEY_SECRET=your_razorpay_secret
-```
+RAZORPAY_KEY_SECRET=your_razorpay_secret_here
 
-Run database migrations and seed the database:
+# UPI Details
+MERCHANT_UPI_VPA="vatsalvadgama04@oksbi"
+MERCHANT_NAME="ChemiCrown CDMS"
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=dwsi9eqkw
+CLOUDINARY_API_KEY=769458461231265
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret_here
+
+# Resend Mailer Key
+RESEND_API_KEY=re_MeA91mM2_xxxxxxxxxxxx
+```
+Apply the database migrations and seed default records:
 ```bash
 npx prisma db push
-node src/seeds/runAllSeeds.js
+node seed-holidays.js
 ```
-
-Start the backend development server:
+Start the development server:
 ```bash
 npm run dev
 ```
 
-### 3. Frontend Setup
-Open a new terminal window:
+### 3. Frontend Environment Config
+Navigate to the `frontend/` directory and install dependencies:
 ```bash
-cd frontend
+cd ../frontend
 npm install
 ```
-
-Create a `.env` file in the `frontend/` directory:
+Create a `.env` file inside `frontend/` with:
 ```env
 VITE_API_URL=http://localhost:5000
-VITE_RAZORPAY_KEY_ID=rzp_test_xxxxxx
 ```
-
-Start the frontend development server:
+Start the local Vite client:
 ```bash
 npm run dev
 ```
 
 ---
 
-## 🏗️ Architecture & Concepts
-
-1. **Monolithic API with Contextual Routes**: The Express API serves distinct routing namespaces (`/api/auth`, `/api/hr`, `/api/orders`, `/api/finance`) ensuring separation of concerns.
-2. **Tab-Isolated Shopping Cart**: Built entirely on `sessionStorage`, ensuring different accounts can securely log in across different browser tabs without data collision.
-3. **Idempotency**: Critical checkout and payment endpoints employ idempotency keys to completely eliminate race conditions and ghost deductions.
-4. **Soft Deletes**: Entities like Employees, Products, and Users use `deletedAt` timestamps to ensure historical referential integrity (e.g., viewing past orders for a deleted product).
-5. **Real-Time Synchronisation**: Global states like 'Customer Mode' and 'Authentication' utilize cross-tab synchronization through `window.addEventListener('storage')`.
-
----
-
-## 📝 License
-This project is proprietary and confidential.
-
-Developed specifically for **ChemiCrown**. All rights reserved.
+## 📄 License
+This project is proprietary and confidential property of **ChemiCrown**. All rights reserved.
