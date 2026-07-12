@@ -51,3 +51,23 @@ export function formatINRFull(value, withSymbol = true) {
 export function formatCompact(value, decimals = 1) {
   return formatINR(value, false, decimals);
 }
+
+/**
+ * Format a phone number to standard Indian format: +91 XXXXX XXXXX
+ */
+export function formatPhone(phone) {
+  if (!phone) return '';
+  // Remove non-digit characters except +
+  let cleaned = phone.replace(/[^\d+]/g, '');
+  if (!cleaned.startsWith('+91')) {
+    if (cleaned.startsWith('91') && cleaned.length === 12) {
+      cleaned = '+' + cleaned;
+    } else if (cleaned.length === 10) {
+      cleaned = '+91' + cleaned;
+    }
+  }
+  if (cleaned.startsWith('+91') && cleaned.length === 13) {
+    return `+91 ${cleaned.substring(3, 8)} ${cleaned.substring(8, 13)}`;
+  }
+  return phone;
+}

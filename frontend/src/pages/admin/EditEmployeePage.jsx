@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  ArrowLeft, Eye, EyeOff, UserPlus, Building2, CreditCard,
-  Phone, Mail, Lock, Calendar, IndianRupee, Percent, Briefcase,
-  User, BadgeCheck, Smartphone
+  ArrowLeft, Building2, CreditCard,
+  Phone, Mail, Calendar, IndianRupee, Percent, Briefcase,
+  User, BadgeCheck, Smartphone, Edit
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
@@ -39,22 +39,59 @@ const ROLES = [
   { value: 'DIGITAL_MARKETING', label: 'Digital Marketing' },
 ];
 
-const empty = {
-  firstName: '', lastName: '', email: '', password: '', phone: '',
-  role: 'SALES', department: '', jobTitle: '',
-  joiningDate: new Date().toISOString().split('T')[0],
-  baseSalary: '', ctc: '', pfRate: '12',
-  bankAccountNumber: '', bankIFSC: '', bankName: '', bankAccountName: '', upiId: '',
-  paymentPreference: 'BANK_TRANSFER',
-  salesTarget: '',
-};
-
-export default function AddEmployeePage() {
+export default function EditEmployeePage() {
+  const { id } = useParams();
   const { token } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState(empty);
+  
+  const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [fetching, setFetching] = useState(true);
+
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const json = await res.json();
+        if (json.success) {
+          const emp = json.data;
+          const profile = emp.employeeProfile || {};
+          setForm({
+            firstName: emp.firstName || '',
+            lastName: emp.lastName || '',
+            email: emp.email || '',
+            phone: emp.phone || '',
+            role: emp.role || 'SALES',
+            department: profile.department || '',
+            jobTitle: profile.jobTitle || '',
+            joiningDate: profile.joiningDate ? profile.joiningDate.split('T')[0] : '',
+            baseSalary: profile.baseSalary !== null ? String(profile.baseSalary) : '',
+            ctc: profile.ctc !== null ? String(profile.ctc) : '',
+            pfRate: profile.pfRate !== null ? String(profile.pfRate) : '12',
+            bankAccountNumber: profile.bankAccountNumber || '',
+            bankIFSC: profile.bankIFSC || '',
+            bankName: profile.bankName || '',
+            bankAccountName: profile.bankAccountName || '',
+            upiId: profile.upiId || '',
+            paymentPreference: profile.paymentPreference || 'BANK_TRANSFER',
+            salesTarget: profile.salesTarget !== null ? String(profile.salesTarget) : '',
+            isActive: profile.isActive !== undefined ? profile.isActive : true
+          });
+        } else {
+          toast.error(json.message || 'Failed to load employee details');
+          navigate('/dashboard/hr#directory');
+        }
+      } catch {
+        toast.error('Network error loading employee details');
+        navigate('/dashboard/hr#directory');
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchEmployee();
+  }, [id, token, navigate]);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -64,7 +101,6 @@ export default function AddEmployeePage() {
       return toast.error('First and last name are required');
     }
     if (!form.email.trim()) return toast.error('Email is required');
-    if (form.password.length < 6) return toast.error('Password must be at least 6 characters');
     if (!form.department) return toast.error('Department is required');
     if (!form.jobTitle)   return toast.error('Job title is required');
 
@@ -85,22 +121,22 @@ export default function AddEmployeePage() {
     try {
       const payload = {
         ...form,
-        baseSalary:   form.baseSalary  ? parseFloat(form.baseSalary)  : undefined,
-        ctc:          form.ctc         ? parseFloat(form.ctc)          : undefined,
+        baseSalary:   form.baseSalary  ? parseFloat(form.baseSalary)  : null,
+        ctc:          form.ctc         ? parseFloat(form.ctc)          : null,
         pfRate:       form.pfRate      ? parseFloat(form.pfRate)       : 12,
-        salesTarget:  form.salesTarget ? parseFloat(form.salesTarget)  : undefined,
+        salesTarget:  form.salesTarget ? parseFloat(form.salesTarget)  : null,
       };
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr`, {
-        method: 'POST',
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Employee created successfully!');
-        navigate('/dashboard/hr#directory');
+        toast.success('Employee profile updated successfully!');
+        navigate(`/dashboard/hr/${id}`);
       } else {
-        toast.error(json.message || 'Failed to create employee');
+        toast.error(json.message || 'Failed to update employee');
       }
     } catch {
       toast.error('Network error occurred');
@@ -109,6 +145,20 @@ export default function AddEmployeePage() {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="space-y-6 max-w-7xl mx-auto animate-pulse">
+        <div className="h-10 w-48 bg-muted rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="h-64 bg-muted rounded-2xl" />
+          <div className="h-64 bg-muted rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!form) return null;
+
   const jobTitleOptions = JOB_TITLES[form.role] || [];
 
   return (
@@ -116,19 +166,19 @@ export default function AddEmployeePage() {
       {/* Header */}
       <div className="page-header">
         <button
-          onClick={() => navigate('/dashboard/hr#directory')}
+          onClick={() => navigate(`/dashboard/hr/${id}`)}
           className="p-2 rounded-xl border border-border hover:bg-muted transition-colors text-muted-foreground shrink-0"
         >
           <ArrowLeft size={18} />
         </button>
         <div className="page-header-icon bg-primary/10 text-primary">
-          <UserPlus size={22} />
+          <Edit size={22} />
         </div>
         <div className="flex-1">
-          <h1 className="page-title">Add New Employee</h1>
-          <p className="page-subtitle">Fill in the employee details below. All fields marked * are required.</p>
+          <h1 className="page-title">Edit Employee Profile</h1>
+          <p className="page-subtitle">Update employee work information, payroll, and payment configurations.</p>
         </div>
-        <Button type="button" variant="outline" onClick={() => navigate('/dashboard/hr#directory')}>
+        <Button type="button" variant="outline" onClick={() => navigate(`/dashboard/hr/${id}`)}>
           Cancel
         </Button>
       </div>
@@ -194,25 +244,16 @@ export default function AddEmployeePage() {
               </div>
             </div>
 
-            <div>
-              <label className="form-label">Initial Password <span className="text-destructive">*</span></label>
-              <div className="relative">
-                <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <div className="pt-2">
+              <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground select-none cursor-pointer uppercase">
                 <input
-                  required
-                  type={showPassword ? 'text' : 'password'}
-                  minLength={6}
-                  value={form.password}
-                  onChange={e => set('password', e.target.value)}
-                  placeholder="Min. 6 characters"
-                  className="form-input pl-9 pr-10"
+                  type="checkbox"
+                  checked={form.isActive}
+                  onChange={e => set('isActive', e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary h-4 w-4"
                 />
-                <button type="button" onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">Employee will be prompted to change on first login</p>
+                Active Employee Profile
+              </label>
             </div>
           </div>
 
@@ -273,7 +314,7 @@ export default function AddEmployeePage() {
                   <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="date"
-                    max={new Date().toISOString().split('T')[0]} value={form.joiningDate}
+                    value={form.joiningDate}
                     onChange={e => set('joiningDate', e.target.value)}
                     className="form-input pl-9"
                   />
@@ -437,15 +478,14 @@ export default function AddEmployeePage() {
         {/* Submit */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 form-card">
           <p className="text-xs text-muted-foreground">
-            An account will be created with the provided email and password. The employee can change their password after first login.
+            Save the updated profile information. Changing the role or department will take effect immediately.
           </p>
           <div className="flex flex-wrap gap-3 shrink-0">
-            <Button type="button" variant="outline" onClick={() => navigate('/dashboard/hr#directory')} disabled={loading}>
+            <Button type="button" variant="outline" onClick={() => navigate(`/dashboard/hr/${id}`)} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading} className="min-w-[140px]">
-              <UserPlus size={15} className="mr-2" />
-              {loading ? 'Creating...' : 'Create Employee'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </div>

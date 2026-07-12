@@ -148,17 +148,17 @@ exports.reviewLeave = async (req, res, next) => {
 
       // If approved, mark attendance as LEAVE on that date
       if (status === 'APPROVED') {
-        const start = new Date(leave.date);
-        start.setHours(0, 0, 0, 0);
-        const end = leave.endDate ? new Date(leave.endDate) : new Date(start);
-        end.setHours(0, 0, 0, 0);
+        const startStr = new Date(leave.date).toISOString().substring(0, 10);
+        const start = new Date(`${startStr}T00:00:00.000Z`);
+        const endStr = leave.endDate ? new Date(leave.endDate).toISOString().substring(0, 10) : startStr;
+        const end = new Date(`${endStr}T00:00:00.000Z`);
 
         const attendanceStatus = leave.type === 'HALF_DAY' ? 'HALF_DAY' : 'LEAVE';
 
         let currentDate = new Date(start);
         while (currentDate <= end) {
           const nextDay = new Date(currentDate);
-          nextDay.setDate(currentDate.getDate() + 1);
+          nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
           const existing = await tx.attendance.findFirst({
             where: { employeeId: leave.employeeId, date: { gte: currentDate, lt: nextDay } }
@@ -170,7 +170,7 @@ exports.reviewLeave = async (req, res, next) => {
             await tx.attendance.create({ data: { employeeId: leave.employeeId, date: new Date(currentDate), status: attendanceStatus } });
           }
           
-          currentDate.setDate(currentDate.getDate() + 1);
+          currentDate.setUTCDate(currentDate.getUTCDate() + 1);
         }
       }
 

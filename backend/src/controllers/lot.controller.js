@@ -73,7 +73,7 @@ exports.createLot = async (req, res, next) => {
       // Upload CoA to Cloudinary
       coaUrl = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'chemicrown/lots/coa' },
+          { folder: 'chemicrown/lots/coa', resource_type: 'auto' },
           (error, result) => {
             if (error) reject(error);
             else resolve(result.secure_url);
@@ -122,7 +122,7 @@ exports.updateLot = async (req, res, next) => {
     if (req.file) {
       coaUrl = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'chemicrown/lots/coa' },
+          { folder: 'chemicrown/lots/coa', resource_type: 'auto' },
           (error, result) => {
             if (error) reject(error);
             else resolve(result.secure_url);
@@ -138,6 +138,9 @@ exports.updateLot = async (req, res, next) => {
     if (status) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes;
     if (coaUrl) updateData.coaUrl = coaUrl;
+    if (req.body.removeCoa === 'true') {
+      updateData.coaUrl = null;
+    }
 
     const lot = await prisma.lot.update({
       where: { id },

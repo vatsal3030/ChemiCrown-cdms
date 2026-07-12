@@ -62,8 +62,8 @@ export default function LeaveDetails() {
   }
 
   const empUser = lr.employee?.user;
-  const startDate = new Date(lr.startDate);
-  const endDate = new Date(lr.endDate);
+  const startDate = new Date(lr.date);
+  const endDate = lr.endDate ? new Date(lr.endDate) : new Date(lr.date);
   
   // Render a clean calendar block for "Affected Dates"
   const renderCalendar = () => {

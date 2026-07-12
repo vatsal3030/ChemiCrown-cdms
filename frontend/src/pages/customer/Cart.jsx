@@ -1,7 +1,48 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Trash2, ArrowRight, Package, Plus, Minus } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { Button } from '@/components/ui/button';
+
+function CartQtyInput({ item, updateQuantity }) {
+  const [val, setVal] = useState(item.quantity);
+
+  useEffect(() => {
+    setVal(item.quantity);
+  }, [item.quantity]);
+
+  const handleChange = (e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      setVal('');
+      return;
+    }
+    const num = parseInt(raw, 10);
+    if (!isNaN(num)) {
+      setVal(num);
+      if (num >= 1) {
+        updateQuantity(item.product.id, num);
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    if (val === '' || isNaN(val) || val < 1) {
+      setVal(item.quantity);
+    }
+  };
+
+  return (
+    <input
+      type="number"
+      min="1"
+      value={val}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className="w-12 text-center text-sm font-semibold bg-transparent border-0 focus:outline-none focus:ring-0 p-0 m-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-foreground"
+    />
+  );
+}
 
 export default function Cart() {
   const { cartItems, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -101,7 +142,7 @@ export default function Cart() {
                         >
                           <Minus size={12} />
                         </button>
-                        <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                        <CartQtyInput item={item} updateQuantity={updateQuantity} />
                         <button
                           onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                           className="w-7 h-8 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-muted transition-colors"

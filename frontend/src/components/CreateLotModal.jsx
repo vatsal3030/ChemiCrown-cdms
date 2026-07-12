@@ -19,6 +19,7 @@ export default function CreateLotModal({ isOpen, onClose, onSuccess, initialLot 
     notes: ''
   });
   const [file, setFile] = useState(null);
+  const [removeCoa, setRemoveCoa] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,6 +52,7 @@ export default function CreateLotModal({ isOpen, onClose, onSuccess, initialLot 
         });
       }
       setFile(null);
+      setRemoveCoa(false);
     }
   }, [isOpen, initialLot, token]);
 
@@ -65,6 +67,9 @@ export default function CreateLotModal({ isOpen, onClose, onSuccess, initialLot 
       });
       if (file) {
         data.append('coaDocument', file); // Multer field name
+      }
+      if (removeCoa) {
+        data.append('removeCoa', 'true');
       }
 
       const url = initialLot 
@@ -166,14 +171,40 @@ export default function CreateLotModal({ isOpen, onClose, onSuccess, initialLot 
                 <option value="REJECTED">REJECTED (Failed QC)</option>
               </select>
             </div>
-            <div>
-              <label className="form-label">Upload CoA (PDF/Image)</label>
-              <Input 
-                type="file" 
-                accept=".pdf,image/*" 
-                onChange={e => setFile(e.target.files[0])} 
-              />
-              <p className="text-[10px] text-muted-foreground mt-1">Leave empty to generate a CoA later</p>
+             <div>
+              <label className="form-label font-semibold">Upload CoA (PDF/Image)</label>
+              {initialLot?.coaUrl && !removeCoa ? (
+                <div className="flex items-center gap-2 mb-2 p-2 bg-slate-50 dark:bg-slate-900 border border-border rounded-lg text-xs">
+                  <a href={initialLot.coaUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold truncate max-w-[150px]">
+                    View Current CoA
+                  </a>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="xs" 
+                    className="text-destructive h-auto p-1 py-0.5 ml-auto text-[10px] hover:bg-destructive/10"
+                    onClick={() => {
+                      setRemoveCoa(true);
+                      setFile(null);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : null}
+              {(!initialLot?.coaUrl || removeCoa) && (
+                <>
+                  <Input 
+                    type="file" 
+                    accept=".pdf,image/*" 
+                    onChange={e => setFile(e.target.files[0])} 
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Leave empty to generate a CoA later</p>
+                </>
+              )}
+              {removeCoa && (
+                <p className="text-[10px] text-amber-600 mt-1">⚠️ Current CoA will be deleted upon save. You can upload a new one above.</p>
+              )}
             </div>
           </div>
 

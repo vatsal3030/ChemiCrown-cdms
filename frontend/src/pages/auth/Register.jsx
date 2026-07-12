@@ -278,7 +278,8 @@ export default function Register() {
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
-                    type="email" value={form.email} onChange={set('email')}
+                    type="email" value={form.email} 
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value.toLowerCase().trim() }))}
                     className={`block w-full pl-9 pr-3 py-2.5 border rounded-xl bg-background text-foreground text-sm focus:ring-2 focus:ring-primary ${errors.email ? 'border-red-400' : 'border-input'}`}
                     placeholder="john@company.com"
                   />

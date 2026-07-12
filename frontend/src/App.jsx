@@ -35,10 +35,12 @@ import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Lots from './pages/admin/Lots';
 import CreateLotPage from './pages/admin/CreateLotPage';
+import LotDetailsPage from './pages/admin/LotDetailsPage';
 import ProductFormPage from './pages/admin/ProductFormPage';
 import CustomerVerification from './pages/admin/CustomerVerification';
 import HRManagement from './pages/admin/HRManagement';
 import AddEmployeePage from './pages/admin/AddEmployeePage';
+import EditEmployeePage from './pages/admin/EditEmployeePage';
 import EmployeeDetails from './pages/admin/EmployeeDetails';
 import PayrollConfig from './pages/admin/PayrollConfig';
 import AttendanceCalendar from './pages/admin/AttendanceCalendar';
@@ -203,6 +205,7 @@ function App() {
                     <Route path="inventory" element={<Inventory />} />
                     <Route path="inventory/lots" element={<Lots />} />
                     <Route path="inventory/lots/new" element={<CreateLotPage />} />
+                    <Route path="inventory/lots/:id" element={<LotDetailsPage />} />
                     <Route path="inventory/product/new" element={<ProductFormPage />} />
                     <Route path="inventory/product/:id" element={<ProductFormPage />} />
                     <Route path="stock-history" element={<StockHistory />} />
@@ -232,10 +235,11 @@ function App() {
                   </Route>
 
                   <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'MANAGER']} />}>
-                    <Route path="hr" element={<HRManagement />} />
-                    <Route path="hr/add-employee" element={<AddEmployeePage />} />
-                    <Route path="hr/:id" element={<EmployeeDetails />} />
-                    <Route path="hr/attendance" element={<AttendanceCalendar />} />
+                     <Route path="hr" element={<HRManagement />} />
+                     <Route path="hr/add-employee" element={<AddEmployeePage />} />
+                     <Route path="hr/edit-employee/:id" element={<EditEmployeePage />} />
+                     <Route path="hr/:id" element={<EmployeeDetails />} />
+                     <Route path="hr/attendance" element={<AttendanceCalendar />} />
                     <Route path="hr/payroll-config/:id" element={<PayrollConfig />} />
                     <Route path="payroll" element={<Payroll />} />
                     <Route path="payroll/:id" element={<PayrollDetails />} />

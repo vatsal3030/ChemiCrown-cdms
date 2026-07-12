@@ -268,11 +268,13 @@ export default function ProductDetails() {
           <div className="text-3xl font-bold">₹{product.price}</div>
           
           {inStock && (
-            <div className="space-y-1">
-              <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                <span className="text-green-600 font-bold">FREE Delivery</span>
-                <span>by Tomorrow</span>
+            <div className="space-y-1.5 border-b border-border pb-3">
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-600">
+                <span>🚚 Ready to Dispatch</span>
               </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Standard warehouse dispatch within 24–48 hours. Shipping and transit times calculated dynamically at checkout.
+              </p>
             </div>
           )}
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Search, SlidersHorizontal, RefreshCw, X, ArrowUpDown, 
   Archive, FileText, CheckCircle, AlertTriangle, AlertCircle, Trash2, Upload
@@ -192,7 +192,11 @@ export default function Lots() {
               ) : (
                 lots.map(lot => (
                   <tr key={lot.id} className="data-table-row">
-                    <td className="data-table-cell font-mono font-semibold text-primary">{lot.lotNumber}</td>
+                    <td className="data-table-cell font-mono font-semibold text-primary">
+                      <Link to={`/dashboard/inventory/lots/${lot.id}`} className="hover:underline">
+                        {lot.lotNumber}
+                      </Link>
+                    </td>
                     <td className="data-table-cell">
                       <p className="font-semibold text-foreground">{lot.product?.name || 'Unknown'}</p>
                       <p className="text-xs text-muted-foreground">SKU: {lot.product?.sku || 'N/A'}</p>
@@ -220,23 +224,28 @@ export default function Lots() {
                       )}
                     </td>
                     <td className="data-table-cell text-right">
-                      {['SUPER_ADMIN', 'OWNER', 'MANAGER', 'QUALITY_CONTROL'].includes(user.role) && (
-                        <div className="flex items-center justify-end gap-1">
-                          {lot.status === 'QUARANTINED' && (
-                            <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:bg-emerald-50" title="Approve" onClick={() => updateLotStatus(lot.id, 'APPROVED')}>
-                                <CheckCircle size={16} />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50" title="Reject" onClick={() => updateLotStatus(lot.id, 'REJECTED')}>
-                                <AlertTriangle size={16} />
-                              </Button>
-                            </>
-                          )}
-                          <Button variant="outline" size="sm" className="h-8 px-2 ml-2 text-xs gap-1" onClick={() => { setSelectedLot(lot); setUploadModalOpen(true); }}>
-                            <Upload size={12} /> CoA
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        <Link to={`/dashboard/inventory/lots/${lot.id}`} className="text-xs font-semibold text-primary hover:underline px-2">
+                          View
+                        </Link>
+                        {['SUPER_ADMIN', 'OWNER', 'MANAGER', 'QUALITY_CONTROL'].includes(user.role) && (
+                          <div className="flex items-center gap-1">
+                            {lot.status === 'QUARANTINED' && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:bg-emerald-50" title="Approve" onClick={() => updateLotStatus(lot.id, 'APPROVED')}>
+                                  <CheckCircle size={16} />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50" title="Reject" onClick={() => updateLotStatus(lot.id, 'REJECTED')}>
+                                  <AlertTriangle size={16} />
+                                </Button>
+                              </>
+                            )}
+                            <Button variant="outline" size="sm" className="h-8 px-2 ml-1 text-xs gap-1" onClick={() => { setSelectedLot(lot); setUploadModalOpen(true); }}>
+                              <Upload size={12} /> CoA
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

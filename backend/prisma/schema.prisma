@@ -296,6 +296,9 @@ model Order {
   invoiceDate           DateTime?
   shippingAddress       String?
   orderNotes            String?
+  driverName            String?
+  driverPhone           String?
+  vehicleNumber         String?
   // Cancellation tracking
   cancellationReason    String?
   cancelledAt           DateTime?
@@ -320,6 +323,8 @@ enum OrderStatus {
   PACKAGED
   DISPATCHED
   DELIVERED
+  REFUND_REQUESTED
+  REFUNDED
   CANCELLED
 }
 

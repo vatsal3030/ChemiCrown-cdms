@@ -48,23 +48,81 @@ export default function OrderDetails() {
   const [refundReason, setRefundReason] = useState('');
   const [refunding, setRefunding] = useState(false);
 
+  // Logistics state
+  const [driverName, setDriverName] = useState('');
+  const [driverPhone, setDriverPhone] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
+
+  // Reviews state (mapping: productId -> review)
+  const [reviews, setReviews] = useState({});
+
+  // Admin refund notes & loading
+  const [refundAdminNotes, setRefundAdminNotes] = useState('');
+  const [processingRefund, setProcessingRefund] = useState(false);
+
   const isAdmin = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES'].includes(user?.role);
   const isCustomer = user?.role === 'CUSTOMER';
 
+  const getOrder = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) setOrder(json.data);
+      else toast.error(json.error || 'Failed to load order');
+    } catch { toast.error('Network error while loading order'); }
+    finally { setLoading(false); }
+  };
+
   useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const json = await res.json();
-        if (json.success) setOrder(json.data);
-        else toast.error(json.error || 'Failed to load order');
-      } catch { toast.error('Network error while loading order'); }
-      finally { setLoading(false); }
-    };
-    fetchOrder();
+    getOrder();
   }, [id, token]);
+
+  // Prefill driver details from order if already set
+  useEffect(() => {
+    if (order) {
+      if (order.driverName) setDriverName(order.driverName);
+      if (order.driverPhone) setDriverPhone(order.driverPhone);
+      if (order.vehicleNumber) setVehicleNumber(order.vehicleNumber);
+    }
+  }, [order]);
+
+  // Fetch reviews for each item in the order
+  useEffect(() => {
+    if (order?.items) {
+      if (isCustomer) {
+        order.items.forEach(item => {
+          fetch(`${import.meta.env.VITE_API_URL}/api/reviews/my/${item.productId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.review) {
+              setReviews(prev => ({ ...prev, [item.productId]: data.review }));
+            }
+          })
+          .catch(() => {});
+        });
+      } else if (isAdmin) {
+        order.items.forEach(item => {
+          fetch(`${import.meta.env.VITE_API_URL}/api/reviews/${item.productId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && Array.isArray(data.data)) {
+              const customerReview = data.data.find(r => r.customerId === order.customerId);
+              if (customerReview) {
+                setReviews(prev => ({ ...prev, [item.productId]: customerReview }));
+              }
+            }
+          })
+          .catch(() => {});
+        });
+      }
+    }
+  }, [order, isCustomer, isAdmin, token]);
 
   const handleAdvance = async () => {
     if (advancing) return;
@@ -75,10 +133,21 @@ export default function OrderDetails() {
     const nextStatus = TIMELINE[currentIndex + 1];
     if (!nextStatus) return;
 
+    // Validate driver details for DISPATCHED or DELIVERED stages (if not already filled)
+    const isLogisticsStage = nextStatus === 'DISPATCHED' || nextStatus === 'DELIVERED';
+    const isAlreadyAssigned = order.driverName && order.vehicleNumber;
+    if (isLogisticsStage && !isAlreadyAssigned && (!driverName.trim() || !vehicleNumber.trim())) {
+      toast.error('Driver Name and Vehicle Number are required for dispatch/delivery phases.');
+      return;
+    }
+
     // Optimistically update order status and append note/history
     setOrder(prev => ({ 
       ...prev, 
       status: nextStatus,
+      driverName: driverName || prev.driverName,
+      driverPhone: driverPhone || prev.driverPhone,
+      vehicleNumber: vehicleNumber || prev.vehicleNumber,
       history: [
         {
           id: 'temp-' + Date.now(),
@@ -99,7 +168,12 @@ export default function OrderDetails() {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/advance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ note: advanceNote })
+        body: JSON.stringify({ 
+          note: advanceNote,
+          driverName: driverName.trim() || undefined,
+          driverPhone: driverPhone.trim() || undefined,
+          vehicleNumber: vehicleNumber.trim() || undefined
+        })
       });
       const json = await res.json();
       if (json.success) {
@@ -115,6 +189,44 @@ export default function OrderDetails() {
       setOrder(prev => ({ ...prev, status: previousStatus, history: previousHistory })); // Rollback
     } finally { 
       setAdvancing(false); 
+    }
+  };
+
+  const handleProcessRefund = async (statusToSet) => {
+    if (!order.refund?.id) return;
+    setProcessingRefund(true);
+    
+    // Optimistic update
+    setOrder(prev => ({
+      ...prev,
+      status: statusToSet === 'PROCESSED' ? 'REFUNDED' : prev.status,
+      refund: {
+        ...prev.refund,
+        status: statusToSet,
+        notes: refundAdminNotes
+      }
+    }));
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/refunds/${order.refund.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: statusToSet, notes: refundAdminNotes })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`Refund status marked as ${statusToSet}`);
+        setRefundAdminNotes('');
+        getOrder();
+      } else {
+        toast.error(data.error || 'Failed to update refund status.');
+        getOrder();
+      }
+    } catch {
+      toast.error('Network error updating refund status.');
+      getOrder();
+    } finally {
+      setProcessingRefund(false);
     }
   };
 
@@ -212,24 +324,22 @@ export default function OrderDetails() {
     if (!refundReason.trim()) { toast.error('Please provide a reason for refund'); return; }
     setRefunding(true);
     try {
-      // Try the refund endpoint; gracefully handle if not implemented yet
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/refund`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ reason: refundReason })
       });
-      if (res.ok) {
-        toast.success('Refund request submitted. Our team will review it within 2-3 business days.');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Refund request submitted successfully!');
         setRefundModal(false);
         setRefundReason('');
+        getOrder();
       } else {
-        // Endpoint may not exist yet — still show user-friendly message
-        toast.success('Refund request noted. Please contact support@chemicrown.in with your order ID.');
-        setRefundModal(false);
+        toast.error(data.error || 'Failed to submit refund request.');
       }
     } catch {
-      toast.success('Refund request noted. Please contact support@chemicrown.in with your order ID.');
-      setRefundModal(false);
+      toast.error('Network error submitting refund request.');
     } finally { setRefunding(false); }
   };
 
@@ -258,7 +368,9 @@ export default function OrderDetails() {
   const StatusIcon = statusCfg.icon;
   const isCancelled = order.status === 'CANCELLED';
   const isDelivered = order.status === 'DELIVERED';
-  const currentStep = TIMELINE.indexOf(order.status);
+  const currentStep = ['REFUND_REQUESTED', 'REFUNDED'].includes(order.status)
+    ? TIMELINE.length - 1
+    : TIMELINE.indexOf(order.status);
   const canAdvance = isAdmin && !isDelivered && !isCancelled && NEXT_ACTION[order.status];
   const subtotal = order.items?.reduce((acc, item) => acc + (item.quantity * item.price), 0) || 0;
   const shipping = order.distanceCost || 0;
@@ -322,21 +434,136 @@ export default function OrderDetails() {
         </div>
       </div>
 
+      {/* ── Refund Status Banner ── */}
+      {order.refund && (
+        <div className="bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800 rounded-2xl p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <RotateCcw className="text-amber-600 shrink-0" size={16} />
+            <div>
+              <p className="font-bold text-sm text-amber-900 dark:text-amber-200">
+                Refund Status: <span className="uppercase font-extrabold">{order.refund.status}</span>
+              </p>
+              <p className="text-xs text-amber-705 dark:text-amber-400">
+                Requested by customer on {fmt(order.refund.createdAt)}
+              </p>
+            </div>
+          </div>
+          {order.refund.reason && (
+            <p className="text-xs text-amber-800 dark:text-amber-350 italic pl-6">
+              "Reason: {order.refund.reason}"
+            </p>
+          )}
+          {order.refund.notes && (
+            <p className="text-xs text-amber-900 dark:text-amber-200 pl-6 font-semibold">
+              Admin Processing Notes: {order.refund.notes}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* ── Admin Advance Panel ── */}
       {isAdmin && canAdvance && (
-        <div className="bg-primary/5 border-2 border-primary/20 rounded-2xl p-4">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+        <div className="bg-primary/5 border-2 border-primary/20 rounded-2xl p-4 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
             <ChevronRight size={15} className="text-primary shrink-0" />
             <p className="font-bold text-sm text-foreground">Next: {NEXT_ACTION[order.status]?.label}</p>
             <p className="text-xs text-muted-foreground hidden sm:block">— {NEXT_ACTION[order.status]?.note}</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
+
+          {/* Logistics Inputs (required when advancing to dispatched or delivered, and not already assigned) */}
+          {(TIMELINE[currentStep + 1] === 'DISPATCHED' || TIMELINE[currentStep + 1] === 'DELIVERED') && !(order.driverName && order.vehicleNumber) && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-border pt-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Driver Name *</label>
+                <input
+                  type="text"
+                  value={driverName}
+                  onChange={e => setDriverName(e.target.value)}
+                  placeholder="Enter driver name"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Driver Phone</label>
+                <input
+                  type="text"
+                  value={driverPhone}
+                  onChange={e => setDriverPhone(e.target.value)}
+                  placeholder="Enter contact number"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Vehicle Number *</label>
+                <input
+                  type="text"
+                  value={vehicleNumber}
+                  onChange={e => setVehicleNumber(e.target.value)}
+                  placeholder="GJ-04-XX-1234"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-2 border-t border-border/40 pt-2.5">
             <input type="text" value={advanceNote} onChange={e => setAdvanceNote(e.target.value)}
-              placeholder="Optional note (e.g. tracking number)..."
+              placeholder="Optional progress/status update note..."
               className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
             <Button onClick={handleAdvance} disabled={advancing} size="sm" className="shrink-0">
               {advancing ? <span className="flex flex-wrap items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Advancing…</span>
                 : <><ChevronRight size={14} className="mr-1" />{NEXT_ACTION[order.status]?.label}</>}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Admin Refund Approval Panel ── */}
+      {isAdmin && order.status === 'REFUND_REQUESTED' && order.refund?.status === 'PENDING' && (
+        <div className="bg-rose-50 border-2 border-rose-200 dark:bg-rose-950/20 dark:border-rose-800 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <RotateCcw size={16} className="text-rose-600" />
+            <div>
+              <p className="font-bold text-sm text-rose-950 dark:text-rose-200">
+                Action Required: Review Refund Request
+              </p>
+              <p className="text-xs text-rose-700 dark:text-rose-400">
+                Requested by customer. Approve to process refund and return items to stock.
+              </p>
+            </div>
+          </div>
+          
+          <div className="bg-white/85 dark:bg-slate-900/60 p-3 rounded-xl border border-rose-100 dark:border-rose-900/50">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase">Customer Reason</p>
+            <p className="text-sm text-foreground italic mt-0.5">"{order.refund.reason}"</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">Admin Processing Notes (Optional)</label>
+            <textarea
+              value={refundAdminNotes}
+              onChange={e => setRefundAdminNotes(e.target.value)}
+              rows={2}
+              placeholder="Enter payment payout UTR, instructions, or rejection reasons..."
+              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-rose-500 text-foreground resize-none"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={() => handleProcessRefund('PROCESSED')}
+              disabled={processingRefund}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 font-bold text-xs py-2 h-9"
+            >
+              Approve & Refund
+            </Button>
+            <Button
+              onClick={() => handleProcessRefund('FAILED')}
+              disabled={processingRefund}
+              variant="outline"
+              className="border-rose-200 text-rose-600 hover:bg-rose-50 flex-1 font-bold text-xs py-2 h-9"
+            >
+              Reject Refund
             </Button>
           </div>
         </div>
@@ -368,24 +595,39 @@ export default function OrderDetails() {
             <div className="form-card overflow-x-auto">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Order Progress</p>
               <div className="flex items-center min-w-[440px]">
-                {TIMELINE.map((step, idx) => {
+                 {TIMELINE.map((step, idx) => {
                   const done = idx <= currentStep;
                   const active = idx === currentStep;
                   const Ic = STATUS_CONFIG[step]?.icon || Clock;
+                  
+                  const stepColors = {
+                    REQUESTED:  'bg-sky-500 text-white shadow-sky-500/20',
+                    PENDING:    'bg-amber-500 text-white shadow-amber-500/20',
+                    PROCESSING: 'bg-violet-500 text-white shadow-violet-500/20',
+                    PACKAGED:   'bg-indigo-500 text-white shadow-indigo-500/20',
+                    DISPATCHED: 'bg-blue-500 text-white shadow-blue-500/20',
+                    DELIVERED:  'bg-emerald-500 text-white shadow-emerald-500/20',
+                  };
+
+                  let circleStyle = 'bg-muted text-muted-foreground';
+                  if (active) {
+                    circleStyle = 'bg-green-600 text-white shadow-md shadow-green-600/30 ring-4 ring-green-600/20 scale-110';
+                  } else if (done) {
+                    circleStyle = stepColors[step] || 'bg-primary text-white';
+                  }
+
                   return (
                     <div key={step} className="flex items-center flex-1 last:flex-none">
                       <div className="flex flex-col items-center gap-1">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
-                          done ? 'bg-primary text-white shadow-md shadow-primary/30' : 'bg-muted text-muted-foreground'
-                        } ${active ? 'ring-4 ring-primary/20 scale-110' : ''}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${circleStyle}`}>
                           <Ic size={13} />
                         </div>
-                        <span className={`text-[9px] font-semibold text-center leading-tight whitespace-nowrap ${done ? 'text-primary' : 'text-muted-foreground'}`}>
+                        <span className={`text-[9px] font-semibold text-center leading-tight whitespace-nowrap ${done ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
                           {STATUS_CONFIG[step]?.label}
                         </span>
                       </div>
                       {idx < TIMELINE.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-1 mb-4 rounded-full transition-all duration-500 ${done ? 'bg-primary' : 'bg-muted'}`} />
+                        <div className={`flex-1 h-0.5 mx-1 mb-4 rounded-full transition-all duration-500 ${done ? 'bg-primary/70' : 'bg-muted'}`} />
                       )}
                     </div>
                   );
@@ -398,53 +640,75 @@ export default function OrderDetails() {
           <div className="form-card">
             <h2 className="font-bold text-sm text-foreground mb-3">Items Ordered</h2>
         <div className="divide-y divide-border">
-            {order.items?.map((item) => (
-              <div key={item.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                {/* Product image — clickable link to catalog */}
-                <Link
-                  to={`/dashboard/catalog/${item.productId || item.product?.id}`}
-                  className="w-12 h-12 sm:w-14 sm:h-14 bg-muted rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-border hover:border-primary transition-colors"
-                  title="View product details"
-                >
-                  {item.product?.imageUrls?.length > 0
-                    ? <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-full h-full object-cover" />
-                    : <Package size={18} className="text-muted-foreground" />}
-                </Link>
-                {/* Name + details */}
-                <div className="flex-1 min-w-0">
-                  {/* Product name — clickable link */}
-                  <Link
-                    to={`/dashboard/catalog/${item.productId || item.product?.id}`}
-                    className="font-semibold text-sm text-foreground line-clamp-1 hover:text-primary transition-colors inline-flex flex-wrap items-center gap-1"
-                  >
-                    {item.product?.name}
-                    <ExternalLink size={10} className="opacity-40" />
-                  </Link>
-                  <p className="text-xs text-muted-foreground">
-                    {item.quantity} × ₹{Number(item.price).toFixed(2)} / {item.product?.unit}
-                  </p>
-                  {item.product?.casNumber && (
-                    <p className="text-[10px] text-muted-foreground font-mono">CAS: {item.product.casNumber}</p>
-                  )}
-                  {(item.hsnCode || item.product?.hsnCode) && (
-                    <p className="text-[10px] text-muted-foreground font-mono">HSN: {item.hsnCode || item.product?.hsnCode}{item.gstRate ? ` · GST ${item.gstRate}%` : ''}</p>
-                  )}
-                  {/* Review button — only for delivered orders */}
-                  {isDelivered && isCustomer && (
-                    <button
-                      onClick={() => setReviewModal({ open: true, item })}
-                      className="mt-1.5 inline-flex flex-wrap items-center gap-1 text-xs text-primary font-semibold hover:underline"
+            {order.items?.map((item) => {
+              const review = reviews[item.productId];
+              return (
+                <div key={item.id} className="py-3 first:pt-0 last:pb-0 border-b border-border last:border-0">
+                  <div className="flex items-start gap-3">
+                    {/* Product image — clickable link to catalog */}
+                    <Link
+                      to={`/dashboard/catalog/${item.productId || item.product?.id}`}
+                      className="w-12 h-12 sm:w-14 sm:h-14 bg-muted rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-border hover:border-primary transition-colors"
+                      title="View product details"
                     >
-                      <Star size={11} className="fill-current" /> Write / Edit Review
-                    </button>
+                      {item.product?.imageUrls?.length > 0
+                        ? <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                        : <Package size={18} className="text-muted-foreground" />}
+                    </Link>
+                    {/* Name + details */}
+                    <div className="flex-1 min-w-0">
+                      {/* Product name — clickable link */}
+                      <Link
+                        to={`/dashboard/catalog/${item.productId || item.product?.id}`}
+                        className="font-semibold text-sm text-foreground line-clamp-1 hover:text-primary transition-colors inline-flex flex-wrap items-center gap-1"
+                      >
+                        {item.product?.name}
+                        <ExternalLink size={10} className="opacity-40" />
+                      </Link>
+                      <p className="text-xs text-muted-foreground">
+                        {item.quantity} × ₹{Number(item.price).toFixed(2)} / {item.product?.unit}
+                      </p>
+                      {item.product?.casNumber && (
+                        <p className="text-[10px] text-muted-foreground font-mono">CAS: {item.product.casNumber}</p>
+                      )}
+                      {(item.hsnCode || item.product?.hsnCode) && (
+                        <p className="text-[10px] text-muted-foreground font-mono">HSN: {item.hsnCode || item.product?.hsnCode}{item.gstRate ? ` · GST ${item.gstRate}%` : ''}</p>
+                      )}
+                      {/* Review button — only for delivered orders */}
+                      {isDelivered && isCustomer && (
+                        <button
+                          onClick={() => setReviewModal({ open: true, item })}
+                          className="mt-1.5 inline-flex flex-wrap items-center gap-1 text-xs text-primary font-semibold hover:underline"
+                        >
+                          <Star size={11} className="fill-current" /> Write / Edit Review
+                        </button>
+                      )}
+                    </div>
+                    {/* Line total */}
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-sm text-foreground">₹{Number(item.quantity * item.price).toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  {/* Inline review if already written by user */}
+                  {review && (
+                    <div className="mt-2.5 ml-15 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl space-y-1">
+                      <div className="flex items-center gap-1 text-yellow-500">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-current' : 'text-slate-300'}`} />
+                        ))}
+                        <span className="text-[10px] text-muted-foreground ml-1">
+                          {isCustomer ? 'You reviewed this product' : 'Customer reviewed this product'}
+                        </span>
+                      </div>
+                      {review.comment && (
+                        <p className="text-xs text-foreground italic font-medium">"{review.comment}"</p>
+                      )}
+                    </div>
                   )}
                 </div>
-                {/* Line total */}
-                <div className="text-right shrink-0">
-                  <p className="font-bold text-sm text-foreground">₹{Number(item.quantity * item.price).toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           </div>
 
@@ -462,8 +726,11 @@ export default function OrderDetails() {
                         <div className="absolute left-[11px] top-6 bottom-[-16px] w-[2px] bg-border" />
                       )}
                       {/* Timeline dot */}
-                      <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center border-2 border-background">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      <div className={`absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-background ${STATUS_CONFIG[hStatus]?.color || 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                        {(() => {
+                          const Icon = STATUS_CONFIG[hStatus]?.icon || Clock;
+                          return <Icon size={10} className="shrink-0" />;
+                        })()}
                       </div>
                       {/* Content */}
                       <div>
@@ -571,6 +838,41 @@ export default function OrderDetails() {
                 <p className="text-[10px] text-muted-foreground">
                   Dispatched on {fmt(order.history.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED'))?.changedAt || order.history.find(h => (h.status === 'DISPATCHED' || h.newStatus === 'DISPATCHED'))?.createdAt)}
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* Driver & Logistics Info */}
+          {(order.driverName || order.vehicleNumber) && (isAdmin || ['DISPATCHED', 'DELIVERED'].includes(order.status)) && (
+            <div className="form-card border-indigo-250 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10">
+              <h2 className="font-bold text-sm text-indigo-700 dark:text-indigo-350 mb-2 flex items-center gap-1.5">
+                <Truck size={13} className="text-indigo-600 dark:text-indigo-400" /> Driver & Logistics Info
+              </h2>
+              <div className="text-xs space-y-1.5">
+                {order.driverName && (
+                  <div>
+                    <span className="text-muted-foreground">Driver Name:</span>
+                    <p className="font-bold text-foreground text-sm">{order.driverName}</p>
+                  </div>
+                )}
+                {order.driverPhone && (
+                  <div>
+                    <span className="text-muted-foreground">Driver Contact:</span>
+                    <p className="font-semibold text-foreground">
+                      📞 <a href={`tel:${order.driverPhone}`} className="hover:underline">{order.driverPhone}</a>
+                    </p>
+                  </div>
+                )}
+                {order.vehicleNumber && (
+                  <div>
+                    <span className="text-muted-foreground">Vehicle Number:</span>
+                    <div>
+                      <p className="font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded inline-block">
+                        {order.vehicleNumber}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

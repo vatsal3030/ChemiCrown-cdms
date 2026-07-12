@@ -3,7 +3,7 @@ import {
   ShoppingCart, Search, Filter, Trash2, ArrowUpDown, Eye,
   Package, ChevronRight, X, SlidersHorizontal, RefreshCw,
   Calendar, IndianRupee, CheckCircle, XCircle,
-  QrCode, Clock
+  QrCode, Clock, Truck, AlertCircle, RotateCcw
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useDialog } from '@/context/DialogContext';
@@ -13,14 +13,16 @@ import { SkeletonTableBody } from '@/components/ui/Skeleton';
 
 const STATUS_PIPELINE = ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISPATCHED', 'DELIVERED'];
 
-const STATUS_STYLES = {
-  REQUESTED:  'badge badge-info',
-  PENDING:    'badge badge-warning',
-  PROCESSING: 'badge badge-secondary',
-  PACKAGED:   'badge badge-secondary',
-  DISPATCHED: 'badge badge-info',
-  DELIVERED:  'badge badge-success',
-  CANCELLED:  'badge badge-destructive',
+const STATUS_CONFIG = {
+  REQUESTED:  { label: 'Requested',  color: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-850', icon: Clock },
+  PENDING:    { label: 'Pending',    color: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-850', icon: AlertCircle },
+  PROCESSING: { label: 'Processing', color: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/20 dark:text-violet-400 dark:border-violet-850', icon: RefreshCw },
+  PACKAGED:   { label: 'Packaged',   color: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-850', icon: Package },
+  DISPATCHED: { label: 'Dispatched', color: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-850', icon: Truck },
+  DELIVERED:  { label: 'Delivered',  color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-850', icon: CheckCircle },
+  REFUND_REQUESTED: { label: 'Refund Requested', color: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800', icon: RotateCcw },
+  REFUNDED:   { label: 'Refunded',   color: 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800', icon: RotateCcw },
+  CANCELLED:  { label: 'Cancelled',  color: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-850', icon: XCircle },
 };
 
 const NEXT_LABEL = {
@@ -314,6 +316,24 @@ export default function Orders({ isMyOrders = false }) {
               {i < STATUS_PIPELINE.length - 1 && <ChevronRight size={12} className="text-muted-foreground" />}
             </span>
           ))}
+          <div className="h-4 w-[1px] bg-border mx-2 hidden lg:block" />
+          <span className="font-semibold text-foreground mr-1">Refunds:</span>
+          <div className="flex items-center gap-1.5">
+            {['REFUND_REQUESTED', 'REFUNDED'].map(s => (
+              <button
+                key={s}
+                onClick={() => { setParam('status', s); setTempFilters(f => ({ ...f, status: s })); }}
+                className={`font-medium px-2.5 py-1 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-xs ${
+                  statusFilter === s 
+                    ? 'bg-rose-600 text-white shadow-md shadow-rose-600/20 border border-rose-600' 
+                    : 'bg-background hover:bg-rose-100 hover:text-rose-700 border border-border hover:border-rose-300 text-foreground'
+                }`}
+              >
+                {s === 'REFUND_REQUESTED' ? 'Refund Requests' : 'Refunded'}
+                {statusCounts[s] ? ` (${statusCounts[s]})` : ''}
+              </button>
+            ))}
+          </div>
           {statusFilter !== 'all' && (
             <button onClick={() => setParam('status', 'all')} className="ml-auto text-destructive hover:underline flex flex-wrap items-center gap-1 text-xs">
               <X size={11} /> Clear
@@ -504,8 +524,8 @@ export default function Orders({ isMyOrders = false }) {
                   className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="all">All Statuses</option>
-                  {['REQUESTED','PENDING','PROCESSING','PACKAGED','DISPATCHED','DELIVERED','CANCELLED'].map(s => (
-                    <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
+                  {['REQUESTED','PENDING','PROCESSING','PACKAGED','DISPATCHED','DELIVERED','REFUND_REQUESTED','REFUNDED','CANCELLED'].map(s => (
+                    <option key={s} value={s}>{s.replace(/_/g, ' ').charAt(0) + s.replace(/_/g, ' ').slice(1).toLowerCase()}</option>
                   ))}
                 </select>
               </div>
@@ -688,9 +708,16 @@ export default function Orders({ isMyOrders = false }) {
                       ₹{Number(order.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="data-table-cell">
-                      <span className={STATUS_STYLES[order.status] || 'badge badge-secondary'}>
-                        {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
-                      </span>
+                      {(() => {
+                        const cfg = STATUS_CONFIG[order.status] || { label: order.status, color: 'bg-slate-50 text-slate-700 border-slate-200', icon: Clock };
+                        const Icon = cfg.icon;
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider shrink-0 ${cfg.color}`}>
+                            <Icon size={11} className="shrink-0" />
+                            {cfg.label}
+                          </span>
+                        );
+                      })()}
                       {order.lastHandledBy && (
                         <p className="text-[10px] text-muted-foreground mt-1 truncate max-w-[120px]" title={`Handled by ${order.lastHandledBy}`}>
                           👤 {order.lastHandledBy}

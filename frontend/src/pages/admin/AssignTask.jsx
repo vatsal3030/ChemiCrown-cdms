@@ -39,10 +39,16 @@ export default function AssignTask() {
 
     setLoading(true);
     try {
+      const payload = {
+        title: form.title,
+        description: form.description,
+        assignedToId: form.assigneeId,
+        dueDate: form.dueDate || null
+      };
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form)
+        body: JSON.stringify(payload)
       });
       const json = await res.json();
       if (json.success) {

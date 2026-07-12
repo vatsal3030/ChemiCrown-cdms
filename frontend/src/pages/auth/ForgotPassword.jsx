@@ -179,7 +179,7 @@ export default function ForgotPassword() {
                   <input 
                     type="email" 
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.toLowerCase().trim())}
                     className="block w-full pl-10 pr-3 py-3 border border-input rounded-xl bg-background text-foreground focus:ring-2 focus:ring-primary" 
                     placeholder="john@company.com"
                     required

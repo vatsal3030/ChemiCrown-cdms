@@ -2,6 +2,7 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const prisma = require('../config/prisma');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/email.service');
+const { normalizePhone } = require('../utils/phone');
 
 // Lazy Razorpay init — only needed for online payment flows, not COD/UPI
 let _razorpay = null;
@@ -112,9 +113,31 @@ const createOrder = async (req, res, next) => {
           taxAmount: itemTax
         });
       }
-
-      const distanceCost = Number(((distanceKm || 0) * 10).toFixed(2));
-      const hazardousShippingCost = calcTotal > 0 ? 2500 : 0;
+      // Delivery Cost Calculation:
+      // 1. Base Fee: ₹50
+      // 2. Distance Cost: ₹10 per km
+      // 3. Weight/Size Cost: ₹2 per Kg/L
+      // 4. Hazardous Handling Surcharge: ₹150 if any product has hazardClasses
+      const baseDeliveryFee = calcTotal > 0 ? 50 : 0;
+      const computedDistanceCost = (distanceKm || 0) * 10;
+      
+      let totalSize = 0;
+      let isHazardous = false;
+      for (const itemData of orderItemsData) {
+        const product = await tx.product.findUnique({ where: { id: itemData.productId } });
+        if (product) {
+          totalSize += itemData.quantity * (product.packageSize || 1);
+          if (product.hazardClasses && product.hazardClasses.length > 0) {
+            isHazardous = true;
+          }
+        }
+      }
+      
+      const weightCost = totalSize * 2;
+      const hazardousSurcharge = isHazardous ? 150 : 0;
+      
+      const distanceCost = Number((baseDeliveryFee + computedDistanceCost + weightCost).toFixed(2));
+      const hazardousShippingCost = Number(hazardousSurcharge.toFixed(2));
       const taxAmount = Number(totalTax.toFixed(2));
       calcTotal = Number(calcTotal.toFixed(2));
       const finalTotal = Number((calcTotal + distanceCost + hazardousShippingCost + taxAmount).toFixed(2));
@@ -397,6 +420,7 @@ const getOrderById = async (req, res, next) => {
           }
         },
         payment: true,
+        refund: true,
         history: {
           include: { user: { select: { firstName: true, lastName: true } } },
           orderBy: { changedAt: 'desc' }
@@ -642,7 +666,7 @@ const verifyCodOrder = async (req, res, next) => {
     
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { payment: true }
+      include: { payment: true, items: true }
     });
 
     if (!order) {
@@ -735,7 +759,7 @@ const STATUS_PIPELINE = ['REQUESTED', 'PENDING', 'PROCESSING', 'PACKAGED', 'DISP
 const advanceOrderStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { note } = req.body;
+    const { note, driverName, driverPhone, vehicleNumber } = req.body;
 
     const order = await prisma.order.findUnique({
       where: { id },
@@ -845,7 +869,10 @@ const advanceOrderStatus = async (req, res, next) => {
         where: { id },
         data: {
           status: nextStatus,
-          updatedBy: req.user.id
+          updatedBy: req.user.id,
+          driverName: driverName || order.driverName,
+          driverPhone: driverPhone ? normalizePhone(driverPhone) : order.driverPhone,
+          vehicleNumber: vehicleNumber || order.vehicleNumber
         }
       });
     }, { timeout: 15000 });
@@ -899,8 +926,8 @@ const advanceOrderStatus = async (req, res, next) => {
       }
     }
 
-    // Send order status update email to customer (non-blocking)
-    if (fullOrder?.customer?.user?.email) {
+    // Send order status update email to customer only for DELIVERED (important event)
+    if (fullOrder?.customer?.user?.email && nextStatus === 'DELIVERED') {
       sendOrderStatusUpdateEmail(
         fullOrder.customer.user.email,
         fullOrder.customer.user.firstName,
@@ -1144,10 +1171,6 @@ const getRefunds = async (req, res, next) => {
   }
 };
 
-/**
- * updateRefundStatus - Admin: mark a refund as PROCESSED (for manual transfers)
- * PUT /api/orders/refunds/:refundId
- */
 const updateRefundStatus = async (req, res, next) => {
   try {
     const { refundId } = req.params;
@@ -1159,37 +1182,242 @@ const updateRefundStatus = async (req, res, next) => {
       return res.status(400).json({ error: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(', ')}` });
     }
 
-    const refund = await prisma.refund.findUnique({ where: { id: refundId } });
+    const refund = await prisma.refund.findUnique({ 
+      where: { id: refundId },
+      include: {
+        order: {
+          include: {
+            items: true,
+            customer: { include: { user: true } }
+          }
+        }
+      }
+    });
     if (!refund) return res.status(404).json({ error: 'Refund not found' });
 
-    const updated = await prisma.refund.update({
-      where: { id: refundId },
-      data: {
-        status,
-        notes:       notes || refund.notes,
-        processedBy: adminId,
-        processedAt: status === 'PROCESSED' ? new Date() : refund.processedAt
+    const updated = await prisma.$transaction(async (tx) => {
+      // 1. Update refund status
+      const ref = await tx.refund.update({
+        where: { id: refundId },
+        data: {
+          status,
+          notes:       notes || refund.notes,
+          processedBy: adminId,
+          processedAt: status === 'PROCESSED' ? new Date() : refund.processedAt
+        }
+      });
+
+      if (status === 'PROCESSED') {
+        // 2. Update Order status to REFUNDED
+        await tx.order.update({
+          where: { id: refund.orderId },
+          data: { status: 'REFUNDED' }
+        });
+
+        // 3. Log History
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: refund.orderId,
+            oldStatus: refund.order.status,
+            newStatus: 'REFUNDED',
+            note: notes || 'Refund approved and processed by admin',
+            changedById: adminId
+          }
+        });
+
+        // 4. Restore inventory stock
+        for (const item of refund.order.items) {
+          await tx.inventory.updateMany({
+            where: { productId: item.productId },
+            data: { quantity: { increment: item.quantity } }
+          });
+
+          // Create audit trail for stock restoration
+          const inv = await tx.inventory.findFirst({ where: { productId: item.productId } });
+          if (inv) {
+            await tx.inventoryTransaction.create({
+              data: {
+                inventoryId: inv.id,
+                type: 'IN',
+                quantity: item.quantity,
+                remarks: `Order #${refund.orderId.substring(0, 8).toUpperCase()} refunded — stock returned`,
+                userId: adminId,
+                createdBy: req.user?.email || 'System'
+              }
+            }).catch(() => {});
+          }
+        }
+
+        // 5. Finance ledger debit entry (if not already created)
+        const existingLedger = await tx.financeLedger.findFirst({
+          where: { referenceId: refund.orderId, category: 'REFUND' }
+        });
+
+        if (!existingLedger) {
+          await tx.financeLedger.create({
+            data: {
+              type:        'DEBIT',
+              category:    'REFUND',
+              amount:      refund.amount,
+              description: `Refund processed for order #${refund.orderId.substring(0, 8).toUpperCase()}`,
+              referenceId: refund.orderId,
+              date:        new Date(),
+              isAutomatic: true
+            }
+          });
+        }
+
+        // 6. Notify Customer of Approved Refund
+        const customerNotif = await tx.notification.create({
+          data: {
+            userId:  refund.order.customer.userId,
+            type:    'REFUND',
+            message: `Your refund of ₹${refund.amount.toFixed(2)} for order #${refund.orderId.substring(0, 8).toUpperCase()} has been approved and processed.`
+          }
+        });
+
+        // 7. Send email on Refund Approved (Important Event)
+        if (refund.order.customer.user?.email) {
+          sendOrderStatusUpdateEmail(
+            refund.order.customer.user.email,
+            refund.order.customer.user.firstName,
+            refund.order.orderId || refund.orderId,
+            'REFUNDED'
+          ).catch(() => {});
+        }
+
+        return { ref, customerNotif };
+      } else {
+        // If refund failed/rejected
+        const customerNotif = await tx.notification.create({
+          data: {
+            userId:  refund.order.customer.userId,
+            type:    'REFUND',
+            message: `Your refund request for order #${refund.orderId.substring(0, 8).toUpperCase()} was rejected/failed. Notes: ${notes || 'No reason provided'}.`
+          }
+        });
+
+        return { ref, customerNotif };
       }
     });
 
-    // If marking as processed, notify customer
-    if (status === 'PROCESSED') {
-      const order = await prisma.order.findUnique({
-        where: { id: refund.orderId },
-        include: { customer: true }
-      });
-      if (order) {
-        await prisma.notification.create({
-          data: {
-            userId:  order.customer.userId,
-            type:    'REFUND',
-            message: `Your refund of ₹${refund.amount.toFixed(2)} for order #${refund.orderId.substring(0, 8).toUpperCase()} has been processed successfully.`
-          }
-        }).catch(() => {});
+    // Real-time socket emission
+    if (req.io && updated.customerNotif) {
+      req.io.to(updated.customerNotif.userId).emit('new_notification', { notification: updated.customerNotif });
+    }
+
+    res.json({ success: true, data: updated.ref, message: `Refund marked as ${status}` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const requestRefund = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        payment: true,
+        refund: true,
+        customer: { include: { user: true } },
+        items: true
+      }
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // RBAC: customers can only request refund for their own orders
+    if (role === 'CUSTOMER') {
+      const customer = await prisma.customer.findUnique({ where: { userId } });
+      if (!customer || order.customerId !== customer.id) {
+        return res.status(403).json({ error: 'You can only request refunds for your own orders' });
       }
     }
 
-    res.json({ success: true, data: updated, message: `Refund marked as ${status}` });
+    if (order.status !== 'DELIVERED') {
+      return res.status(400).json({ error: 'Refunds can only be requested for delivered orders' });
+    }
+
+    if (order.refund) {
+      return res.status(400).json({ error: 'A refund request already exists for this order.' });
+    }
+
+    const paidAmount = order.payment?.status === 'SUCCESS' ? (order.payment.amount || order.total || 0) : 0;
+    const payMethod = order.payment?.paymentMethod || 'UNKNOWN';
+    const razorpayPaymentId = order.payment?.razorpayPaymentId || null;
+
+    let refundMethod = 'MANUAL_BANK';
+    if (razorpayPaymentId) refundMethod = 'RAZORPAY';
+    else if (payMethod === 'UPI_QR') refundMethod = 'MANUAL_UPI';
+    else if (payMethod === 'PAY_ON_DELIVERY') refundMethod = 'COD_REFUND';
+
+    // Transaction to create refund request and update order status
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create Refund Request
+      const refund = await tx.refund.create({
+        data: {
+          orderId: id,
+          amount: paidAmount,
+          originalAmount: paidAmount,
+          cancellationFee: 0,
+          status: 'PENDING',
+          reason: reason || 'Customer requested refund after delivery',
+          paymentMethod: refundMethod,
+          initiatedBy: userId
+        }
+      });
+
+      // 2. Update Order status to REFUND_REQUESTED
+      await tx.order.update({
+        where: { id },
+        data: { status: 'REFUND_REQUESTED' }
+      });
+
+      // 3. Log History
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: id,
+          oldStatus: 'DELIVERED',
+          newStatus: 'REFUND_REQUESTED',
+          note: `Refund requested: ${reason || 'No reason provided'}`,
+          changedById: userId
+        }
+      });
+
+      // 4. Send notification to admin users (SUPER_ADMIN / OWNER)
+      const admins = await tx.user.findMany({
+        where: { role: { in: ['SUPER_ADMIN', 'OWNER'] } },
+        select: { id: true }
+      });
+
+      const createdNotifications = [];
+      for (const admin of admins) {
+        const notif = await tx.notification.create({
+          data: {
+            userId: admin.id,
+            type: 'REFUND',
+            message: `New refund request submitted for order #${id.substring(0, 8).toUpperCase()} (Amount: ₹${paidAmount.toFixed(2)}).`
+          }
+        });
+        createdNotifications.push(notif);
+      }
+
+      return { refund, createdNotifications };
+    });
+
+    // Emit socket notifications outside transaction to avoid blocking/rollback issues
+    if (req.io && result.createdNotifications) {
+      result.createdNotifications.forEach(notif => {
+        req.io.to(notif.userId).emit('new_notification', { notification: notif });
+      });
+    }
+
+    res.status(200).json({ success: true, data: result.refund, message: 'Refund request submitted successfully' });
   } catch (error) {
     next(error);
   }
@@ -1199,6 +1427,7 @@ module.exports = {
   createOrder, verifyPayment, getOrders, getOrderById, 
   cancelOrder, verifyCodOrder, advanceOrderStatus, 
   submitUpiPayment, verifyUpiPayment, getPendingUpiOrders,
-  getRefunds, updateRefundStatus
+  getRefunds, updateRefundStatus, requestRefund
 };
+
 

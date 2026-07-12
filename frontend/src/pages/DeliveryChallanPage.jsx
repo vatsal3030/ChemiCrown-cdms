@@ -80,108 +80,108 @@ export default function DeliveryChallanPage() {
       </div>
 
       {/* Challan Document */}
-      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white text-black p-8 sm:p-12 border-2 border-slate-900 shadow-md font-sans leading-normal print:p-6 print:border-0">
 
         {/* Header */}
-        <div className="px-8 pt-8 pb-6 border-b border-border">
-          <div className="flex justify-between items-start">
+        <div className="border-b-2 border-slate-950 pb-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
-              <h2 className="text-2xl font-extrabold text-foreground tracking-tight">{company.name}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{company.legalName}</p>
-              <p className="text-sm text-muted-foreground">{company.address}</p>
-              <p className="text-sm font-semibold text-foreground mt-2">GSTIN: {company.gstin}</p>
+              <h1 className="text-3xl font-black uppercase tracking-tight text-slate-950">{company.name}</h1>
+              <p className="text-xs font-semibold text-slate-600 mt-0.5">{company.legalName}</p>
+              <p className="text-xs text-slate-600 max-w-md mt-1">{company.address}</p>
+              <p className="text-xs text-slate-600 font-semibold mt-1">
+                GSTIN: <span className="font-mono text-slate-950">{company.gstin}</span>
+              </p>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-extrabold text-primary tracking-tight">DELIVERY CHALLAN</p>
-              <div className="mt-3 space-y-1">
-                <p className="text-sm"><span className="text-muted-foreground">Challan #:</span> <span className="font-semibold text-foreground">{challan.challanNumber}</span></p>
-                <p className="text-sm"><span className="text-muted-foreground">Date:</span> <span className="font-semibold text-foreground">{formatDate(challan.challanDate)}</span></p>
+            <div className="text-left sm:text-right shrink-0">
+              <h2 className="text-2xl font-black text-slate-950 tracking-wider">DELIVERY CHALLAN</h2>
+              <div className="mt-3 space-y-1 text-xs">
+                <p><span className="text-slate-500 font-semibold">Challan No:</span> <span className="font-bold font-mono text-slate-900">{challan.challanNumber}</span></p>
+                <p><span className="text-slate-500 font-semibold">Date:</span> <span className="font-bold text-slate-900">{formatDate(challan.challanDate)}</span></p>
                 {challan.invoiceNumber && (
-                  <p className="text-sm"><span className="text-muted-foreground">Invoice Ref:</span> <span className="font-mono text-foreground">{challan.invoiceNumber}</span></p>
+                  <p><span className="text-slate-500 font-semibold">Invoice Ref:</span> <span className="font-bold font-mono text-slate-900">{challan.invoiceNumber}</span></p>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Consignor / Consignee */}
-        <div className="px-8 py-5 border-b border-border bg-muted/30">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Consignor (From)</p>
-              <p className="font-semibold text-foreground">{company.name}</p>
-              <p className="text-sm text-muted-foreground">{company.address}</p>
-              <p className="text-sm text-muted-foreground">Phone: {company.phone}</p>
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Consignee (To)</p>
-              <p className="font-semibold text-foreground">{consignee.name}</p>
-              {consignee.companyName && <p className="text-sm text-muted-foreground">{consignee.companyName}</p>}
-              {consignee.gstin && <p className="text-sm font-medium text-foreground">GSTIN: {consignee.gstin}</p>}
-              <p className="text-sm text-muted-foreground">{consignee.address}</p>
-              <p className="text-sm text-muted-foreground">Phone: {consignee.phone}</p>
-            </div>
+        {/* Consignor / Consignee address grids */}
+        <div className="grid grid-cols-1 md:grid-cols-2 border border-slate-300 rounded-xl mb-6 overflow-hidden text-xs bg-slate-50/50">
+          <div className="p-4 border-r border-slate-300">
+            <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2 border-b border-slate-200 pb-1">Consignor (From)</h3>
+            <p className="font-bold text-sm text-slate-950">{company.name}</p>
+            <p className="text-slate-700 mt-1 max-w-sm leading-relaxed">{company.address}</p>
+            <p className="text-slate-600 mt-1">Phone: {company.phone}</p>
+          </div>
+          <div className="p-4">
+            <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2 border-b border-slate-200 pb-1">Consignee (To)</h3>
+            <p className="font-bold text-sm text-slate-950">{consignee.companyName || consignee.name}</p>
+            <p className="text-slate-700 mt-1">Contact: {consignee.name}</p>
+            {consignee.gstin && <p className="font-semibold text-slate-900 mt-1">GSTIN: <span className="font-mono">{consignee.gstin}</span></p>}
+            <p className="text-slate-600 mt-0.5 leading-relaxed">{consignee.address}</p>
+            <p className="text-slate-600 mt-0.5">Phone: {consignee.phone}</p>
           </div>
         </div>
 
-        {/* Hazardous Warning */}
+        {/* Hazardous Alert Banner */}
         {challan.hasHazardous && (
-          <div className="px-8 py-3 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 flex items-center gap-3">
-            <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-center gap-3 text-xs">
+            <AlertTriangle size={20} className="text-amber-600 shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">⚠️ Contains Hazardous Materials</p>
-              <p className="text-xs text-amber-700 dark:text-amber-400">Handle with care. Follow MSDS guidelines. Ensure proper PPE during loading/unloading.</p>
+              <p className="font-bold text-amber-800 text-sm">⚠️ Hazard Declaration: Dangerous Goods in Transit</p>
+              <p className="text-amber-700 mt-0.5 leading-relaxed">
+                This shipment contains chemical materials classed as hazardous. Transport driver must carry appropriate TREM Cards (Transport Emergency Cards) and follow safety protocols for loading and road transit.
+              </p>
             </div>
           </div>
         )}
 
-        {/* Items Table */}
-        <div className="px-8 py-6">
-          <table className="w-full text-sm">
+        {/* Goods Description Table */}
+        <div className="border border-slate-300 rounded-xl overflow-hidden mb-6">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b-2 border-foreground/20">
-                <th className="text-left py-2.5 font-bold text-foreground w-8">#</th>
-                <th className="text-left py-2.5 font-bold text-foreground">Description of Goods</th>
-                <th className="text-center py-2.5 font-bold text-foreground w-16">HSN</th>
-                <th className="text-center py-2.5 font-bold text-foreground w-20">Qty</th>
-                <th className="text-center py-2.5 font-bold text-foreground w-16">Unit</th>
+              <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300 uppercase tracking-wider text-[10px]">
+                <th className="p-3 w-8 text-center">#</th>
+                <th className="p-3">Description of Goods</th>
+                <th className="p-3 text-center w-24">HSN Code</th>
+                <th className="p-3 text-center w-24">Quantity</th>
+                <th className="p-3 text-center w-24">Packing Unit</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.sr} className="border-b border-border/50">
-                  <td className="py-3 text-muted-foreground">{item.sr}</td>
-                  <td className="py-3">
-                    <p className="font-medium text-foreground">{item.name}</p>
-                    <div className="flex flex-wrap gap-2 mt-0.5">
-                      {item.sku && <span className="text-xs text-muted-foreground">SKU: {item.sku}</span>}
-                      {item.casNumber && <span className="text-xs text-muted-foreground font-mono">CAS: {item.casNumber}</span>}
+                <tr key={item.sr} className="border-b border-slate-200 hover:bg-slate-50 last:border-b-0">
+                  <td className="p-3 text-center text-slate-500 font-medium">{item.sr}</td>
+                  <td className="p-3">
+                    <p className="font-bold text-slate-900">{item.name}</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {item.sku && <span className="text-[10px] text-slate-500">SKU: {item.sku}</span>}
+                      {item.casNumber && <span className="text-[10px] text-slate-500 font-mono">CAS: {item.casNumber}</span>}
                       {item.unNumber && (
-                        <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
+                        <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded uppercase tracking-wide">
                           UN {item.unNumber}
                         </span>
                       )}
                       {item.hazardClass && (
-                        <span className="text-xs font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
+                        <span className="text-[9px] font-bold text-rose-800 bg-rose-100 px-1.5 py-0.5 rounded uppercase tracking-wide">
                           Class {item.hazardClass}
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="py-3 text-center text-muted-foreground font-mono text-xs">{item.hsnCode || '—'}</td>
-                  <td className="py-3 text-center font-semibold text-foreground">{item.quantity}</td>
-                  <td className="py-3 text-center text-muted-foreground text-xs">
+                  <td className="p-3 text-center text-slate-700 font-mono text-[11px]">{item.hsnCode || '—'}</td>
+                  <td className="p-3 text-center text-slate-900 font-extrabold text-sm">{item.quantity}</td>
+                  <td className="p-3 text-center text-slate-600 font-semibold">
                     {item.packageSize && item.baseUnit ? `${item.packageSize} ${item.baseUnit}` : item.unit || '—'}
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-foreground/20">
-                <td colSpan={3} className="py-3 text-right font-bold text-foreground">Total Packages:</td>
-                <td className="py-3 text-center font-extrabold text-foreground">
-                  {items.reduce((acc, item) => acc + item.quantity, 0)}
-                </td>
+              <tr className="border-t border-slate-300 font-extrabold text-slate-900 bg-slate-50">
+                <td colSpan={3} className="p-3 text-right text-xs uppercase tracking-wider text-slate-500">Total Despatched Packages:</td>
+                <td className="p-3 text-center text-sm font-black">{items.reduce((acc, item) => acc + item.quantity, 0)}</td>
                 <td></td>
               </tr>
             </tfoot>
@@ -189,57 +189,64 @@ export default function DeliveryChallanPage() {
         </div>
 
         {/* Transport Details */}
-        <div className="px-8 py-5 border-t border-border bg-muted/30">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Transport Details</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="border border-slate-300 rounded-xl p-4 mb-6 bg-slate-50/50 text-xs">
+          <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-3 border-b border-slate-200 pb-1">Transport Details</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-muted-foreground text-xs">Mode</p>
-              <p className="font-medium text-foreground">{transport.mode}</p>
+              <p className="text-slate-500 text-[10px] uppercase font-bold">Transit Mode</p>
+              <p className="font-bold text-slate-900 mt-0.5">{transport.mode}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">Vehicle No.</p>
-              <p className="font-medium text-foreground">{transport.vehicleNumber}</p>
+              <p className="text-slate-500 text-[10px] uppercase font-bold">Vehicle Number</p>
+              <p className="font-mono font-bold text-slate-900 mt-0.5">{transport.vehicleNumber || '—'}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">Driver Name</p>
-              <p className="font-medium text-foreground">{transport.driverName}</p>
+              <p className="text-slate-500 text-[10px] uppercase font-bold">Driver Name</p>
+              <p className="font-bold text-slate-900 mt-0.5">{transport.driverName || '—'}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">Distance</p>
-              <p className="font-medium text-foreground">{transport.distanceKm ? `${Number(transport.distanceKm).toFixed(1)} km` : '—'}</p>
+              <p className="text-slate-500 text-[10px] uppercase font-bold">Billing Distance</p>
+              <p className="font-bold text-slate-900 mt-0.5">{transport.distanceKm ? `${Number(transport.distanceKm).toFixed(1)} km` : '—'}</p>
             </div>
           </div>
           {transport.dispatchedAt && (
-            <p className="text-xs text-muted-foreground mt-3">
-              Dispatched on {formatDate(transport.dispatchedAt)} at {formatTime(transport.dispatchedAt)}
+            <p className="text-[10px] text-slate-500 mt-3 font-semibold">
+              Goods Dispatched on: {formatDate(transport.dispatchedAt)} at {formatTime(transport.dispatchedAt)}
             </p>
           )}
         </div>
 
         {/* Signatures */}
-        <div className="px-8 py-8 border-t border-border">
-          <div className="grid grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="h-16" />
-              <div className="border-t border-foreground/20 pt-1">
-                <p className="text-xs text-muted-foreground">Prepared By</p>
+        <div className="border-t border-slate-300 pt-8 mt-8">
+          <div className="grid grid-cols-3 gap-6 text-xs text-center">
+            <div className="flex flex-col justify-between min-h-[90px] border-r border-slate-200">
+              <div className="h-10 flex items-center justify-center relative">
+                <span className="font-handwriting text-xl text-blue-600 rotate-[-5deg]">Solanki</span>
+              </div>
+              <div className="pt-2 border-t border-slate-300 mx-4">
+                <p className="font-bold text-slate-700">Prepared By</p>
+                <p className="text-[9px] text-slate-400 uppercase mt-0.5">ChemiCrown Store Desk</p>
               </div>
             </div>
-            <div className="text-center">
-              <div className="h-16" />
-              <div className="border-t border-foreground/20 pt-1">
-                <p className="text-xs text-muted-foreground">Transporter's Signature</p>
+            <div className="flex flex-col justify-between min-h-[90px] border-r border-slate-200">
+              <div className="h-10" />
+              <div className="pt-2 border-t border-slate-300 mx-4">
+                <p className="font-bold text-slate-700">Transporter's Sign</p>
+                <p className="text-[9px] text-slate-400 uppercase mt-0.5">Driver / Carrier Agent</p>
               </div>
             </div>
-            <div className="text-center">
-              <div className="h-16" />
-              <div className="border-t border-foreground/20 pt-1">
-                <p className="text-xs text-muted-foreground">Received By (Consignee)</p>
+            <div className="flex flex-col justify-between min-h-[90px]">
+              <div className="h-10 border border-dashed border-slate-300 rounded-lg flex items-center justify-center mx-6 bg-slate-50/50">
+                <span className="text-[8px] uppercase text-slate-300 font-bold tracking-wider">Stamp & Sign Here</span>
+              </div>
+              <div className="pt-2 border-t border-slate-300 mx-4">
+                <p className="font-bold text-slate-700">Receiver's Sign</p>
+                <p className="text-[9px] text-slate-400 uppercase mt-0.5">Consignee Seal</p>
               </div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-6 text-center">
-            This delivery challan is generated by {company.name}. Goods to be delivered as per the above details.
+          <p className="text-[9px] text-slate-400 mt-8 text-center italic">
+            This delivery challan is a formal transport document generated in accordance with GST Rules. Please inspect goods upon delivery before signing.
           </p>
         </div>
       </div>

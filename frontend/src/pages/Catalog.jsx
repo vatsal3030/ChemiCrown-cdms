@@ -77,7 +77,7 @@ export default function Catalog() {
   const [searchParams] = useSearchParams();
   const navigate   = useNavigate();
   const location   = useLocation();
-  const { addToCart } = useCart();
+  const { cartItems, addToCart, updateQuantity, removeFromCart } = useCart();
   const { user, token } = useAuth();
 
   // Dynamic determination of public vs dashboard layout style
@@ -152,6 +152,16 @@ export default function Catalog() {
   const clearFilters = () => {
     setPendingFilters({ ...EMPTY_FILTERS });
     setActiveFilters({ ...EMPTY_FILTERS });
+  };
+
+  const removeFilter = (key, defaultValue) => {
+    setPendingFilters(f => ({ ...f, [key]: defaultValue }));
+    setActiveFilters(f => ({ ...f, [key]: defaultValue }));
+  };
+
+  const removePriceFilter = () => {
+    setPendingFilters(f => ({ ...f, minPrice: '', maxPrice: '' }));
+    setActiveFilters(f => ({ ...f, minPrice: '', maxPrice: '' }));
   };
 
   // Sync panel to active when opening
@@ -366,7 +376,11 @@ export default function Catalog() {
             </div>
 
             <div className="flex flex-wrap gap-3 mt-5 justify-end">
-              <Button variant="outline" size="sm" onClick={() => { setPendingFilters({ ...EMPTY_FILTERS }); }}>Reset</Button>
+              <Button variant="outline" size="sm" onClick={() => {
+                setPendingFilters({ ...EMPTY_FILTERS });
+                setActiveFilters({ ...EMPTY_FILTERS });
+                setShowFilters(false);
+              }}>Reset</Button>
               <Button size="sm" onClick={applyFilters}>Apply Filters</Button>
             </div>
           </div>
@@ -380,24 +394,24 @@ export default function Catalog() {
           {activeFilters.categoryId !== 'all' && (
             <FilterChip
               label={`Category: ${categories?.find(c => c.id === activeFilters.categoryId)?.name || '...'}`}
-              onRemove={() => setActiveFilters(f => ({ ...f, categoryId: 'all' }))}
+              onRemove={() => removeFilter('categoryId', 'all')}
             />
           )}
           {activeFilters.grade !== 'all' && (
             <FilterChip label={`Grade: ${activeFilters.grade}`}
-              onRemove={() => setActiveFilters(f => ({ ...f, grade: 'all' }))} />
+              onRemove={() => removeFilter('grade', 'all')} />
           )}
           {activeFilters.hazard !== 'all' && (
             <FilterChip label={activeFilters.hazard === 'hazardous' ? '⚠ Hazardous' : '✓ Non-hazardous'}
-              onRemove={() => setActiveFilters(f => ({ ...f, hazard: 'all' }))} />
+              onRemove={() => removeFilter('hazard', 'all')} />
           )}
           {activeFilters.inStockOnly && (
             <FilterChip label="In Stock Only"
-              onRemove={() => setActiveFilters(f => ({ ...f, inStockOnly: false }))} />
+              onRemove={() => removeFilter('inStockOnly', false)} />
           )}
           {(activeFilters.minPrice !== '' || activeFilters.maxPrice !== '') && (
             <FilterChip label={`₹${activeFilters.minPrice || '0'} – ₹${activeFilters.maxPrice || '∞'}`}
-              onRemove={() => setActiveFilters(f => ({ ...f, minPrice: '', maxPrice: '' }))} />
+              onRemove={removePriceFilter} />
           )}
           <button onClick={clearFilters} className="text-xs text-destructive hover:underline ml-1">Clear all</button>
         </div>
@@ -451,6 +465,7 @@ export default function Catalog() {
               const lowStock = inStock && qty <= LOW_STOCK_THRESHOLD;
               const hazardInfo  = getHazardInfo(product.unNumber);
               const gradeStyle  = GRADE_COLORS[product.grade] || GRADE_COLORS['Technical'];
+              const cartItem = cartItems?.find(item => item.product.id === product.id);
 
               return (
                 <div key={product.id}
@@ -581,19 +596,49 @@ export default function Catalog() {
                           ₹{product.price.toLocaleString('en-IN')}
                         </p>
                       </div>
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!user) { navigate('/login', { state: { from: location } }); return; }
-                          addToCart(product, 1);
-                        }}
-                        disabled={!inStock}
-                        className="rounded-xl shadow-sm hover:shadow shrink-0 px-2.5 sm:px-4"
-                        size="sm"
-                      >
-                        <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
-                        <span className="hidden sm:inline">Add</span>
-                      </Button>
+                      {cartItem ? (
+                        <div className="flex items-center border border-primary/30 rounded-xl overflow-hidden bg-background h-8 shrink-0">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (cartItem.quantity <= 1) {
+                                removeFromCart(product.id);
+                              } else {
+                                updateQuantity(product.id, cartItem.quantity - 1);
+                              }
+                            }}
+                            className="px-2.5 h-full hover:bg-muted text-xs font-black transition-colors"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 h-full flex items-center justify-center text-xs font-bold min-w-[24px] text-center text-primary bg-primary/5">
+                            {cartItem.quantity}
+                          </span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(product.id, cartItem.quantity + 1);
+                            }}
+                            className="px-2.5 h-full hover:bg-muted text-xs font-black transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!user) { navigate('/login', { state: { from: location } }); return; }
+                            addToCart(product, 1);
+                          }}
+                          disabled={!inStock}
+                          className="rounded-xl shadow-sm hover:shadow shrink-0 px-2.5 sm:px-4 h-8"
+                          size="sm"
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
+                          <span className="hidden sm:inline">Add</span>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

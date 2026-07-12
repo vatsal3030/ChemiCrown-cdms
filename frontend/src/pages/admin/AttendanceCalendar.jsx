@@ -19,6 +19,7 @@ export default function AttendanceCalendar() {
 
   const targetYear = viewDate.getFullYear();
   const targetMonth = viewDate.getMonth();
+  const formattedDate = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-02`;
 
   const fetcher = async (url) => {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -29,7 +30,7 @@ export default function AttendanceCalendar() {
 
   // Fetch employees with attendances for the current month
   const { data: employees, error, isLoading, mutate } = useSWR(
-    token ? `${import.meta.env.VITE_API_URL}/api/hr?attendanceDate=${viewDate.toISOString()}&showTerminated=false` : null,
+    token ? `${import.meta.env.VITE_API_URL}/api/hr?attendanceDate=${formattedDate}&showTerminated=false` : null,
     fetcher
   );
 
@@ -48,10 +49,19 @@ export default function AttendanceCalendar() {
   const handleCellClick = (empId, day) => {
     if (!isSuperAdmin) return;
 
+    const cellDateTime = new Date(targetYear, targetMonth, day).getTime();
+    
+    // Check if future date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (cellDateTime > today.getTime()) {
+      toast.error('Cannot mark attendance for future dates');
+      return;
+    }
+
     // Check if date is before employee joining date
     const emp = employees?.find(e => e.id === empId);
     if (emp?.employeeProfile?.joiningDate) {
-      const cellDateTime = new Date(targetYear, targetMonth, day).getTime();
       const joiningDateTime = new Date(new Date(emp.employeeProfile.joiningDate).setHours(0,0,0,0)).getTime();
       if (cellDateTime < joiningDateTime) {
         toast.error(`Cannot edit attendance before joining date (${new Date(emp.employeeProfile.joiningDate).toLocaleDateString()})`);
@@ -281,23 +291,32 @@ export default function AttendanceCalendar() {
                       const joiningDateTime = joiningDateVal ? new Date(new Date(joiningDateVal).setHours(0,0,0,0)).getTime() : null;
                       const isBeforeJoining = joiningDateTime ? cellDateTime < joiningDateTime : false;
                       
+                      // Check if future date
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const isFutureDate = cellDateTime > today.getTime();
+
+                      const isCellDisabled = isBeforeJoining || isFutureDate;
+                      
                       return (
                         <td key={day} className={`p-0.5 border-r border-border text-center ${isWeekend ? 'bg-muted/10' : ''}`}>
                           <button
-                            disabled={!isSuperAdmin || isBeforeJoining}
+                            disabled={!isSuperAdmin || isCellDisabled}
                             onClick={() => handleCellClick(empId, day)}
                             className={`w-full h-8 flex items-center justify-center text-xs font-bold rounded transition-colors ${
-                              isBeforeJoining 
-                                ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-350 dark:text-slate-650 cursor-not-allowed opacity-50' 
+                              isCellDisabled 
+                                ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-350 dark:text-slate-600 cursor-not-allowed opacity-50' 
                                 : getStatusColor(status, isPending)
-                            } ${!isSuperAdmin || isBeforeJoining ? '' : 'cursor-pointer hover:opacity-80'}`}
+                            } ${!isSuperAdmin || isCellDisabled ? '' : 'cursor-pointer hover:opacity-80'}`}
                             title={
                               isBeforeJoining
                                 ? `${emp.firstName} - Before Joining Date (Joined: ${new Date(emp.employeeProfile.joiningDate).toLocaleDateString('en-IN')})`
-                                : `${emp.firstName} - ${day}/${targetMonth + 1}/${targetYear}`
+                                : isFutureDate
+                                  ? `Cannot mark attendance for future dates`
+                                  : `${emp.firstName} - ${day}/${targetMonth + 1}/${targetYear}`
                             }
                           >
-                            {isBeforeJoining ? '-' : getStatusLabel(status)}
+                            {isCellDisabled ? '-' : getStatusLabel(status)}
                           </button>
                         </td>
                       );

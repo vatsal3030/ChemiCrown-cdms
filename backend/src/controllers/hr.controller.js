@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const bcrypt = require('bcryptjs');
 const { sendWelcomeEmail } = require('../services/email.service');
+const { normalizePhone } = require('../utils/phone');
 
 exports.getEmployees = async (req, res, next) => {
   try {
@@ -236,7 +237,9 @@ exports.addEmployee = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'PF Rate must be between 0% and 30%' });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email ? email.toLowerCase().trim() : '';
+
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email is already registered' });
     }
@@ -246,11 +249,11 @@ exports.addEmployee = async (req, res, next) => {
     const newEmployee = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          email,
+          email: normalizedEmail,
           password: hashedPassword,
           firstName,
           lastName,
-          phone,
+          phone: normalizePhone(phone),
           role: role || 'MANAGER'
         }
       });
@@ -273,10 +276,10 @@ exports.addEmployee = async (req, res, next) => {
     });
 
     // Send Welcome Email (non-blocking — employee creation should not fail if email fails)
-    sendWelcomeEmail(email, password, firstName).then(result => {
-      if (!result.success) console.warn(`⚠️  Welcome email to ${email} failed: ${result.error}`);
+    sendWelcomeEmail(normalizedEmail, password, firstName).then(result => {
+      if (!result.success) console.warn(`⚠️  Welcome email to ${normalizedEmail} failed: ${result.error}`);
     }).catch(err => {
-      console.warn(`⚠️  Welcome email to ${email} failed:`, err.message);
+      console.warn(`⚠️  Welcome email to ${normalizedEmail} failed:`, err.message);
     });
 
     res.status(201).json({ success: true, message: 'Employee added successfully', data: newEmployee });
@@ -288,7 +291,11 @@ exports.addEmployee = async (req, res, next) => {
 exports.updateEmployee = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, phone, role, department, jobTitle, joiningDate, isActive, baseSalary, ctc, pfRate } = req.body;
+    const { 
+      firstName, lastName, phone, role, department, jobTitle, joiningDate, isActive, 
+      baseSalary, ctc, pfRate, bankAccountNumber, bankIFSC, bankName, bankAccountName, 
+      upiId, paymentPreference, salesTarget 
+    } = req.body;
     const requestingUser = req.user;
 
     const empRecord = await prisma.employee.findUnique({ where: { userId: id } });
@@ -309,6 +316,9 @@ exports.updateEmployee = async (req, res, next) => {
     }
     if (finalPfRate !== undefined && finalPfRate !== null && (parseFloat(finalPfRate) < 0 || parseFloat(finalPfRate) > 30)) {
       return res.status(400).json({ success: false, message: 'PF Rate must be between 0% and 30%' });
+    }
+    if (salesTarget !== undefined && salesTarget !== null && parseFloat(salesTarget) < 0) {
+      return res.status(400).json({ success: false, message: 'Sales target cannot be negative' });
     }
 
     // RBAC: Prevent role escalation — only SUPER_ADMIN/OWNER can assign privileged roles
@@ -333,33 +343,45 @@ exports.updateEmployee = async (req, res, next) => {
     const updatedUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.update({
         where: { id },
-        data: { firstName, lastName, phone, role }
+        data: { firstName, lastName, phone: normalizePhone(phone), role }
       });
 
-      if (department !== undefined || jobTitle !== undefined || joiningDate !== undefined || isActive !== undefined) {
-        await tx.employee.upsert({
-          where: { userId: id },
-          create: {
-            userId: id,
-            department,
-            jobTitle,
-            joiningDate: joiningDate ? new Date(joiningDate) : undefined,
-            isActive: isActive !== undefined ? isActive : true,
-            baseSalary: baseSalary ? parseFloat(baseSalary) : null,
-            ctc: ctc ? parseFloat(ctc) : null,
-            pfRate: pfRate ? parseFloat(pfRate) : 12.0
-          },
-          update: {
-            department,
-            jobTitle,
-            joiningDate: joiningDate ? new Date(joiningDate) : undefined,
-            isActive: isActive !== undefined ? isActive : true,
-            baseSalary: baseSalary ? parseFloat(baseSalary) : null,
-            ctc: ctc ? parseFloat(ctc) : null,
-            pfRate: pfRate ? parseFloat(pfRate) : null
-          }
-        });
-      }
+      await tx.employee.upsert({
+        where: { userId: id },
+        create: {
+          userId: id,
+          department,
+          jobTitle,
+          joiningDate: joiningDate ? new Date(joiningDate) : undefined,
+          isActive: isActive !== undefined ? isActive : true,
+          baseSalary: baseSalary ? parseFloat(baseSalary) : null,
+          ctc: ctc ? parseFloat(ctc) : null,
+          pfRate: pfRate ? parseFloat(pfRate) : 12.0,
+          bankAccountNumber,
+          bankIFSC: bankIFSC ? bankIFSC.toUpperCase() : undefined,
+          bankName,
+          bankAccountName,
+          upiId,
+          paymentPreference,
+          salesTarget: salesTarget ? parseFloat(salesTarget) : null
+        },
+        update: {
+          department,
+          jobTitle,
+          joiningDate: joiningDate ? new Date(joiningDate) : undefined,
+          isActive: isActive !== undefined ? isActive : true,
+          baseSalary: baseSalary ? parseFloat(baseSalary) : null,
+          ctc: ctc ? parseFloat(ctc) : null,
+          pfRate: pfRate ? parseFloat(pfRate) : null,
+          bankAccountNumber: bankAccountNumber !== undefined ? bankAccountNumber : undefined,
+          bankIFSC: bankIFSC !== undefined ? (bankIFSC ? bankIFSC.toUpperCase() : null) : undefined,
+          bankName: bankName !== undefined ? bankName : undefined,
+          bankAccountName: bankAccountName !== undefined ? bankAccountName : undefined,
+          upiId: upiId !== undefined ? upiId : undefined,
+          paymentPreference: paymentPreference !== undefined ? paymentPreference : undefined,
+          salesTarget: salesTarget !== undefined ? (salesTarget ? parseFloat(salesTarget) : null) : undefined
+        }
+      });
 
       // Write audit log for role changes
       if (role) {
@@ -409,6 +431,14 @@ exports.markAttendance = async (req, res, next) => {
     if (isNaN(targetDate.getTime())) {
       return res.status(400).json({ success: false, message: `Invalid date: ${date}` });
     }
+
+    // Prevent marking attendance for future dates
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (targetDate > today) {
+      return res.status(400).json({ success: false, message: 'Cannot mark attendance for future dates' });
+    }
+
     const nextDay = new Date(targetDate);
     nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
@@ -420,11 +450,16 @@ exports.markAttendance = async (req, res, next) => {
     });
 
     let attendance;
-    if (status === 'REMOVE') {
+    if (status === 'REMOVE' || status === null || status === undefined) {
       if (existing) {
         await prisma.attendance.delete({ where: { id: existing.id } });
       }
       return res.status(200).json({ success: true, message: 'Attendance removed' });
+    }
+
+    const ALLOWED_STATUSES = ['PRESENT', 'ABSENT', 'HALF_DAY', 'LEAVE'];
+    if (!ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({ success: false, message: `Invalid status: ${status}. Must be one of: ${ALLOWED_STATUSES.join(', ')}` });
     }
 
     if (existing) {

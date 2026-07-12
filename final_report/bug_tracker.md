@@ -97,8 +97,6 @@ Please use the table below to document any visual defects, broken links, or logi
 | Bug ID | Component / Page | Description of Issue (Raw or Technical) | Expected Behavior | Priority | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **B01** | UI / Custom Cursor | Double cursor visible; system default pointer remains visible alongside the custom flask cursor. | Hide system pointer entirely when custom cursor renders; show default only on fallback. | *High* | **Resolved (Fixed)** |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
+| **B02** | Catalog Page | Clearing active filter chips or clicking Reset button leaves pending selection state out of sync. | Synchronize pending and active states immediately; Reset button should instantly reload the product list. | *Medium* | **Resolved (Fixed)** |
+| **B03** | Lots QC Panel / CoA | Uploading PDF CoA files crashed server; lacked file remove/update options and dedicated detail views. | Set auto resource types on Cloudinary; add file remove flags, and implement a dedicated Lot Details page with inline CoA pre-rendering. | *High* | **Resolved (Fixed)** |
+| **B04** | Orders & Checkout / Printing | Profile address fields out of sync; wrong shipping totals; generic invoice/challan layout; flat order status badges. | Save and render correct addresses; base shipping on weight/distance; redesign realistic invoice/challan with stamps; add status-specific icons. | *High* | **Resolved (Fixed)** |

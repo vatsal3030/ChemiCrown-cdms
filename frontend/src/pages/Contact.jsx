@@ -280,7 +280,7 @@ export default function Contact() {
                             Email <span className="text-[#ff8f78]">*</span>
                           </label>
                           <input type="email" value={form.email} placeholder="you@company.com"
-                            onChange={e => set('email', e.target.value)} maxLength={120}
+                            onChange={e => set('email', e.target.value.toLowerCase().trim())} maxLength={120}
                             className={inputCls(errors.email)}
                           />
                           {errors.email && <p className="text-xs text-[#ff6e84] mt-1.5">{errors.email}</p>}

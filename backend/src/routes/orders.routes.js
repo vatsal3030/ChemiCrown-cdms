@@ -3,7 +3,7 @@ const {
   createOrder, verifyPayment, getOrders, getOrderById, 
   cancelOrder, verifyCodOrder, advanceOrderStatus, 
   submitUpiPayment, verifyUpiPayment, getPendingUpiOrders,
-  getRefunds, updateRefundStatus
+  getRefunds, updateRefundStatus, requestRefund
 } = require('../controllers/orders.controller');
 const { requireAuth } = require('../middlewares/auth.middleware');
 const { requireRole } = require('../middlewares/rbac.middleware');
@@ -32,6 +32,7 @@ router.put('/refunds/:refundId',   requireRole(['SUPER_ADMIN', 'OWNER']), update
 // Per-order routes — must come AFTER static routes to avoid param collision
 router.get('/:id', getOrderById);
 router.post('/:id/cancel', cancelOrder);
+router.post('/:id/refund', requestRefund);
 router.put('/:id/verify-cod', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER']), verifyCodOrder);
 router.post('/:id/advance', requireRole(['SUPER_ADMIN', 'OWNER', 'MANAGER', 'SALES']), advanceOrderStatus);
 

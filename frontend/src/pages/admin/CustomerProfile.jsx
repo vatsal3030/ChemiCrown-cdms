@@ -185,7 +185,7 @@ export default function CustomerProfile() {
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"><MapPin size={14} /></div>
                 <div>
                   <p className="text-xs text-muted-foreground">Billing Address</p>
-                  <p className="font-medium text-foreground">{customer.billingAddress || 'N/A'}</p>
+                  <p className="font-medium text-foreground">{customer.address || 'N/A'}</p>
                 </div>
               </div>
             </div>

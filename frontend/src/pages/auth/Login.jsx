@@ -53,7 +53,7 @@ export default function Login() {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password, rememberMe })
+        body: JSON.stringify({ email: email.toLowerCase().trim(), password, rememberMe })
       });
       const data = await res.json();
 
@@ -211,7 +211,7 @@ export default function Login() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value.toLowerCase().trim())}
                   className="block w-full pl-9 pr-3 py-2.5 border border-input rounded-xl bg-background text-foreground text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   placeholder="john.doe@company.com"
                 />

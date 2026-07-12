@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ArrowLeft, User, Phone, Mail, Building, Briefcase, Calendar as CalendarIcon, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, Trophy, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import toast from 'react-hot-toast';
+import { formatPhone } from '@/lib/utils';
 
 export default function EmployeeDetails() {
   const { id } = useParams();
@@ -17,21 +18,7 @@ export default function EmployeeDetails() {
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewDate, setViewDate] = useState(new Date());
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editLoading, setEditLoading] = useState(false);
-  const [editForm, setEditForm] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    role: '',
-    department: '',
-    jobTitle: '',
-    joiningDate: '',
-    isActive: true,
-    baseSalary: '',
-    ctc: '',
-    pfRate: '12'
-  });
+
 
   const handleIssueWarning = async () => {
     const type = await prompt("Issue Official Warning", "Enter Warning Type (VERBAL, WRITTEN, FINAL):", "WRITTEN", { placeholder: "VERBAL, WRITTEN, or FINAL" });
@@ -142,12 +129,11 @@ export default function EmployeeDetails() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Fetch employee details (by getting all and filtering for now)
-      const empRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr`, { headers: { Authorization: `Bearer ${token}` }});
+      // Fetch employee details directly
+      const empRes = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${id}`, { headers: { Authorization: `Bearer ${token}` }});
       const empData = await empRes.json();
       if (empData.success) {
-        const found = empData.data.find(e => e.id === id);
-        if (found) setEmployee(found);
+        setEmployee(empData.data);
       }
 
       // Fetch attendance
@@ -173,61 +159,27 @@ export default function EmployeeDetails() {
   }, [id, token]);
 
   const openEditModal = () => {
-    if (!employee) return;
-    setEditForm({
-      firstName: employee.firstName || '',
-      lastName: employee.lastName || '',
-      phone: employee.phone || '',
-      role: employee.role || '',
-      department: employee.employeeProfile?.department || '',
-      jobTitle: employee.employeeProfile?.jobTitle || '',
-      joiningDate: employee.employeeProfile?.joiningDate ? employee.employeeProfile.joiningDate.substring(0, 10) : '',
-      isActive: employee.employeeProfile?.isActive !== undefined ? employee.employeeProfile.isActive : true,
-      baseSalary: employee.employeeProfile?.baseSalary || '',
-      ctc: employee.employeeProfile?.ctc || '',
-      pfRate: employee.employeeProfile?.pfRate || '12'
-    });
-    setEditModalOpen(true);
+    navigate(`/dashboard/hr/edit-employee/${id}`);
   };
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    if (editForm.baseSalary && parseFloat(editForm.baseSalary) < 0) {
-      return toast.error('Base Salary cannot be negative');
-    }
-    if (editForm.ctc && parseFloat(editForm.ctc) < 0) {
-      return toast.error('CTC cannot be negative');
-    }
-    if (editForm.baseSalary && editForm.ctc && parseFloat(editForm.ctc) > 0 && parseFloat(editForm.baseSalary) > 0) {
-      if (parseFloat(editForm.ctc) < parseFloat(editForm.baseSalary) * 12) {
-        return toast.error('Annual CTC must be at least 12 times the monthly Base Salary');
-      }
-    }
-    if (editForm.pfRate && (parseFloat(editForm.pfRate) < 0 || parseFloat(editForm.pfRate) > 30)) {
-      return toast.error('PF Rate must be between 0% and 30%');
-    }
+  const handleDeleteWarning = async (warnId) => {
+    const ok = await confirm("Delete Warning", "Are you sure you want to remove this warning log?", { type: 'warning' });
+    if (!ok) return;
+
     try {
-      setEditLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(editForm)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hr/${employee.employeeProfile?.id}/warnings/${warnId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Employee updated successfully');
-        setEditModalOpen(false);
+        toast.success("Warning removed successfully");
         fetchData();
       } else {
-        toast.error(json.message || 'Failed to update employee');
+        toast.error(json.message || "Failed to remove warning");
       }
     } catch {
-      toast.error('Network error occurred');
-    } finally {
-      setEditLoading(false);
+      toast.error("Network error");
     }
   };
 
@@ -327,7 +279,7 @@ export default function EmployeeDetails() {
           
           <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-6 text-sm text-slate-300 font-medium">
             <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Mail size={14} className="text-indigo-400"/> {employee.email}</div>
-            {employee.phone && <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Phone size={14} className="text-indigo-400"/> {employee.phone}</div>}
+            {employee.phone && <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Phone size={14} className="text-indigo-400"/> {formatPhone(employee.phone)}</div>}
             <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Building size={14} className="text-indigo-400"/> {employee.employeeProfile?.department || 'No Dept'}</div>
             <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><Briefcase size={14} className="text-indigo-400"/> {employee.employeeProfile?.jobTitle || 'No Title'}</div>
             <div className="flex flex-wrap items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10"><CalendarIcon size={14} className="text-indigo-400"/> Joined: {employee.employeeProfile?.joiningDate ? new Date(employee.employeeProfile.joiningDate).toLocaleDateString() : 'N/A'}</div>
@@ -512,164 +464,53 @@ export default function EmployeeDetails() {
               </>
             )}
           </div>
-        </div>
-      </div>
 
-      {editModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-border flex justify-between items-center bg-muted/50">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                Edit Employee Profile
+          {/* Warning Logs Card */}
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <AlertTriangle size={18} className="text-amber-500" /> Warnings Issued
               </h2>
-              <button onClick={() => setEditModalOpen(false)} className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-650">
-                <X size={18} />
-              </button>
+              <span className="bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-450 text-xs px-2 py-0.5 rounded-full font-bold">
+                {employee.employeeProfile?.warnings?.length || 0}
+              </span>
             </div>
             
-            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">First Name</label>
-                  <input 
-                    required
-                    type="text" 
-                    value={editForm.firstName}
-                    onChange={e => setEditForm({...editForm, firstName: e.target.value})}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</label>
-                  <input 
-                    required
-                    type="text" 
-                    value={editForm.lastName}
-                    onChange={e => setEditForm({...editForm, lastName: e.target.value})}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Phone Number</label>
-                <input 
-                  type="tel" 
-                  value={editForm.phone}
-                  onChange={e => setEditForm({...editForm, phone: e.target.value})}
-                  className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">System Role</label>
-                  <select 
-                    value={editForm.role}
-                    onChange={e => setEditForm({...editForm, role: e.target.value})}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                  >
-                    <option value="OWNER">Owner</option>
-                    <option value="SUPER_ADMIN">Super Admin</option>
-                    <option value="MANAGER">Manager</option>
-                    <option value="INVENTORY_MANAGER">Inventory Manager</option>
-                    <option value="SALES">Sales Rep</option>
-                    <option value="MARKETING">Marketing</option>
-                    <option value="DIGITAL_MARKETING">Digital Marketing</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Department</label>
-                  <input 
-                    required
-                    type="text" 
-                    value={editForm.department}
-                    onChange={e => setEditForm({...editForm, department: e.target.value})}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Job Title</label>
-                  <input 
-                    required
-                    type="text" 
-                    value={editForm.jobTitle}
-                    onChange={e => setEditForm({...editForm, jobTitle: e.target.value})}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Joining Date</label>
-                  <input 
-                    type="date"
-                    value={editForm.joiningDate}
-                    onChange={e => setEditForm({...editForm, joiningDate: e.target.value})}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                  />
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-4 mt-4">
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Payroll & Compensation</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Base Salary (₹)</label>
-                    <input 
-                      type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
-                      value={editForm.baseSalary}
-                      onChange={e => setEditForm({...editForm, baseSalary: e.target.value})}
-                      className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                    />
+            {(!employee.employeeProfile?.warnings || employee.employeeProfile.warnings.length === 0) ? (
+              <p className="text-slate-500 text-xs">No active warnings issued to this employee.</p>
+            ) : (
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                {employee.employeeProfile.warnings.map(warning => (
+                  <div key={warning.id} className="p-3 rounded-lg bg-amber-50/50 border border-amber-250/20 dark:bg-amber-950/20 dark:border-amber-900/40 flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                          warning.type === 'FINAL' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400'
+                        }`}>
+                          {warning.type}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(warning.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-foreground font-medium">{warning.reason}</p>
+                    </div>
+                    {user?.role === 'SUPER_ADMIN' && (
+                      <button
+                        onClick={() => handleDeleteWarning(warning.id)}
+                        className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors cursor-pointer"
+                        title="Remove Warning"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">CTC (₹)</label>
-                    <input 
-                      type="number" min="0" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
-                      value={editForm.ctc}
-                      onChange={e => setEditForm({...editForm, ctc: e.target.value})}
-                      className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">PF Rate (%)</label>
-                    <input 
-                      type="number" min="0" max="100" onKeyDown={e => { if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault(); }}
-                      value={editForm.pfRate}
-                      onChange={e => setEditForm({...editForm, pfRate: e.target.value})}
-                      className="w-full px-3 py-2 bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-55"
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
-
-              <div className="flex items-center gap-2 mt-4">
-                <input 
-                  type="checkbox" 
-                  id="editIsActive"
-                  checked={editForm.isActive}
-                  onChange={e => setEditForm({...editForm, isActive: e.target.checked})}
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                />
-                <label htmlFor="editIsActive" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Active Employee
-                </label>
-              </div>
-
-              <div className="pt-4 flex justify-end gap-2 border-t border-border mt-6">
-                <button type="button" onClick={() => setEditModalOpen(false)} disabled={editLoading} className="px-4 py-2 border border-border rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 text-sm font-semibold transition-all">
-                  Cancel
-                </button>
-                <button type="submit" disabled={editLoading} className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold shadow-sm transition-all disabled:opacity-50">
-                  {editLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

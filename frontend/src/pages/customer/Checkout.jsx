@@ -287,8 +287,18 @@ export default function Checkout() {
     const rate = item.product?.gstRate || 18;
     return acc + Number(((item.product.price * item.quantity) * rate / 100).toFixed(2));
   }, 0);
-  const hazardousFee = cartTotal > 0 ? 2500 : 0; // Hazardous material handling fee (matches backend)
-  const finalTotal = Number((cartTotal + gstAmount + hazardousFee + distanceCost).toFixed(2));
+
+  // Compute realistic delivery charges
+  const baseDeliveryFee = cartTotal > 0 ? 50 : 0;
+  const computedDistanceCost = distanceKm * COST_PER_KM;
+  const totalWeightSize = cartItems.reduce((acc, item) => acc + (item.quantity * (item.product?.packageSize || 1)), 0);
+  const weightCost = totalWeightSize * 2;
+  const isHazardousOrder = cartItems.some(item => item.product?.hazardClasses && item.product.hazardClasses.length > 0);
+  const hazardousFee = isHazardousOrder ? 150 : 0;
+
+  // Map to matching database variables
+  const distanceCostAmount = baseDeliveryFee + computedDistanceCost + weightCost;
+  const finalTotal = Number((cartTotal + gstAmount + distanceCostAmount + hazardousFee).toFixed(2));
 
   if (cartItems.length === 0) {
     return (
@@ -349,16 +359,17 @@ export default function Checkout() {
                 </div>
               ))}
             </div>
-
             <div className="space-y-3 text-sm mt-6 border-t border-border pt-4">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-medium text-foreground">₹{cartTotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Hazardous Handling Fee</span>
-                <span className="font-medium text-foreground">₹{hazardousFee.toFixed(2)}</span>
-              </div>
+              {hazardousFee > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Hazardous Handling Surcharge</span>
+                  <span className="font-medium text-foreground">₹{hazardousFee.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">CGST</span>
                 <span className="font-medium text-foreground">₹{(gstAmount / 2).toFixed(2)}</span>
@@ -368,8 +379,8 @@ export default function Checkout() {
                 <span className="font-medium text-foreground">₹{(gstAmount / 2).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Delivery Distance Cost ({distanceKm.toFixed(1)} km × ₹{COST_PER_KM}/km)</span>
-                <span className="font-medium text-foreground">₹{distanceCost.toFixed(2)}</span>
+                <span className="text-muted-foreground">Delivery Cost (Base + Distance + Weight)</span>
+                <span className="font-medium text-foreground">₹{distanceCostAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-bold text-xl border-t border-border pt-4 mt-4 text-primary">
                 <span>Total Amount</span>

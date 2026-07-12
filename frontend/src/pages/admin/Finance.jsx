@@ -3,7 +3,7 @@ import {
   IndianRupee, TrendingUp, Wallet,
   RefreshCw, Plus, Trash2, Edit3, X, Filter,
   ShoppingCart, Users, Package, AlertTriangle, ChevronDown,
-  Receipt, ArrowUpRight, ArrowDownRight, BookOpen
+  Receipt, ArrowUpRight, ArrowDownRight, BookOpen, Eye, FileText, Calendar
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useDialog } from '@/context/DialogContext';
@@ -100,6 +100,7 @@ export default function Finance() {
   const [loading, setLoading] = useState(true);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [expensesLoading, setExpensesLoading] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState(null);
   const [syncing, setSyncing] = useState(false);
 
   const headers = { Authorization: `Bearer ${token}` };
@@ -581,7 +582,8 @@ export default function Finance() {
                     <td className="px-5 py-3 text-right font-bold text-rose-600">-{fmt(exp.amount)}</td>
                     <td className="px-5 py-3 text-right">
                       <div className="flex justify-end gap-1.5">
-                        <button onClick={() => deleteExpense(exp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors"><Trash2 size={13} /></button>
+                        <button onClick={() => setSelectedExpense(exp)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors" title="View Details"><Eye size={13} /></button>
+                        <button onClick={() => deleteExpense(exp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors" title="Delete"><Trash2 size={13} /></button>
                       </div>
                     </td>
                   </tr>
@@ -601,6 +603,94 @@ export default function Finance() {
         </div>
       )}
 
+
+      {selectedExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-card border border-border w-full max-w-lg rounded-2xl shadow-xl overflow-hidden scale-in-95 duration-200 flex flex-col">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Receipt className="text-rose-500 w-5 h-5" /> Expense Details
+              </h3>
+              <button 
+                onClick={() => setSelectedExpense(null)} 
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
+              {/* Category & Amount */}
+              <div className="flex items-center justify-between bg-rose-50 dark:bg-rose-950/30 p-4 rounded-xl border border-rose-100 dark:border-rose-900/30">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-rose-500/80 dark:text-rose-400/80">Category</p>
+                  <span className="text-sm font-bold text-rose-700 dark:text-rose-300">{selectedExpense.category}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-rose-500/80 dark:text-rose-400/80">Amount</p>
+                  <span className="text-2xl font-black text-rose-600 dark:text-rose-400">-{fmt(selectedExpense.amount)}</span>
+                </div>
+              </div>
+
+              {/* Details List */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1">Date Logged</label>
+                  <div className="flex items-center gap-2 text-sm text-foreground font-semibold">
+                    <Calendar size={14} className="text-primary" />
+                    {new Date(selectedExpense.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1">Description</label>
+                  <div className="bg-muted/40 border border-border p-3.5 rounded-xl text-sm text-foreground font-medium leading-relaxed whitespace-pre-wrap">
+                    {selectedExpense.description}
+                  </div>
+                </div>
+
+                {selectedExpense.receiptUrl && (
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Receipt / Attachment</label>
+                    {selectedExpense.receiptUrl.match(/\.(jpeg|jpg|gif|png|webp)/i) ? (
+                      <div className="relative group rounded-xl overflow-hidden border border-border bg-muted/30 max-w-xs">
+                        <img 
+                          src={selectedExpense.receiptUrl} 
+                          alt="Receipt" 
+                          className="w-full h-auto object-cover max-h-48 transition-transform duration-300 group-hover:scale-105" 
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                          <a 
+                            href={selectedExpense.receiptUrl} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="bg-white text-black px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-slate-100 transition-colors"
+                          >
+                            Open Original
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <a 
+                        href={selectedExpense.receiptUrl} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline bg-muted px-4 py-2.5 rounded-xl border border-border"
+                      >
+                        <FileText size={14} /> View Receipt Document
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-border bg-muted/10 flex justify-end">
+              <Button onClick={() => setSelectedExpense(null)}>Close</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
