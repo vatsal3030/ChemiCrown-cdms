@@ -118,10 +118,12 @@ export default function Payroll() {
   const [showBulkPayModal, setShowBulkPayModal] = useState(false);
   const [bulkPaymentMethod, setBulkPaymentMethod] = useState('BANK_TRANSFER');
   const [isProcessingBulkPay, setIsProcessingBulkPay] = useState(false);
+  const [bulkPayConfirmText, setBulkPayConfirmText] = useState('');
 
   const triggerBulkPay = () => {
     const pending = salaries.filter(s => s.status === 'PENDING');
     if (pending.length === 0) return toast.error('No pending slips');
+    setBulkPayConfirmText('');
     setShowBulkPayModal(true);
   };
 
@@ -487,52 +489,80 @@ export default function Payroll() {
       </div>
 
       {/* Choice Modal for Bulk Payment Options */}
-      {showBulkPayModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-card border border-border w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Bulk Disburse Salary</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Process payments for all {salaries.filter(s => s.status === 'PENDING').length} pending slips for {month}.
-              </p>
-            </div>
+      {showBulkPayModal && (() => {
+        const pendingSlips = salaries.filter(s => s.status === 'PENDING');
+        const totalPayout = pendingSlips.reduce((sum, s) => sum + (s.netPay || 0), 0);
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-card border border-border w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Bulk Disburse Salary</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Process payments for all {pendingSlips.length} pending slips for {month}.
+                </p>
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Payment Method</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { key: 'BANK_TRANSFER', label: 'Bank Transfer' },
-                  { key: 'CASH', label: 'Cash' },
-                  { key: 'UPI', label: 'UPI' },
-                  { key: 'CHEQUE', label: 'Cheque' }
-                ].map(opt => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setBulkPaymentMethod(opt.key)}
-                    className={`p-3 rounded-xl border text-left text-sm font-semibold transition-all ${
-                      bulkPaymentMethod === opt.key 
-                        ? 'border-primary bg-primary/10 text-primary' 
-                        : 'border-border hover:border-primary/45 hover:bg-muted text-foreground'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 rounded-xl p-3.5 space-y-1">
+                <div className="text-xs text-emerald-800 dark:text-emerald-400 font-semibold uppercase tracking-wider">Total Net Disbursement</div>
+                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                  ₹{totalPayout.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Payment Method</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: 'BANK_TRANSFER', label: 'Bank Transfer' },
+                    { key: 'CASH', label: 'Cash' },
+                    { key: 'UPI', label: 'UPI' },
+                    { key: 'CHEQUE', label: 'Cheque' }
+                  ].map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setBulkPaymentMethod(opt.key)}
+                      className={`p-3 rounded-xl border text-left text-sm font-semibold transition-all ${
+                        bulkPaymentMethod === opt.key 
+                          ? 'border-primary bg-primary/10 text-primary' 
+                          : 'border-border hover:border-primary/45 hover:bg-muted text-foreground'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground block">
+                  Type <code className="bg-muted px-1.5 py-0.5 rounded text-destructive font-mono font-bold">DISBURSE</code> to enable confirmation <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={bulkPayConfirmText}
+                  onChange={e => setBulkPayConfirmText(e.target.value)}
+                  placeholder="Type DISBURSE"
+                  className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary font-mono uppercase"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2">
+                <Button variant="outline" onClick={() => setShowBulkPayModal(false)} disabled={isProcessingBulkPay}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleBulkPayConfirm} 
+                  disabled={isProcessingBulkPay || bulkPayConfirmText.toUpperCase() !== 'DISBURSE'}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                >
+                  {isProcessingBulkPay ? 'Processing...' : 'Confirm Disburse'}
+                </Button>
               </div>
             </div>
-
-            <div className="flex gap-3 justify-end pt-2">
-              <Button variant="outline" onClick={() => setShowBulkPayModal(false)} disabled={isProcessingBulkPay}>
-                Cancel
-              </Button>
-              <Button onClick={handleBulkPayConfirm} disabled={isProcessingBulkPay}>
-                {isProcessingBulkPay ? 'Processing...' : 'Confirm Disburse'}
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

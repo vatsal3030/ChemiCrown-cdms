@@ -17,6 +17,11 @@ export default function AttendanceCalendar() {
   // Pending changes to be saved
   const [pendingChanges, setPendingChanges] = useState({});
 
+  // Bulk update states
+  const [selectedEmployees, setSelectedEmployees] = useState({});
+  const [bulkDate, setBulkDate] = useState(new Date().getDate());
+  const [bulkStatus, setBulkStatus] = useState('PRESENT');
+
   const targetYear = viewDate.getFullYear();
   const targetMonth = viewDate.getMonth();
   const formattedDate = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-02`;
@@ -84,6 +89,77 @@ export default function AttendanceCalendar() {
 
       return { ...prev, [key]: nextStatus };
     });
+  };
+
+  const handleSelectAll = (checked) => {
+    const visibleEmployees = employees?.filter(e => e.employeeProfile) || [];
+    const newSelected = {};
+    if (checked) {
+      visibleEmployees.forEach(e => {
+        newSelected[e.id] = true;
+      });
+    }
+    setSelectedEmployees(newSelected);
+  };
+
+  const handleToggleSelect = (empId) => {
+    setSelectedEmployees(prev => ({
+      ...prev,
+      [empId]: !prev[empId]
+    }));
+  };
+
+  const handleApplyBulkStatus = () => {
+    if (!isSuperAdmin) return;
+    const selectedIds = Object.keys(selectedEmployees).filter(id => selectedEmployees[id]);
+    if (selectedIds.length === 0) {
+      toast.error('Please select at least one employee');
+      return;
+    }
+
+    const cellDateTime = new Date(targetYear, targetMonth, bulkDate).getTime();
+    
+    // Check if future date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (cellDateTime > today.getTime()) {
+      toast.error('Cannot mark attendance for future dates');
+      return;
+    }
+
+    const dateStr = new Date(Date.UTC(targetYear, targetMonth, bulkDate)).toISOString().split('T')[0];
+    const keySuffix = `_${dateStr}`;
+
+    let appliedCount = 0;
+    let skippedCount = 0;
+
+    const newPending = { ...pendingChanges };
+
+    selectedIds.forEach(empId => {
+      const emp = employees?.find(e => e.id === empId);
+      if (emp) {
+        // Check joining date
+        if (emp.employeeProfile?.joiningDate) {
+          const joiningDateTime = new Date(new Date(emp.employeeProfile.joiningDate).setHours(0,0,0,0)).getTime();
+          if (cellDateTime < joiningDateTime) {
+            skippedCount++;
+            return;
+          }
+        }
+        
+        const key = `${empId}${keySuffix}`;
+        newPending[key] = bulkStatus;
+        appliedCount++;
+      }
+    });
+
+    setPendingChanges(newPending);
+    if (appliedCount > 0) {
+      toast.success(`Applied ${bulkStatus} to ${appliedCount} employees for day ${bulkDate}`);
+    }
+    if (skippedCount > 0) {
+      toast.error(`Skipped ${skippedCount} employees (before their joining date)`);
+    }
   };
 
   const getExistingStatus = (empId, dateStr) => {
@@ -223,6 +299,68 @@ export default function AttendanceCalendar() {
         </div>
       </div>
 
+      {/* Bulk Operations Panel */}
+      {isSuperAdmin && (
+        <div className="bg-card border border-border rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-1 rounded-lg">Bulk Update</span>
+            
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-foreground">Day:</label>
+              <select
+                value={bulkDate}
+                onChange={e => setBulkDate(parseInt(e.target.value))}
+                className="text-xs bg-background border border-input rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary w-16"
+              >
+                {daysArray.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-foreground">Status:</label>
+              <select
+                value={bulkStatus}
+                onChange={e => setBulkStatus(e.target.value)}
+                className="text-xs bg-background border border-input rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="PRESENT">Present (P)</option>
+                <option value="ABSENT">Absent (A)</option>
+                <option value="HALF_DAY">Half Day (H)</option>
+                <option value="LEAVE">Leave (L)</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleApplyBulkStatus}
+              className="px-3.5 py-1.5 text-xs bg-primary text-white font-semibold rounded-lg hover:bg-primary/95 transition-colors"
+            >
+              Apply to Selected
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <button
+              onClick={() => handleSelectAll(true)}
+              className="hover:text-primary underline font-medium"
+            >
+              Select All
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => handleSelectAll(false)}
+              className="hover:text-primary underline font-medium"
+            >
+              Deselect All
+            </button>
+            <span className="ml-2 bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
+              {Object.keys(selectedEmployees).filter(id => selectedEmployees[id]).length} selected
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-4 space-y-2 animate-pulse bg-card">
@@ -260,7 +398,17 @@ export default function AttendanceCalendar() {
               <thead className="bg-muted/80 sticky top-0 z-10">
                 <tr className="border-b border-border">
                   <th className="px-3 sm:px-4 py-3 text-left font-bold text-foreground border-r border-border sticky left-0 bg-muted z-20 min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
-                    Employee
+                    <div className="flex items-center gap-2">
+                      {isSuperAdmin && (
+                        <input
+                          type="checkbox"
+                          checked={employees?.filter(e => e.employeeProfile).length > 0 && employees?.filter(e => e.employeeProfile).every(e => selectedEmployees[e.id])}
+                          onChange={e => handleSelectAll(e.target.checked)}
+                          className="rounded border-input text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                        />
+                      )}
+                      <span>Employee</span>
+                    </div>
                   </th>
                   {daysArray.map(day => (
                     <th key={day} className="px-1 py-2 text-center font-semibold text-muted-foreground border-b border-border min-w-[32px]">
@@ -274,8 +422,20 @@ export default function AttendanceCalendar() {
                 {employees?.filter(e => e.employeeProfile).map(emp => (
                   <tr key={emp.id} className="border-b border-border hover:bg-muted/30 group">
                     <td className="px-3 sm:px-4 py-2 border-r border-border sticky left-0 bg-card group-hover:bg-muted/40 z-10 transition-colors min-w-[120px] max-w-[120px] sm:min-w-[200px] sm:max-w-[200px]">
-                      <div className="font-semibold text-foreground truncate text-xs sm:text-sm">{emp.firstName || emp.lastName ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : emp.email?.split('@')[0] || 'Unknown User'}</div>
-                      <div className="text-[10px] sm:text-xs text-muted-foreground truncate">{emp.employeeProfile?.department || 'No Dept'} • {emp.employeeProfile?.jobTitle}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {isSuperAdmin && (
+                          <input
+                            type="checkbox"
+                            checked={!!selectedEmployees[emp.id]}
+                            onChange={() => handleToggleSelect(emp.id)}
+                            className="rounded border-input text-primary focus:ring-primary w-4 h-4 cursor-pointer shrink-0"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-foreground truncate text-xs sm:text-sm">{emp.firstName || emp.lastName ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : emp.email?.split('@')[0] || 'Unknown User'}</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground truncate">{emp.employeeProfile?.department || 'No Dept'} • {emp.employeeProfile?.jobTitle}</div>
+                        </div>
+                      </div>
                     </td>
                     {daysArray.map(day => {
                       const empId = emp.id;

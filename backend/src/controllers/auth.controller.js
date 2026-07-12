@@ -52,6 +52,12 @@ const getMe = async (req, res, next) => {
         lastName: true,
         phone: true,
         profileImageUrl: true,
+        customerProfile: {
+          select: {
+            companyName: true,
+            gstNumber: true
+          }
+        }
       }
     });
 
@@ -70,6 +76,7 @@ const getMe = async (req, res, next) => {
 
 const register = async (req, res, next) => {
   try {
+    const { email, password, firstName, lastName, phone, companyName, gstNumber, address } = req.body;
     const normalizedEmail = email ? email.toLowerCase().trim() : '';
     
     const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -138,6 +145,7 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
+    const { email, password, rememberMe } = req.body;
     const normalizedEmail = email ? email.toLowerCase().trim() : '';
 
     const user = await prisma.user.findUnique({ 
@@ -186,7 +194,12 @@ const login = async (req, res, next) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        profileImageUrl: user.profileImageUrl
+        phone: user.phone,
+        profileImageUrl: user.profileImageUrl,
+        customerProfile: user.customerProfile ? {
+          companyName: user.customerProfile.companyName,
+          gstNumber: user.customerProfile.gstNumber
+        } : null
       }
     });
   } catch (error) {

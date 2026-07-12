@@ -10,12 +10,6 @@ export default function ForgotPassword() {
   const location = useLocation();
   const { user, loading } = useAuth();
 
-  useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, loading, navigate]);
-
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
   const [email, setEmail] = useState(location.state?.email || '');
   const [otp, setOtp] = useState('');

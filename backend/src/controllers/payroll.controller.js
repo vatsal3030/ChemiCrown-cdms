@@ -256,6 +256,8 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
         - pfContribution
       ).toFixed(2));
 
+      const absentDays = Math.round(daysInMonth - paidDays);
+
       try {
         await prisma.$transaction(async (tx) => {
           const slip = await tx.salary.create({
@@ -269,7 +271,7 @@ exports.generateMonthlyPayroll = async (req, res, next) => {
               deductions: absentDeduction, // for compatibility
               pfContribution,
               netPay,
-              absentDays: Math.round(daysInMonth - paidDays),
+              absentDays,
               workingDays: Math.round(paidDays),
               holidayDays,
               status: 'PENDING'

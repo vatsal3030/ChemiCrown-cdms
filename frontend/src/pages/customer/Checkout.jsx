@@ -49,8 +49,8 @@ export default function Checkout() {
       if (saved) return JSON.parse(saved);
     } catch (err) { console.error('Session storage read error', err); }
     return {
-      companyName: '',
-      gstNumber: '',
+      companyName: user?.customerProfile?.companyName || '',
+      gstNumber: user?.customerProfile?.gstNumber || '',
       shippingAddress: '',
       phone: user?.phone || '',
       email: user?.email || '',
@@ -67,6 +67,31 @@ export default function Checkout() {
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(formData)); }
     catch (err) { console.error('Session storage write error', err); }
   }, [formData, SESSION_KEY]);
+
+  // Pre-populate companyName, gstNumber, phone, and email once user loads
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => {
+        const updates = {};
+        if (!prev.companyName && user.customerProfile?.companyName) {
+          updates.companyName = user.customerProfile.companyName;
+        }
+        if (!prev.gstNumber && user.customerProfile?.gstNumber) {
+          updates.gstNumber = user.customerProfile.gstNumber;
+        }
+        if (!prev.phone && user.phone) {
+          updates.phone = user.phone;
+        }
+        if (!prev.email && user.email) {
+          updates.email = user.email;
+        }
+        if (Object.keys(updates).length > 0) {
+          return { ...prev, ...updates };
+        }
+        return prev;
+      });
+    }
+  }, [user]);
 
   const isDirty = !!(formData.companyName || formData.gstNumber || formData.shippingAddress);
   useUnsavedChangesWarning(isDirty && !loading);

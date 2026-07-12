@@ -249,14 +249,27 @@ export default function MyPayroll() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/dashboard/my-payroll/${slip.id}`)}
-                          className="h-8 text-xs font-semibold"
-                        >
-                          View Details
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          {isPaid && !slip.confirmedByEmployee && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleConfirmReceipt(slip.id)}
+                              disabled={confirmingReceipt}
+                              className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                            >
+                              <ThumbsUp size={12} /> Confirm Receipt
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/dashboard/my-payroll/${slip.id}`)}
+                            className="h-8 text-xs font-semibold"
+                          >
+                            View Details
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );

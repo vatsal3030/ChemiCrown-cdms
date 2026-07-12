@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { 
   ArrowLeft, Wallet, CheckCircle2, Clock, X, 
   ShieldCheck, User, Calendar, CreditCard, Receipt, 
-  Building2, Phone, Mail, FileText
+  Building2, Phone, Mail, FileText, ThumbsUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatINR } from '@/lib/utils';
@@ -28,6 +28,28 @@ export default function PayrollDetails() {
   
   const [slip, setSlip] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
+
+  const handleConfirmReceipt = async () => {
+    setConfirming(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/payroll/${id}/confirm`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success('Salary receipt confirmed!');
+        setSlip(prev => prev ? { ...prev, confirmedByEmployee: true } : prev);
+      } else {
+        toast.error(json.message || 'Failed to confirm');
+      }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   useEffect(() => {
     const fetchSlip = async () => {
@@ -71,7 +93,7 @@ export default function PayrollDetails() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <button
-            onClick={() => navigate(isAdmin ? '/dashboard/payroll' : '/dashboard/my-payroll')}
+            onClick={() => navigate(isAdmin ? `/dashboard/payroll?month=${slip.month}` : `/dashboard/my-payroll?month=${slip.month}`)}
             className="p-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl transition-colors print:hidden"
           >
             <ArrowLeft size={20} />
@@ -92,6 +114,15 @@ export default function PayrollDetails() {
           {isAdmin && slip.status === 'PENDING' && (
             <Button onClick={() => navigate(`/dashboard/payroll/pay/${slip.id}`)} className="gap-2">
               <CreditCard size={16} /> Pay Salary
+            </Button>
+          )}
+          {!isAdmin && slip.status === 'PAID' && !slip.confirmedByEmployee && (
+            <Button 
+              onClick={handleConfirmReceipt} 
+              disabled={confirming} 
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+            >
+              <ThumbsUp size={16} /> Confirm Receipt
             </Button>
           )}
         </div>

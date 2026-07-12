@@ -108,6 +108,10 @@ export default function Orders({ isMyOrders = false }) {
   const [rejectModal, setRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  // Driver modal state
+  const [driverModalOrder, setDriverModalOrder] = useState(null);
+  const [driverForm, setDriverForm] = useState({ driverName: '', driverPhone: '', vehicleNumber: '' });
+
   const fetchPendingUpi = useCallback(async () => {
     if (!isAdmin) return;
     try {
@@ -201,15 +205,27 @@ export default function Orders({ isMyOrders = false }) {
   };
 
 
-  const handleAdvance = async (id) => {
+  const handleAdvance = async (id, driverData = null) => {
     const order = orders.find(o => o.id === id);
     if (!order) return;
     if (advancing[id]) return;
     
-    // Optimistic UI
     const currentIndex = STATUS_PIPELINE.indexOf(order.status);
     const nextStatus = STATUS_PIPELINE[currentIndex + 1];
     if (!nextStatus) return;
+
+    const isDriverRequiredStage = nextStatus === 'DISPATCHED' || nextStatus === 'DELIVERED';
+    const hasDriverInfo = order.driverName && order.vehicleNumber;
+
+    if (isDriverRequiredStage && !hasDriverInfo && !driverData) {
+      setDriverForm({
+        driverName: order.driverName || '',
+        driverPhone: order.driverPhone || '',
+        vehicleNumber: order.vehicleNumber || ''
+      });
+      setDriverModalOrder(order);
+      return;
+    }
 
     const previousStatus = order.status;
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus } : o));
@@ -222,12 +238,12 @@ export default function Orders({ isMyOrders = false }) {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${id}/advance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({})
+        body: JSON.stringify(driverData || {})
       });
       const json = await res.json();
       if (json.success) {
-        // Sync exact status from server just in case
-        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: json.data.status } : o));
+        // Sync exact status and fields from server
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, ...json.data } : o));
       } else {
         toast.error(json.error || 'Failed to advance status');
         setOrders(prev => prev.map(o => o.id === id ? { ...o, status: previousStatus } : o)); // Revert only this order
@@ -451,6 +467,82 @@ export default function Orders({ isMyOrders = false }) {
                 className="px-4 py-2 text-sm bg-destructive hover:bg-destructive/90 text-white font-semibold rounded-xl disabled:opacity-50"
               >
                 {verifyingId === rejectModal.id ? 'Rejecting...' : 'Reject Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Driver Information Modal */}
+      {driverModalOrder && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Truck size={18} className="text-primary" /> Enter Delivery Driver Details
+              </h2>
+              <button onClick={() => setDriverModalOrder(null)} className="p-1.5 rounded-lg hover:bg-muted">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  Driver Name <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={driverForm.driverName}
+                  onChange={e => setDriverForm(prev => ({ ...prev, driverName: e.target.value }))}
+                  placeholder="e.g. Ramesh Kumar"
+                  className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  Driver Phone Number
+                </label>
+                <input
+                  type="text"
+                  value={driverForm.driverPhone}
+                  onChange={e => setDriverForm(prev => ({ ...prev, driverPhone: e.target.value }))}
+                  placeholder="e.g. +91 99990 12345"
+                  className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                  Vehicle Number <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={driverForm.vehicleNumber}
+                  onChange={e => setDriverForm(prev => ({ ...prev, vehicleNumber: e.target.value }))}
+                  placeholder="e.g. GJ-01-XX-1234"
+                  className="w-full text-sm bg-background border border-input rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Driver and vehicle details will be visible to the customer on their order details page.</p>
+            </div>
+            <div className="px-6 pb-6 flex justify-end gap-3">
+              <button
+                onClick={() => setDriverModalOrder(null)}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!driverForm.driverName.trim() || !driverForm.vehicleNumber.trim()) {
+                    toast.error('Driver Name and Vehicle Number are required');
+                    return;
+                  }
+                  handleAdvance(driverModalOrder.id, driverForm);
+                  setDriverModalOrder(null);
+                }}
+                className="px-4 py-2 text-sm bg-primary hover:bg-primary/95 text-white font-semibold rounded-xl"
+              >
+                Confirm & Dispatch
               </button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowLeft, CheckCircle2, IndianRupee, AlertCircle, Copy, FileText, QrCode, Building2, Banknote } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, IndianRupee, AlertCircle, Copy, FileText, QrCode, Building2, Banknote, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
@@ -182,7 +182,7 @@ export default function PayrollPaymentPage() {
           <Button variant="outline" onClick={() => window.print()} className="gap-2">
             <Printer size={15} /> Print Receipt
           </Button>
-          <Button onClick={() => navigate('/dashboard/payroll')} className="gap-2">
+          <Button onClick={() => navigate(`/dashboard/payroll?month=${slip.month}`)} className="gap-2">
             Return to Payroll Hub
           </Button>
         </div>

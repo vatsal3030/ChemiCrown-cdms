@@ -46,6 +46,15 @@ const FAQ_ITEMS = [
       { q: 'How do I update an employee\'s department, job title, or system role?', a: 'Authorized HR users (Super Admin, Owner, or Manager) can navigate to HR Management, select the employee from the Directory list to view their details page, and click the "Edit Profile" button in the Actions panel. Note: System role updates are restricted based on RBAC rules to prevent privilege escalation.' },
     ]
   },
+  {
+    category: 'System Operations & Logistics',
+    icon: BookOpen,
+    items: [
+      { q: 'How do I perform bulk attendance updates for employees?', a: 'Authorized administrators can navigate to the Attendance Register, select employees using the checkboxes next to their names, choose a target day of the month and status (Present, Absent, Half Day, Leave), and click "Apply to Selected". You can review all pending highlighted changes on the grid before saving.' },
+      { q: 'Where do I add delivery driver information for orders?', a: 'When advancing an order to "Dispatched" or "Delivered", the system will automatically prompt the administrator for the driver\'s name, phone number, and vehicle number. These details are shared with the customer on their dispatched order status page.' },
+      { q: 'How can I customize product quantities or special requirements?', a: 'In both the product catalog cards and the cart drawer, customers can adjust product quantities. The cart also provides options to add specifications or customized notes for the chemicals being purchased.' },
+    ]
+  },
 ];
 
 export default function Support() {
