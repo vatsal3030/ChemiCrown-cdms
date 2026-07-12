@@ -559,6 +559,8 @@
 }
 
 /* ── Custom Cursor Styles ── */
+html.custom-cursor-active,
+html.custom-cursor-active *,
 body.custom-cursor-active,
 body.custom-cursor-active * {
   cursor: none !important;
@@ -886,7 +888,10 @@ body.custom-cursor-active * {
 
 /* ── Custom Cursor Active State ── */
 @media (pointer: fine) {
-  .custom-cursor-active,
+  html.custom-cursor-active,
+  html.custom-cursor-active *,
+  body.custom-cursor-active,
+  body.custom-cursor-active *,
   .custom-cursor-active a,
   .custom-cursor-active button,
   .custom-cursor-active select,

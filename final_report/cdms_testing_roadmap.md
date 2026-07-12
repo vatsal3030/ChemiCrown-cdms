@@ -23,30 +23,30 @@ Before testing, make sure your database has been reset and seeded using the foll
 **Access URL**: `http://localhost:5173/`
 
 ### 1.1 Header & Footer Navigation
-* [ ] **CTA: Logo Brand** (Top Left Header)
+* [x] **CTA: Logo Brand** (Top Left Header)
   * *Action*: Click the ChemiCrown logo.
   * *Expected*: Instantly returns you to the home page (`/`).
-* [ ] **CTA: Public Navbar Links** (Catalog, About Us, Contact)
+* [x] **CTA: Public Navbar Links** (Catalog, About Us, Contact)
   * *Action*: Click each link in the navbar.
   * *Expected*: Smooth route transitions without page flashes. The navbar should display loader skeletons while verifying active sessions, then show the "Login" button if unauthenticated.
-* [ ] **CTA: Public Footer Links** (Privacy Policy, Terms of Service)
+* [x] **CTA: Public Footer Links** (Privacy Policy, Terms of Service)
   * *Action*: Scroll to bottom, click links.
   * *Expected*: Renders the correct policy page layouts.
 
 ### 1.2 Interactive Chemical Catalog (Public View)
-* [ ] **URL Path**: `/catalog`
-* [ ] **Search Input** (Filter Chemicals)
+* [x] **URL Path**: `/catalog`
+* [x] **Search Input** (Filter Chemicals)
   * *Action*: Type `"Thinner"` into the search box.
   * *Expected*: The list should filter in real-time, showing *GP Thinner* and *Nitrocellulose (NC) Thinner*.
-* [ ] **Category Filters** (Sidebar)
+* [x] **Category Filters** (Sidebar)
   * *Action*: Click on the "Solvents" category.
   * *Expected*: The catalog lists only solvent items (e.g. Toluene, Acetone).
-* [ ] **CTA: View Details Button**
+* [x] **CTA: View Details Button**
   * *Action*: Click "View Details" on the *Acetone (Propanone)* card.
   * *Expected*: Opens `/product/:id`. Shows CAS Number (`67-64-1`), UN Number (`1090`), GHS Hazard Class ratings (Class 3 Flammable Liquid), Safety Data Sheet (SDS) button, and base pricing details.
 
 ### 1.3 GHS & CoA Print Modals
-* [ ] **CTA: "Print GHS Label" Button**
+* [x] **CTA: "Print GHS Label" Button**
   * *Action*: Click this button on any product details view.
   * *Expected*: A modal overlay appears showing the GHS pictogram warnings (e.g. Flame, Exclamation mark) and handling warnings.
   * *Action*: Click the green **Print Label** button in the modal.

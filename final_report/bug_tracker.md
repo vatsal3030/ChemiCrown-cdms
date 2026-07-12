@@ -81,13 +81,22 @@ Follow this structured roadmap to verify that all functional paths, UI component
 
 ---
 
+## 💡 How to Update Checkboxes
+To mark a test step as completed in Markdown:
+1. Open the `.md` file in your editor (e.g. Visual Studio Code).
+2. Find the checkbox line: `- [ ] **Task name**`
+3. Replace the empty space with an `x`: `- [x] **Task name**`
+4. Save the file. The UI or preview will render it as a checked box.
+
+---
+
 ## 📝 Bug Tracker Registry
 
 Please use the table below to document any visual defects, broken links, or logical errors found during your testing. Copy your raw insights here, and I will rewrite them into clear, actionable, and structured bug entries.
 
 | Bug ID | Component / Page | Description of Issue (Raw or Technical) | Expected Behavior | Priority | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **B01** | *Example page* | *Example: Details side margins too wide on 1920px screen.* | *Example: Limit width to 1200px.* | *Low* | *Open* |
+| **B01** | UI / Custom Cursor | Double cursor visible; system default pointer remains visible alongside the custom flask cursor. | Hide system pointer entirely when custom cursor renders; show default only on fallback. | *High* | **Resolved (Fixed)** |
 | | | | | | |
 | | | | | | |
 | | | | | | |

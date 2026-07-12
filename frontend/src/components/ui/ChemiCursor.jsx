@@ -423,11 +423,14 @@ export default function ChemiCursor() {
   // ── Dynamically toggle body class based on cursor active visibility & pointer presence ──
   useEffect(() => {
     if (isVisible && hasMouse) {
+      document.documentElement.classList.add('custom-cursor-active');
       document.body.classList.add('custom-cursor-active');
     } else {
+      document.documentElement.classList.remove('custom-cursor-active');
       document.body.classList.remove('custom-cursor-active');
     }
     return () => {
+      document.documentElement.classList.remove('custom-cursor-active');
       document.body.classList.remove('custom-cursor-active');
     };
   }, [isVisible, hasMouse]);
