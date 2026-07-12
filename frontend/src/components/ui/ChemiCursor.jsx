@@ -76,7 +76,6 @@ export default function ChemiCursor() {
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    document.body.classList.add('custom-cursor-active');
 
     const handleMouseMove = (e) => {
       mousePos.current = { x: e.clientX, y: e.clientY };
@@ -405,13 +404,35 @@ export default function ChemiCursor() {
     };
   }, [isText, isHover, lerpColor]);
 
-  // ── Touch screen fallback ──
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  // ── Fine pointer device detection (Mice / Trackpads) ──
+  const [hasMouse, setHasMouse] = useState(false);
   useEffect(() => {
-    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const mediaQuery = window.matchMedia('(pointer: fine)');
+    setHasMouse(mediaQuery.matches);
+
+    const handler = (e) => setHasMouse(e.matches);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    } else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handler);
+      return () => mediaQuery.removeListener(handler);
+    }
   }, []);
 
-  if (isTouchDevice || !isVisible) return null;
+  // ── Dynamically toggle body class based on cursor active visibility & pointer presence ──
+  useEffect(() => {
+    if (isVisible && hasMouse) {
+      document.body.classList.add('custom-cursor-active');
+    } else {
+      document.body.classList.remove('custom-cursor-active');
+    }
+    return () => {
+      document.body.classList.remove('custom-cursor-active');
+    };
+  }, [isVisible, hasMouse]);
+
+  if (!hasMouse || !isVisible) return null;
 
   return (
     <div
